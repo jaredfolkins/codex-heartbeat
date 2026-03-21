@@ -6,16 +6,16 @@
 
 ## problem i'm sovling
 
-Codex is a known issue for long-running autoresearch-style loops in the way it is set up right now:
+Codex still has issues with long-running autoresearch-style loops in its current setup:
 
 - https://github.com/karpathy/autoresearch/issues/57
 - https://x.com/karpathy/status/2031083551387701698
 
-I needed the same thing Karpathy was pointing at. I have projects in `codex-cli` with long task lists, and I wanted something like a Ralph loop but with a few knobs on it.
+I ran into the same problem. I use `codex-cli` for projects with long task lists, and I wanted something closer to a Ralph loop, but with a few practical knobs.
 
-This is not for vibe coding. It is for engineering work and refactoring projects where I want a nice, interactive Codex session running in `tmux` so I can see what it is doing, jump in, and steer it while it works.
+This is not for vibe coding. It is for engineering and refactoring work: a long-lived, interactive Codex session in `tmux` where I can watch what it is doing, jump in, and steer when needed.
 
-`codex-heartbeat` is a small Go wrapper around the Codex CLI for one long-lived workspace thread.
+`codex-heartbeat` is a small Go wrapper around the Codex CLI built for exactly that.
 
 > Warning
 > codex-loop runs Codex in the current `--yolo`-equivalent mode by default.
