@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -252,14 +253,18 @@ func runInteractiveCommand(args []string) error {
 	var opts sharedOptions
 	var interval durationFlag
 	var endIn durationFlag
+	var noAltScreen bool
+	var altScreen bool
 
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	registerSharedFlags(fs, &opts)
 	fs.Var(&interval, "interval", "Heartbeat interval (examples: 15m, 2 hours, 1 day)")
 	fs.Var(&endIn, "end-in", "Stop the heartbeat after this long (examples: 30m, 2 hours, 1 day)")
+	fs.BoolVar(&noAltScreen, "no-alt-screen", false, "Run Codex inline so the wrapper banner stays visible in scrollback")
+	fs.BoolVar(&altScreen, "alt-screen", false, "Force Codex to use the alternate screen")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--end-in 1 day]")
+		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--end-in 1 day] [--no-alt-screen]")
 		fs.PrintDefaults()
 	}
 
@@ -268,6 +273,10 @@ func runInteractiveCommand(args []string) error {
 	}
 	if fs.NArg() != 0 {
 		return fmt.Errorf("run does not accept positional arguments")
+	}
+	useNoAltScreen, err := resolveNoAltScreen(noAltScreen, altScreen)
+	if err != nil {
+		return err
 	}
 
 	cfg, promptText, state, err := prepareWorkspace(opts)
@@ -297,11 +306,11 @@ func runInteractiveCommand(args []string) error {
 	}
 	defer runLogFile.Close()
 
-	argsForCodex := buildInteractiveArgs(cfg.Workdir, promptText, state.SessionID, opts.safe)
+	sendPromptOnLaunch := state.SessionID == "" && !interval.IsSet()
+	argsForCodex := buildInteractiveArgs(cfg.Workdir, promptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen)
 	cmd := exec.Command("codex", argsForCodex...)
 	cmd.Dir = cfg.Workdir
 	cmd.Env = os.Environ()
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	startedAt := time.Now()
 	appendEvent(cfg.LogsDir, logEvent{
@@ -312,6 +321,7 @@ func runInteractiveCommand(args []string) error {
 		Message:   fmt.Sprintf("interval=%s end_in=%s", interval.String(), endIn.String()),
 	})
 
+	printRunBanner(cfg, state, interval, endIn, useNoAltScreen)
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		return fmt.Errorf("start codex: %w", err)
@@ -345,7 +355,7 @@ func runInteractiveCommand(args []string) error {
 
 	go trackSessionID(ctx, cfg, &state, startedAt)
 	if interval.IsSet() {
-		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), state.SessionID != "", cfg, &state)
+		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), true, cfg, &state)
 	}
 
 	outputDone := make(chan error, 1)
@@ -642,17 +652,75 @@ func buildExecArgs(workdir, promptText, sessionID string, opts sharedOptions) []
 	return append(args, promptText)
 }
 
-func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool) []string {
+func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, sendPromptOnLaunch bool, noAltScreen bool) []string {
 	args := []string{}
 	if !safe {
 		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
 	}
 	args = append(args, "--cd", workdir)
+	if noAltScreen {
+		args = append(args, "--no-alt-screen")
+	}
 	if sessionID != "" {
 		args = append(args, "resume", sessionID)
 		return args
 	}
+	if !sendPromptOnLaunch {
+		return args
+	}
 	return append(args, promptText)
+}
+
+func resolveNoAltScreen(flagNoAltScreen, flagAltScreen bool) (bool, error) {
+	if flagNoAltScreen && flagAltScreen {
+		return false, fmt.Errorf("--no-alt-screen and --alt-screen cannot be used together")
+	}
+	if flagNoAltScreen {
+		return true, nil
+	}
+	if flagAltScreen {
+		return false, nil
+	}
+	return runtime.GOOS == "darwin" && strings.EqualFold(os.Getenv("TERM_PROGRAM"), "ghostty"), nil
+}
+
+func printRunBanner(cfg workspaceConfig, state workspaceState, interval, endIn durationFlag, noAltScreen bool) {
+	mode := "new"
+	if state.SessionID != "" {
+		mode = "resume"
+	}
+
+	screenMode := "alt"
+	if noAltScreen {
+		screenMode = "inline"
+	}
+
+	var details []string
+	details = append(details, fmt.Sprintf("mode=%s", mode))
+	details = append(details, fmt.Sprintf("screen=%s", screenMode))
+	if interval.IsSet() {
+		details = append(details, fmt.Sprintf("interval=%s", interval.String()))
+	}
+	if endIn.IsSet() {
+		details = append(details, fmt.Sprintf("end-in=%s", endIn.String()))
+	}
+
+	fmt.Fprintf(os.Stderr, "[codex-heartbeat] %s | workdir=%s\n", strings.Join(details, " | "), shortenPath(cfg.Workdir))
+}
+
+func shortenPath(path string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return path
+	}
+	if path == home {
+		return "~"
+	}
+	prefix := home + string(os.PathSeparator)
+	if strings.HasPrefix(path, prefix) {
+		return "~" + string(os.PathSeparator) + strings.TrimPrefix(path, prefix)
+	}
+	return path
 }
 
 func executePulse(cfg workspaceConfig, state *workspaceState, promptText string, opts sharedOptions) error {

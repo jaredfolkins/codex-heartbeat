@@ -51,6 +51,12 @@ Open the interactive Codex UI with transcript logging:
 ./codex-heartbeat run --workdir /path/to/workdir
 ```
 
+Keep the wrapper banner and Codex output in normal scrollback:
+
+```bash
+./codex-heartbeat run --workdir /path/to/workdir --no-alt-screen
+```
+
 Open the interactive Codex UI and auto-paste the prompt file every 15 minutes:
 
 ```bash
@@ -98,6 +104,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 
 - `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
 - `run --interval 15m` keeps the live UI attached. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
+- `run` prints a short `codex-heartbeat` banner before attach. In Ghostty on macOS it defaults to inline mode so that banner stays visible; use `--alt-screen` to force the alternate screen or `--no-alt-screen` on other terminals when you want the same inline behavior.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.

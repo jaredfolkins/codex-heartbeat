@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -52,5 +55,47 @@ func TestParseFlexibleDurationRejectsInvalidValues(t *testing.T) {
 				t.Fatalf("parseFlexibleDuration(%q) unexpectedly succeeded", input)
 			}
 		})
+	}
+}
+
+func TestBuildInteractiveArgsAddsNoAltScreen(t *testing.T) {
+	t.Parallel()
+
+	args := buildInteractiveArgs("/tmp/work", "prompt", "", false, false, true)
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "--no-alt-screen") {
+		t.Fatalf("buildInteractiveArgs() did not include --no-alt-screen: %v", args)
+	}
+}
+
+func TestResolveNoAltScreenRejectsConflictingFlags(t *testing.T) {
+	t.Parallel()
+
+	if _, err := resolveNoAltScreen(true, true); err == nil {
+		t.Fatal("resolveNoAltScreen() unexpectedly accepted conflicting flags")
+	}
+}
+
+func TestResolveNoAltScreenGhosttyDefault(t *testing.T) {
+	t.Parallel()
+
+	previous := os.Getenv("TERM_PROGRAM")
+	t.Cleanup(func() {
+		if previous == "" {
+			_ = os.Unsetenv("TERM_PROGRAM")
+			return
+		}
+		_ = os.Setenv("TERM_PROGRAM", previous)
+	})
+
+	_ = os.Setenv("TERM_PROGRAM", "ghostty")
+	got, err := resolveNoAltScreen(false, false)
+	if err != nil {
+		t.Fatalf("resolveNoAltScreen() returned error: %v", err)
+	}
+
+	want := runtime.GOOS == "darwin"
+	if got != want {
+		t.Fatalf("resolveNoAltScreen() = %v, want %v", got, want)
 	}
 }
