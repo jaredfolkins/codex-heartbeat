@@ -4,7 +4,7 @@ Date: 2026-03-21
 
 Recovered task: continue the interrupted review of the current `codex-heartbeat` changes.
 
-Status: review completed, follow-up fixes committed, and the branch is now one commit ahead of `origin/main`.
+Status: review completed and the follow-up fixes are committed locally.
 
 ## Fixed In Source
 
@@ -24,23 +24,23 @@ Status: review completed, follow-up fixes committed, and the branch is now one c
 
 ## Workspace Status
 
-1. Committed locally as `eb7ed01` with title `Fix heartbeat run bootstrap and CLI runtime UX`.
+1. Primary code change is committed locally as `eb7ed01` with title `Fix heartbeat run bootstrap and CLI runtime UX`.
 
-2. The working tree is currently clean. `git status --short` returned no modified or untracked files.
+2. This repository does not currently use `TASKS.md`, `TASKS-HISTORY.md`, `DESIGN.md`, or `AGENTS.md`; the review/handoff note in `.analysis/REVIEW.md` is the active workspace ledger for this task.
 
-3. The local branch is `main` and is currently `ahead 1` relative to `origin/main`.
-
-4. This repository does not currently use `TASKS.md`, `TASKS-HISTORY.md`, `DESIGN.md`, or `AGENTS.md`; the review/handoff note in `.analysis/REVIEW.md` is the active workspace ledger for this task.
+3. Verify the final branch/worktree state with `git status --short --branch` before pushing. At the last check during this pass, the branch was ahead of `origin/main` and no source files outside this note remained pending.
 
 ## Handoff
 
-1. Latest local commit:
+1. Primary implementation commit:
    `eb7ed01 Fix heartbeat run bootstrap and CLI runtime UX`
 
 2. Commit summary:
    restore new-session `run --interval` prompt startup, normalize subcommand help exits, limit `--skip-git-repo-check` to non-interactive commands, add legacy runtime migration coverage, and refresh README/docs.
 
-3. Suggested next command:
+3. Any later local commits in this branch are review-note or handoff bookkeeping.
+
+4. Suggested next command:
    `git push origin main`
 
 ## Validation
