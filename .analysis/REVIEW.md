@@ -4,7 +4,7 @@ Date: 2026-03-21
 
 Recovered task: continue the interrupted review of the current `codex-heartbeat` changes.
 
-Status: review completed and follow-up fixes applied in the working tree.
+Status: review completed, follow-up fixes committed, and the branch is now one commit ahead of `origin/main`.
 
 ## Fixed In Source
 
@@ -24,24 +24,24 @@ Status: review completed and follow-up fixes applied in the working tree.
 
 ## Workspace Status
 
-1. Ready for commit review. Current tracked modifications are `README.md`, `cmd/codex-heartbeat/main.go`, and `cmd/codex-heartbeat/main_test.go`.
+1. Committed locally as `eb7ed01` with title `Fix heartbeat run bootstrap and CLI runtime UX`.
 
-2. This review note lives at `.analysis/REVIEW.md` and is currently untracked.
+2. The working tree is currently clean. `git status --short` returned no modified or untracked files.
+
+3. The local branch is `main` and is currently `ahead 1` relative to `origin/main`.
+
+4. This repository does not currently use `TASKS.md`, `TASKS-HISTORY.md`, `DESIGN.md`, or `AGENTS.md`; the review/handoff note in `.analysis/REVIEW.md` is the active workspace ledger for this task.
 
 ## Handoff
 
-1. Suggested staged files:
-   `README.md`, `cmd/codex-heartbeat/main.go`, `cmd/codex-heartbeat/main_test.go`, `.analysis/REVIEW.md`
+1. Latest local commit:
+   `eb7ed01 Fix heartbeat run bootstrap and CLI runtime UX`
 
-2. Suggested commit title:
-   `Fix heartbeat run bootstrap and CLI runtime UX`
-
-3. Suggested commit summary:
+2. Commit summary:
    restore new-session `run --interval` prompt startup, normalize subcommand help exits, limit `--skip-git-repo-check` to non-interactive commands, add legacy runtime migration coverage, and refresh README/docs.
 
-4. Suggested next commands:
-   `git add README.md cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go .analysis/REVIEW.md`
-   `git commit -m "Fix heartbeat run bootstrap and CLI runtime UX"`
+3. Suggested next command:
+   `git push origin main`
 
 ## Validation
 
