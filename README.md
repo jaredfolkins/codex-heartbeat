@@ -4,7 +4,7 @@
 
 # codex-heartbeat
 
-## problem i'm sovling
+## problem i'm solving
 
 Codex still has issues with long-running autoresearch-style loops in its current setup:
 
@@ -18,7 +18,7 @@ This is not for vibe coding. It is for engineering and refactoring work: a long-
 `codex-heartbeat` is a small Go wrapper around the Codex CLI built for exactly that.
 
 > Warning
-> codex-loop runs Codex in the current `--yolo`-equivalent mode by default.
+> codex-heartbeat runs Codex in the current `--yolo`-equivalent mode by default.
 > On this Codex CLI version that means it automatically passes `--dangerously-bypass-approvals-and-sandbox` to child Codex runs unless you add `--safe`.
 
 It does four things:
@@ -48,7 +48,7 @@ If blocked, write the blocker clearly and propose the next action.
 Do not restart from scratch.
 ```
 
-`--prompt` is optional. If you do not provide it, codex-loop uses the embedded `heartbeat.md` that ships inside the binary.
+`--prompt` is optional. If you do not provide it, codex-heartbeat uses the embedded `heartbeat.md` that ships inside the binary.
 
 Bootstrap or pulse once:
 
@@ -120,6 +120,6 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.
 - `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.
-- `--skip-git-repo-check` is enabled by default so the wrapper can target a plain directory.
+- `pulse`, `bootstrap`, and `daemon` enable `--skip-git-repo-check` by default so non-interactive child runs can target a plain directory.
 - Child exit codes are preserved for wrapped one-shot and interactive runs such as `pulse`, `bootstrap`, and `run`.
-- `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-loop logs the transcript and injects timed prompts.
+- `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-heartbeat logs the transcript and injects timed prompts.

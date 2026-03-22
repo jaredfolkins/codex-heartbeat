@@ -119,14 +119,18 @@ func runPulseCommand(args []string) error {
 	var opts sharedOptions
 	fs := flag.NewFlagSet("pulse", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
-	registerSharedFlags(fs, &opts)
+	registerExecFlags(fs, &opts)
 	fs.Usage = func() {
 		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat pulse --workdir DIR [--prompt FILE] [--safe]")
 		fs.PrintDefaults()
 	}
 
-	if err := fs.Parse(args); err != nil {
+	help, err := parseFlagSet(fs, args)
+	if err != nil {
 		return err
+	}
+	if help {
+		return nil
 	}
 	if fs.NArg() != 0 {
 		return fmt.Errorf("pulse does not accept positional arguments")
@@ -157,7 +161,7 @@ func runDaemonCommand(args []string) error {
 
 	fs := flag.NewFlagSet("daemon", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
-	registerSharedFlags(fs, &opts)
+	registerExecFlags(fs, &opts)
 	fs.Var(&interval, "interval", "Heartbeat interval (examples: 15m, 2 hours, 1 day)")
 	fs.Var(&endIn, "end-in", "Stop the heartbeat after this long (examples: 30m, 2 hours, 1 day)")
 	fs.Usage = func() {
@@ -165,8 +169,12 @@ func runDaemonCommand(args []string) error {
 		fs.PrintDefaults()
 	}
 
-	if err := fs.Parse(args); err != nil {
+	help, err := parseFlagSet(fs, args)
+	if err != nil {
 		return err
+	}
+	if help {
+		return nil
 	}
 	if fs.NArg() != 0 {
 		return fmt.Errorf("daemon does not accept positional arguments")
@@ -258,7 +266,7 @@ func runInteractiveCommand(args []string) error {
 
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
-	registerSharedFlags(fs, &opts)
+	registerRunFlags(fs, &opts)
 	fs.Var(&interval, "interval", "Heartbeat interval (examples: 15m, 2 hours, 1 day)")
 	fs.Var(&endIn, "end-in", "Stop the heartbeat after this long (examples: 30m, 2 hours, 1 day)")
 	fs.BoolVar(&noAltScreen, "no-alt-screen", false, "Run Codex inline so the wrapper banner stays visible in scrollback")
@@ -268,8 +276,12 @@ func runInteractiveCommand(args []string) error {
 		fs.PrintDefaults()
 	}
 
-	if err := fs.Parse(args); err != nil {
+	help, err := parseFlagSet(fs, args)
+	if err != nil {
 		return err
+	}
+	if help {
+		return nil
 	}
 	if fs.NArg() != 0 {
 		return fmt.Errorf("run does not accept positional arguments")
@@ -306,7 +318,7 @@ func runInteractiveCommand(args []string) error {
 	}
 	defer runLogFile.Close()
 
-	sendPromptOnLaunch := state.SessionID == "" && !interval.IsSet()
+	sendPromptOnLaunch, injectImmediately := interactiveLaunchBehavior(state.SessionID)
 	argsForCodex := buildInteractiveArgs(cfg.Workdir, promptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen)
 	cmd := exec.Command("codex", argsForCodex...)
 	cmd.Dir = cfg.Workdir
@@ -355,7 +367,7 @@ func runInteractiveCommand(args []string) error {
 
 	go trackSessionID(ctx, cfg, &state, startedAt)
 	if interval.IsSet() {
-		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), true, cfg, &state)
+		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), injectImmediately, cfg, &state)
 	}
 
 	outputDone := make(chan error, 1)
@@ -427,14 +439,18 @@ func runStatusCommand(args []string) error {
 	var opts sharedOptions
 	flagSet := flag.NewFlagSet("status", flag.ContinueOnError)
 	flagSet.SetOutput(os.Stderr)
-	registerSharedFlags(flagSet, &opts)
+	registerStatusFlags(flagSet, &opts)
 	flagSet.Usage = func() {
 		fmt.Fprintln(flagSet.Output(), "Usage: codex-heartbeat status --workdir DIR")
 		flagSet.PrintDefaults()
 	}
 
-	if err := flagSet.Parse(args); err != nil {
+	help, err := parseFlagSet(flagSet, args)
+	if err != nil {
 		return err
+	}
+	if help {
+		return nil
 	}
 	if flagSet.NArg() != 0 {
 		return fmt.Errorf("status does not accept positional arguments")
@@ -445,6 +461,9 @@ func runStatusCommand(args []string) error {
 
 	cfg, err := newWorkspaceConfig(opts.workdir)
 	if err != nil {
+		return err
+	}
+	if err := migrateLegacyProjectDir(cfg); err != nil {
 		return err
 	}
 
@@ -461,11 +480,29 @@ func runStatusCommand(args []string) error {
 	return enc.Encode(state)
 }
 
-func registerSharedFlags(fs *flag.FlagSet, opts *sharedOptions) {
+func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
 	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
 	fs.StringVar(&opts.promptPath, "prompt", "", "Optional heartbeat prompt file; defaults to the embedded heartbeat.md")
 	fs.BoolVar(&opts.safe, "safe", false, "Do not pass --dangerously-bypass-approvals-and-sandbox to child Codex runs")
+}
+
+func registerExecFlags(fs *flag.FlagSet, opts *sharedOptions) {
+	registerRunFlags(fs, opts)
 	fs.BoolVar(&opts.skipGitRepoCheck, "skip-git-repo-check", true, "Pass --skip-git-repo-check to non-interactive child Codex runs")
+}
+
+func registerStatusFlags(fs *flag.FlagSet, opts *sharedOptions) {
+	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
+}
+
+func parseFlagSet(fs *flag.FlagSet, args []string) (helpRequested bool, err error) {
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
 }
 
 func prepareWorkspace(opts sharedOptions) (workspaceConfig, string, workspaceState, error) {
@@ -475,6 +512,9 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, string, workspaceSta
 
 	cfg, err := newWorkspaceConfig(opts.workdir)
 	if err != nil {
+		return workspaceConfig{}, "", workspaceState{}, err
+	}
+	if err := migrateLegacyProjectDir(cfg); err != nil {
 		return workspaceConfig{}, "", workspaceState{}, err
 	}
 	if err := os.MkdirAll(cfg.LogsDir, 0o755); err != nil {
@@ -498,6 +538,97 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, string, workspaceSta
 	}
 
 	return cfg, promptText, state, nil
+}
+
+func migrateLegacyProjectDir(cfg workspaceConfig) error {
+	legacyDir := filepath.Join(cfg.Workdir, ".codex-heartbeat")
+	legacyInfo, err := os.Stat(legacyDir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("stat legacy runtime dir: %w", err)
+	}
+	if !legacyInfo.IsDir() {
+		return nil
+	}
+
+	if _, err := os.Stat(cfg.ProjectDir); err == nil {
+		return nil
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("stat project runtime dir: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(cfg.ProjectDir), 0o755); err != nil {
+		return fmt.Errorf("create projects dir: %w", err)
+	}
+	if err := os.Rename(legacyDir, cfg.ProjectDir); err == nil {
+		return nil
+	} else if !errors.Is(err, syscall.EXDEV) {
+		return fmt.Errorf("migrate legacy runtime dir: %w", err)
+	}
+
+	// Cross-device moves need a copy/delete fallback instead of os.Rename.
+	if err := copyTree(legacyDir, cfg.ProjectDir); err != nil {
+		return fmt.Errorf("copy legacy runtime dir: %w", err)
+	}
+	if err := os.RemoveAll(legacyDir); err != nil {
+		return fmt.Errorf("remove legacy runtime dir: %w", err)
+	}
+	return nil
+}
+
+func copyTree(srcRoot, dstRoot string) error {
+	return filepath.WalkDir(srcRoot, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(srcRoot, path)
+		if err != nil {
+			return err
+		}
+		dstPath := filepath.Join(dstRoot, relPath)
+
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode().Perm())
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			return os.Symlink(target, dstPath)
+		}
+		return copyFile(path, dstPath, info.Mode().Perm())
+	})
+}
+
+func copyFile(srcPath, dstPath string, perm fs.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+		return err
+	}
+
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+	return nil
 }
 
 func newWorkspaceConfig(workdir string) (workspaceConfig, error) {
@@ -669,6 +800,11 @@ func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, send
 		return args
 	}
 	return append(args, promptText)
+}
+
+func interactiveLaunchBehavior(sessionID string) (sendPromptOnLaunch bool, injectHeartbeatImmediately bool) {
+	hasSession := strings.TrimSpace(sessionID) != ""
+	return !hasSession, hasSession
 }
 
 func resolveNoAltScreen(flagNoAltScreen, flagAltScreen bool) (bool, error) {
