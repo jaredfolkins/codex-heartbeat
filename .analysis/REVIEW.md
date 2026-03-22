@@ -1,10 +1,11 @@
 # Review Notes
 
 Date: 2026-03-21
+Last verified: 2026-03-22
 
 Recovered task: continue the interrupted review of the current `codex-heartbeat` changes.
 
-Status: review completed, the follow-up fixes were validated, and the branch state was pushed to `origin/main`.
+Status: review completed, the follow-up fixes were validated and pushed to `origin/main`, and later synced commits only adjusted documentation wording.
 
 ## Fixed In Source
 
@@ -28,9 +29,9 @@ Status: review completed, the follow-up fixes were validated, and the branch sta
 
 2. This repository does not currently use `TASKS.md`, `TASKS-HISTORY.md`, `DESIGN.md`, or `AGENTS.md`; the review/handoff note in `.analysis/REVIEW.md` is the active workspace ledger for this task.
 
-3. Subsequent commits in this branch after `eb7ed01` are note-only bookkeeping and do not change runtime behavior.
+3. Commits after `eb7ed01` in the current branch history are review-note bookkeeping or README-only documentation edits; they do not reopen the runtime behavior addressed by the fix set.
 
-4. At task close, local `main` and `origin/main` were synced and the worktree was clean.
+4. At the latest verification pass on 2026-03-22, local `main` and `origin/main` were synced and the worktree was clean.
 
 ## Handoff
 
@@ -40,7 +41,7 @@ Status: review completed, the follow-up fixes were validated, and the branch sta
 2. Commit summary:
    restore new-session `run --interval` prompt startup, normalize subcommand help exits, limit `--skip-git-repo-check` to non-interactive commands, add legacy runtime migration coverage, and refresh README/docs.
 
-3. Any later commits in this branch are review-note or handoff bookkeeping.
+3. Later commits in this branch history after the primary implementation are review-note or README documentation changes only.
 
 4. No additional action is required for this task. If work resumes later, start by checking `git status --short --branch`.
 
