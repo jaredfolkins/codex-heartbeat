@@ -4,7 +4,7 @@ Date: 2026-03-21
 
 Recovered task: continue the interrupted review of the current `codex-heartbeat` changes.
 
-Status: review completed and the follow-up fixes are committed locally.
+Status: review completed, the follow-up fixes were validated, and the branch state was pushed to `origin/main`.
 
 ## Fixed In Source
 
@@ -24,11 +24,13 @@ Status: review completed and the follow-up fixes are committed locally.
 
 ## Workspace Status
 
-1. Primary code change is committed locally as `eb7ed01` with title `Fix heartbeat run bootstrap and CLI runtime UX`.
+1. Primary code change landed in commit `eb7ed01` with title `Fix heartbeat run bootstrap and CLI runtime UX`.
 
 2. This repository does not currently use `TASKS.md`, `TASKS-HISTORY.md`, `DESIGN.md`, or `AGENTS.md`; the review/handoff note in `.analysis/REVIEW.md` is the active workspace ledger for this task.
 
-3. Verify the final branch/worktree state with `git status --short --branch` before pushing. At the last check during this pass, the branch was ahead of `origin/main` and no source files outside this note remained pending.
+3. Subsequent commits in this branch after `eb7ed01` are note-only bookkeeping and do not change runtime behavior.
+
+4. At task close, local `main` and `origin/main` were synced and the worktree was clean.
 
 ## Handoff
 
@@ -38,10 +40,9 @@ Status: review completed and the follow-up fixes are committed locally.
 2. Commit summary:
    restore new-session `run --interval` prompt startup, normalize subcommand help exits, limit `--skip-git-repo-check` to non-interactive commands, add legacy runtime migration coverage, and refresh README/docs.
 
-3. Any later local commits in this branch are review-note or handoff bookkeeping.
+3. Any later commits in this branch are review-note or handoff bookkeeping.
 
-4. Suggested next command:
-   `git push origin main`
+4. No additional action is required for this task. If work resumes later, start by checking `git status --short --branch`.
 
 ## Validation
 
