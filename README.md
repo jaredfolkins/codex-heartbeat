@@ -4,22 +4,14 @@
 
 # codex-heartbeat
 
-## problem i'm solving
+## Problem
 
 Codex still has issues with long-running autoresearch-style loops in its current setup:
 
-- https://github.com/karpathy/autoresearch/issues/57
+`codex-heartbeat` is a small Go wrapper that is like a Ralph loop but with a few practical knobs. As 
+I wanted to help my peers understand and see how to use Codex for long-running autotasking-style loops. Being able to see the session autoprompt but also being able to intervene is valuable.
+
 - https://x.com/karpathy/status/2031083551387701698
-
-I ran into the same problem. I use `codex-cli` for projects with long task lists, and I wanted something closer to a Ralph loop, but with a few practical knobs.
-
-This is not for vibe coding. It is for engineering and refactoring work: a long-lived, interactive Codex session in `tmux` where I can watch what it is doing, jump in, and steer when needed.
-
-`codex-heartbeat` is a small Go wrapper around the Codex CLI built for exactly that.
-
-> Warning
-> codex-heartbeat runs Codex in the current `--yolo`-equivalent mode by default.
-> On this Codex CLI version that means it automatically passes `--dangerously-bypass-approvals-and-sandbox` to child Codex runs unless you add `--safe`.
 
 It does four things:
 
@@ -27,6 +19,13 @@ It does four things:
 - Resumes that same session on a timer instead of relying on `resume --last`.
 - Holds a workspace lock so two heartbeat runners do not manage the same thread at once.
 - Tees Codex output to the terminal while also appending it to daily log files under `~/.codex-heartbeat/projects/<workspace-key>/logs/`.
+
+## Warning 
+
+> Warning
+> codex-heartbeat runs Codex in the current `--yolo`-equivalent mode by default.
+> On this Codex CLI version that means it automatically passes `--dangerously-bypass-approvals-and-sandbox` to child Codex runs unless you add `--safe`.
+
 
 ## Build
 
