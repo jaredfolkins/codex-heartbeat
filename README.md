@@ -6,7 +6,7 @@
 
 ## Problem
 
-Codex still has issues with long-running autoresearch-style loops in its current setup:
+Codex still has issues with long-running autorprompting loops in its current setup.
 
 `codex-heartbeat` is a small Go wrapper that is like a Ralph loop but with a few practical knobs. As 
 I wanted to help my peers understand and see how to use Codex for long-running autotasking-style loops. Being able to see the session autoprompt but also being able to intervene is valuable.
