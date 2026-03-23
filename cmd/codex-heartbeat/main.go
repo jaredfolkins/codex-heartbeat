@@ -340,6 +340,8 @@ func runInteractiveCommand(args []string) error {
 	}
 	defer ptmx.Close()
 
+	setTerminalTitle(runTerminalTitle(cfg))
+
 	var restore func()
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -842,6 +844,56 @@ func printRunBanner(cfg workspaceConfig, state workspaceState, interval, endIn d
 	}
 
 	fmt.Fprintf(os.Stderr, "[codex-heartbeat] %s | workdir=%s\n", strings.Join(details, " | "), shortenPath(cfg.Workdir))
+}
+
+func runTerminalTitle(cfg workspaceConfig) string {
+	return fmt.Sprintf("codex-heartbeat | %s", shortenPath(cfg.Workdir))
+}
+
+func setTerminalTitle(title string) {
+	output := terminalControlOutput()
+	if output == nil {
+		return
+	}
+
+	sequence := terminalTitleSequence(title)
+	if sequence == "" {
+		return
+	}
+
+	_, _ = io.WriteString(output, sequence)
+}
+
+func terminalControlOutput() *os.File {
+	if term.IsTerminal(int(os.Stderr.Fd())) {
+		return os.Stderr
+	}
+	if term.IsTerminal(int(os.Stdout.Fd())) {
+		return os.Stdout
+	}
+	return nil
+}
+
+func terminalTitleSequence(title string) string {
+	sanitized := sanitizeTerminalTitle(title)
+	if sanitized == "" {
+		return ""
+	}
+	return "\033]0;" + sanitized + "\007"
+}
+
+func sanitizeTerminalTitle(title string) string {
+	title = strings.Map(func(r rune) rune {
+		switch {
+		case r == '\a' || r == '\n' || r == '\r' || r == '\t':
+			return ' '
+		case r < 0x20 || r == 0x7f:
+			return -1
+		default:
+			return r
+		}
+	}, title)
+	return strings.Join(strings.Fields(title), " ")
 }
 
 func shortenPath(path string) string {

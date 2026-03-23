@@ -313,3 +313,25 @@ func TestResolveNoAltScreenGhosttyDefault(t *testing.T) {
 		t.Fatalf("resolveNoAltScreen() = %v, want %v", got, want)
 	}
 }
+
+func TestRunTerminalTitleIncludesWorkspace(t *testing.T) {
+	t.Parallel()
+
+	got := runTerminalTitle(workspaceConfig{Workdir: "/tmp/codex-heartbeat"})
+	if !strings.Contains(got, "codex-heartbeat | ") {
+		t.Fatalf("runTerminalTitle() missing heartbeat prefix: %q", got)
+	}
+	if !strings.Contains(got, "/tmp/codex-heartbeat") {
+		t.Fatalf("runTerminalTitle() missing workspace: %q", got)
+	}
+}
+
+func TestTerminalTitleSequenceSanitizesControlCharacters(t *testing.T) {
+	t.Parallel()
+
+	got := terminalTitleSequence("heartbeat\tone\n two\a")
+	want := "\033]0;heartbeat one two\007"
+	if got != want {
+		t.Fatalf("terminalTitleSequence() = %q, want %q", got, want)
+	}
+}
