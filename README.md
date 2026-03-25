@@ -55,7 +55,7 @@ Bootstrap or pulse once:
 ./codex-heartbeat pulse --workdir /path/to/workdir
 ```
 
-Open the interactive Codex UI with transcript logging:
+Open the interactive Codex UI with transcript logging and the default screen-aware heartbeat mode:
 
 ```bash
 ./codex-heartbeat run --workdir /path/to/workdir
@@ -71,6 +71,12 @@ Open the interactive Codex UI and auto-paste the prompt file every 15 minutes:
 
 ```bash
 ./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
+```
+
+Explicitly select the default screen-aware mode, which waits for 30 seconds of idle screen state and falls back to a heartbeat after 60 minutes without an injected prompt:
+
+```bash
+./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --screen-idle-heartbeat
 ```
 
 Run the interactive heartbeat for a bounded amount of time:
@@ -113,13 +119,17 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 ## Notes
 
 - `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
-- `run --interval 15m` keeps the live UI attached. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
+- `run` now defaults to the screen-aware scheduler. It polls the live Codex screen every 10 seconds, injects after 3 consecutive idle polls, and falls back to a heartbeat after 60 minutes without an injected prompt.
+- `run --interval 15m` keeps the live UI attached but switches to an explicit timed scheduler. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
+- `--screen-idle-heartbeat` is still accepted as an explicit alias for the default screen-aware scheduler.
+- `--interval` and `--screen-idle-heartbeat` are mutually exclusive because they choose different heartbeat schedulers.
 - `run` prints a short `codex-heartbeat` banner before attach. In Ghostty on macOS it defaults to inline mode so that banner stays visible; use `--alt-screen` to force the alternate screen or `--no-alt-screen` on other terminals when you want the same inline behavior.
 - `run` also sets the terminal title to `codex-heartbeat | <workdir>` so heartbeat tabs are easy to spot at a glance.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
+- The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, refuses to accumulate idle polls while you have typed locally within the last 30 seconds, and only uses the 60 minute fallback once input has been quiet long enough to avoid clobbering active typing.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.
 - `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.
 - `pulse`, `bootstrap`, and `daemon` enable `--skip-git-repo-check` by default so non-interactive child runs can target a plain directory.
 - Child exit codes are preserved for wrapped one-shot and interactive runs such as `pulse`, `bootstrap`, and `run`.
-- `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-heartbeat logs the transcript and injects timed prompts.
+- `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-heartbeat logs the transcript and injects prompts when the scheduler decides it is time.

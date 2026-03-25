@@ -95,6 +95,37 @@ func TestInteractiveLaunchBehaviorResume(t *testing.T) {
 	}
 }
 
+func TestUseScreenIdleSchedulerDefaultsWhenIntervalUnset(t *testing.T) {
+	t.Parallel()
+
+	if !useScreenIdleScheduler(durationFlag{}, false) {
+		t.Fatal("useScreenIdleScheduler() should default to screen-aware mode when no interval is set")
+	}
+}
+
+func TestUseScreenIdleSchedulerUsesTimedModeWhenIntervalIsExplicit(t *testing.T) {
+	t.Parallel()
+
+	interval := durationFlag{
+		value: 15 * time.Minute,
+		set:   true,
+	}
+	if useScreenIdleScheduler(interval, false) {
+		t.Fatal("useScreenIdleScheduler() should use timer mode when an explicit interval is set")
+	}
+	if !useScreenIdleScheduler(interval, true) {
+		t.Fatal("useScreenIdleScheduler() should honor the explicit screen-aware flag")
+	}
+}
+
+func TestRunHeartbeatModeDefaultsToScreenAwareSummary(t *testing.T) {
+	t.Parallel()
+
+	if got := runHeartbeatMode(durationFlag{}, false); got != screenIdleHeartbeatSummary() {
+		t.Fatalf("runHeartbeatMode() = %q, want %q", got, screenIdleHeartbeatSummary())
+	}
+}
+
 func TestRegisterRunFlagsOmitsSkipGitRepoCheck(t *testing.T) {
 	t.Parallel()
 
@@ -255,6 +286,106 @@ func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
 	}
 	if args[len(args)-1] != promptText {
 		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	}
+}
+
+func TestRunInteractiveCommandScreenIdleLaunchIncludesPrompt(t *testing.T) {
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	promptText := "heartbeat prompt"
+	promptPath := filepath.Join(root, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte(promptText+"\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+
+	binDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatalf("mkdir bin dir: %v", err)
+	}
+	argsPath := filepath.Join(root, "codex-args.txt")
+	scriptPath := filepath.Join(binDir, "codex")
+	script := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$@\" > %q\nexit 0\n", argsPath)
+	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake codex: %v", err)
+	}
+
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("TERM_PROGRAM", "")
+
+	if err := runInteractiveCommand([]string{"--workdir", workdir, "--prompt", promptPath, "--screen-idle-heartbeat"}); err != nil {
+		t.Fatalf("runInteractiveCommand() returned error: %v", err)
+	}
+
+	argsData, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatalf("read fake codex args: %v", err)
+	}
+	args := strings.Split(strings.TrimSpace(string(argsData)), "\n")
+	if len(args) == 0 {
+		t.Fatal("fake codex did not receive any args")
+	}
+	if args[len(args)-1] != promptText {
+		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	}
+}
+
+func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	promptText := "heartbeat prompt"
+	promptPath := filepath.Join(root, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte(promptText+"\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+
+	binDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatalf("mkdir bin dir: %v", err)
+	}
+	argsPath := filepath.Join(root, "codex-args.txt")
+	scriptPath := filepath.Join(binDir, "codex")
+	script := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$@\" > %q\nexit 0\n", argsPath)
+	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake codex: %v", err)
+	}
+
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("TERM_PROGRAM", "")
+
+	if err := runInteractiveCommand([]string{"--workdir", workdir, "--prompt", promptPath}); err != nil {
+		t.Fatalf("runInteractiveCommand() returned error: %v", err)
+	}
+
+	argsData, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatalf("read fake codex args: %v", err)
+	}
+	args := strings.Split(strings.TrimSpace(string(argsData)), "\n")
+	if len(args) == 0 {
+		t.Fatal("fake codex did not receive any args")
+	}
+	if args[len(args)-1] != promptText {
+		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	}
+}
+
+func TestRunInteractiveCommandRejectsConflictingHeartbeatFlags(t *testing.T) {
+	t.Parallel()
+
+	err := runInteractiveCommand([]string{"--workdir", t.TempDir(), "--interval", "15m", "--screen-idle-heartbeat"})
+	if err == nil {
+		t.Fatal("runInteractiveCommand() unexpectedly accepted conflicting heartbeat flags")
+	}
+	if !strings.Contains(err.Error(), "--interval and --screen-idle-heartbeat cannot be used together") {
+		t.Fatalf("runInteractiveCommand() error = %v", err)
 	}
 }
 

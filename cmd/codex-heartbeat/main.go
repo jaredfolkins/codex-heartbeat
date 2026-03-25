@@ -263,6 +263,7 @@ func runInteractiveCommand(args []string) error {
 	var endIn durationFlag
 	var noAltScreen bool
 	var altScreen bool
+	var screenIdleHeartbeat bool
 
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
@@ -271,8 +272,9 @@ func runInteractiveCommand(args []string) error {
 	fs.Var(&endIn, "end-in", "Stop the heartbeat after this long (examples: 30m, 2 hours, 1 day)")
 	fs.BoolVar(&noAltScreen, "no-alt-screen", false, "Run Codex inline so the wrapper banner stays visible in scrollback")
 	fs.BoolVar(&altScreen, "alt-screen", false, "Force Codex to use the alternate screen")
+	fs.BoolVar(&screenIdleHeartbeat, "screen-idle-heartbeat", false, "Explicitly select the default screen-aware heartbeat mode (30s idle detection plus 60m fallback)")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--end-in 1 day] [--no-alt-screen]")
+		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
 		fs.PrintDefaults()
 	}
 
@@ -286,6 +288,10 @@ func runInteractiveCommand(args []string) error {
 	if fs.NArg() != 0 {
 		return fmt.Errorf("run does not accept positional arguments")
 	}
+	if interval.IsSet() && screenIdleHeartbeat {
+		return fmt.Errorf("--interval and --screen-idle-heartbeat cannot be used together")
+	}
+	useScreenIdleHeartbeat := useScreenIdleScheduler(interval, screenIdleHeartbeat)
 	useNoAltScreen, err := resolveNoAltScreen(noAltScreen, altScreen)
 	if err != nil {
 		return err
@@ -330,15 +336,26 @@ func runInteractiveCommand(args []string) error {
 		Type:      "run_start",
 		SessionID: state.SessionID,
 		Command:   "codex " + strings.Join(argsForCodex, " "),
-		Message:   fmt.Sprintf("interval=%s end_in=%s", interval.String(), endIn.String()),
+		Message:   fmt.Sprintf("heartbeat=%s end_in=%s", runHeartbeatMode(interval, screenIdleHeartbeat), endIn.String()),
 	})
 
-	printRunBanner(cfg, state, interval, endIn, useNoAltScreen)
+	printRunBanner(cfg, state, interval, endIn, useNoAltScreen, screenIdleHeartbeat)
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		return fmt.Errorf("start codex: %w", err)
 	}
 	defer ptmx.Close()
+
+	rows, cols, sizeErr := pty.Getsize(ptmx)
+	if sizeErr != nil {
+		rows = 40
+		cols = 120
+	}
+	screen := newTerminalScreen(cols, rows)
+	var inputTracker *userInputTracker
+	if useScreenIdleHeartbeat {
+		inputTracker = &userInputTracker{}
+	}
 
 	setTerminalTitle(runTerminalTitle(cfg))
 
@@ -361,6 +378,9 @@ func runInteractiveCommand(args []string) error {
 			go func() {
 				for range resizeSignals {
 					_ = pty.InheritSize(os.Stdin, ptmx)
+					if rows, cols, err := pty.Getsize(ptmx); err == nil {
+						screen.Resize(cols, rows)
+					}
 				}
 			}()
 			resizeSignals <- syscall.SIGWINCH
@@ -368,13 +388,15 @@ func runInteractiveCommand(args []string) error {
 	}
 
 	go trackSessionID(ctx, cfg, &state, startedAt)
-	if interval.IsSet() {
+	if useScreenIdleHeartbeat {
+		go injectScreenIdleLoop(ctx, ptmx, promptText, screen, inputTracker, startedAt, cfg, &state)
+	} else if interval.IsSet() {
 		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), injectImmediately, cfg, &state)
 	}
 
 	outputDone := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(io.MultiWriter(os.Stdout, runLogFile), ptmx)
+		_, err := io.Copy(io.MultiWriter(os.Stdout, runLogFile, screen), ptmx)
 		if isIgnorableCopyError(err) {
 			err = nil
 		}
@@ -383,7 +405,7 @@ func runInteractiveCommand(args []string) error {
 
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		go func() {
-			_, _ = io.Copy(ptmx, os.Stdin)
+			_, _ = io.Copy(ptmx, trackUserInput(os.Stdin, inputTracker))
 		}()
 	}
 
@@ -822,7 +844,7 @@ func resolveNoAltScreen(flagNoAltScreen, flagAltScreen bool) (bool, error) {
 	return runtime.GOOS == "darwin" && strings.EqualFold(os.Getenv("TERM_PROGRAM"), "ghostty"), nil
 }
 
-func printRunBanner(cfg workspaceConfig, state workspaceState, interval, endIn durationFlag, noAltScreen bool) {
+func printRunBanner(cfg workspaceConfig, state workspaceState, interval, endIn durationFlag, noAltScreen bool, screenIdleHeartbeat bool) {
 	mode := "new"
 	if state.SessionID != "" {
 		mode = "resume"
@@ -836,14 +858,28 @@ func printRunBanner(cfg workspaceConfig, state workspaceState, interval, endIn d
 	var details []string
 	details = append(details, fmt.Sprintf("mode=%s", mode))
 	details = append(details, fmt.Sprintf("screen=%s", screenMode))
-	if interval.IsSet() {
-		details = append(details, fmt.Sprintf("interval=%s", interval.String()))
+	if heartbeatMode := runHeartbeatMode(interval, screenIdleHeartbeat); heartbeatMode != "" {
+		details = append(details, fmt.Sprintf("heartbeat=%s", heartbeatMode))
 	}
 	if endIn.IsSet() {
 		details = append(details, fmt.Sprintf("end-in=%s", endIn.String()))
 	}
 
 	fmt.Fprintf(os.Stderr, "[codex-heartbeat] %s | workdir=%s\n", strings.Join(details, " | "), shortenPath(cfg.Workdir))
+}
+
+func useScreenIdleScheduler(interval durationFlag, screenIdleHeartbeat bool) bool {
+	return screenIdleHeartbeat || !interval.IsSet()
+}
+
+func runHeartbeatMode(interval durationFlag, screenIdleHeartbeat bool) string {
+	if useScreenIdleScheduler(interval, screenIdleHeartbeat) {
+		return screenIdleHeartbeatSummary()
+	}
+	if interval.IsSet() {
+		return interval.String()
+	}
+	return ""
 }
 
 func runTerminalTitle(cfg workspaceConfig) string {
@@ -1180,11 +1216,11 @@ func appendEvent(logsDir string, event logEvent) {
 }
 
 func printRootUsage(w io.Writer) {
-	fmt.Fprintln(w, "codex-heartbeat wraps the Codex CLI and can inject heartbeat prompts on a schedule.")
+	fmt.Fprintln(w, "codex-heartbeat wraps the Codex CLI and can inject heartbeat prompts based on screen state or a timer.")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Usage:")
 	fmt.Fprintln(w, "  codex-heartbeat pulse --workdir DIR [--prompt FILE]")
-	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--end-in 1 day]")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
 	fmt.Fprintln(w, "  codex-heartbeat daemon --workdir DIR --interval 5m [--end-in 2 hours]")
 	fmt.Fprintln(w, "  codex-heartbeat status --workdir DIR")
 	fmt.Fprintln(w, "")
