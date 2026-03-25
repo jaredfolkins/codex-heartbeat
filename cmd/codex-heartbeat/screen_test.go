@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -147,23 +150,29 @@ func TestTrackUserInputMarksActivity(t *testing.T) {
 	}
 }
 
-func TestAdvanceScreenIdlePolls(t *testing.T) {
+func TestEvaluateScreenIdlePoll(t *testing.T) {
 	t.Parallel()
+
+	now := time.Date(2026, time.March, 25, 12, 0, 0, 0, time.UTC)
+	lastPromptAt := now.Add(-30 * time.Minute)
 
 	tests := []struct {
 		name       string
 		idlePolls  int
 		quiet      bool
 		state      screenState
+		lastPrompt time.Time
 		wantPolls  int
 		wantInject bool
+		wantReason string
 	}{
-		{name: "first idle poll", idlePolls: 0, quiet: true, state: screenStateIdle, wantPolls: 1},
-		{name: "second idle poll", idlePolls: 1, quiet: true, state: screenStateIdle, wantPolls: 2},
-		{name: "third idle poll injects", idlePolls: 2, quiet: true, state: screenStateIdle, wantInject: true},
-		{name: "recent input resets idle accumulation", idlePolls: 2, quiet: false, state: screenStateIdle},
-		{name: "working screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateWorking},
-		{name: "ambiguous screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateAmbiguous},
+		{name: "first idle poll", idlePolls: 0, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 1, wantReason: "idle_accumulating"},
+		{name: "second idle poll", idlePolls: 1, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating"},
+		{name: "third idle poll injects", idlePolls: 2, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantInject: true, wantReason: "idle_threshold_reached"},
+		{name: "recent input resets idle accumulation", idlePolls: 2, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantReason: "recent_input"},
+		{name: "working screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateWorking, lastPrompt: lastPromptAt, wantReason: "screen_working"},
+		{name: "ambiguous screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateAmbiguous, lastPrompt: lastPromptAt, wantReason: "screen_ambiguous"},
+		{name: "fallback injects after 60m", idlePolls: 0, quiet: true, state: screenStateWorking, lastPrompt: now.Add(-screenIdleFallbackWait), wantInject: true, wantReason: "fallback_due"},
 	}
 
 	for _, tc := range tests {
@@ -171,10 +180,70 @@ func TestAdvanceScreenIdlePolls(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			gotPolls, gotInject := advanceScreenIdlePolls(tc.idlePolls, tc.quiet, tc.state)
-			if gotPolls != tc.wantPolls || gotInject != tc.wantInject {
-				t.Fatalf("advanceScreenIdlePolls(%d, %t, %v) = (%d, %t), want (%d, %t)", tc.idlePolls, tc.quiet, tc.state, gotPolls, gotInject, tc.wantPolls, tc.wantInject)
+			decision := evaluateScreenIdlePoll(now, tc.quiet, tc.state, tc.idlePolls, tc.lastPrompt)
+			if decision.nextIdlePolls != tc.wantPolls || decision.shouldInject != tc.wantInject || decision.reason != tc.wantReason {
+				t.Fatalf("evaluateScreenIdlePoll() = (%d, %t, %q), want (%d, %t, %q)", decision.nextIdlePolls, decision.shouldInject, decision.reason, tc.wantPolls, tc.wantInject, tc.wantReason)
 			}
 		})
+	}
+}
+
+func TestPersistScreenDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	projectDir := t.TempDir()
+	logsDir := filepath.Join(projectDir, "logs")
+	cfg := workspaceConfig{
+		ProjectDir: projectDir,
+		LogsDir:    logsDir,
+	}
+
+	now := time.Date(2026, time.March, 25, 12, 0, 0, 0, time.UTC)
+	runtimeState := screenRuntimeState{
+		SessionID:     "session-123",
+		Scheduler:     screenIdleHeartbeatSummary(),
+		ScreenState:   "idle",
+		Quiet:         true,
+		IdlePolls:     2,
+		Reason:        "idle_accumulating",
+		LastCheckedAt: now,
+		LastPromptAt:  now.Add(-time.Minute),
+		Snapshot:      "Token usage: total=20",
+	}
+	poll := screenPollRecord{
+		Timestamp:    now.Format(time.RFC3339),
+		SessionID:    "session-123",
+		Scheduler:    screenIdleHeartbeatSummary(),
+		ScreenState:  "idle",
+		Quiet:        true,
+		IdlePolls:    2,
+		Reason:       "idle_accumulating",
+		LastPromptAt: now.Add(-time.Minute).Format(time.RFC3339),
+		Snapshot:     "Token usage: total=20",
+	}
+
+	persistScreenDiagnostics(cfg, runtimeState, poll)
+
+	statePath := screenStateFilePath(projectDir)
+	data, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatalf("ReadFile(screen state) returned error: %v", err)
+	}
+
+	var storedState screenRuntimeState
+	if err := json.Unmarshal(data, &storedState); err != nil {
+		t.Fatalf("Unmarshal(screen state) returned error: %v", err)
+	}
+	if storedState.ScreenState != "idle" || storedState.Reason != "idle_accumulating" {
+		t.Fatalf("stored screen state = %+v", storedState)
+	}
+
+	logPath := filepath.Join(logsDir, now.Format("2006-01-02")+"-screen.jsonl")
+	logData, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("ReadFile(screen log) returned error: %v", err)
+	}
+	if !strings.Contains(string(logData), "\"reason\":\"idle_accumulating\"") {
+		t.Fatalf("screen log missing expected reason: %s", logData)
 	}
 }

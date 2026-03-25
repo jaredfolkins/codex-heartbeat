@@ -108,8 +108,10 @@ Inspect the stored session:
 By default the wrapper writes:
 
 - `~/.codex-heartbeat/projects/<workspace-key>/state.json`
+- `~/.codex-heartbeat/projects/<workspace-key>/screen-state.json`
 - `~/.codex-heartbeat/projects/<workspace-key>/heartbeat.lock`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD.jsonl`
+- `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-run.log`
 
 `<workspace-key>` is derived from the selected `--workdir` so each workspace gets its own runtime state under your home directory. If an older `<workdir>/.codex-heartbeat` directory exists and you are using the default paths, the wrapper moves it into `~/.codex-heartbeat/projects/` automatically.
@@ -128,6 +130,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - `run` also sets the terminal title to `codex-heartbeat | <workdir>` so heartbeat tabs are easy to spot at a glance.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
 - The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, refuses to accumulate idle polls while you have typed locally within the last 30 seconds, and only uses the 60 minute fallback once input has been quiet long enough to avoid clobbering active typing.
+- The latest screen classifier snapshot is written to `screen-state.json`, and every screen poll is appended to `YYYY-MM-DD-screen.jsonl` so you can audit why the wrapper thought Codex was working, idle, ambiguous, or blocked by recent input.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.
 - `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.

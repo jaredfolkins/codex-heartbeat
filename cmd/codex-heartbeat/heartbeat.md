@@ -1,4 +1,5 @@
-If you are not currently working on an active step, use 3 sub-agents to create a council.
+If you are waiting and not working
+Use 3 sub-agents to create a council.
 Use `model = "gpt-5.3-codex-spark"` for the sub-agents.
 Use `model_reasoning_effort = "xhigh"` for the sub-agents.
 The sub-agents may search the web for information to help them.

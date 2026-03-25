@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +20,7 @@ const (
 	screenIdleRecentLines  = 8
 	screenIdleQuietWindow  = screenIdlePollInterval * screenIdlePollCount
 	screenIdleFallbackWait = 60 * time.Minute
+	screenSnapshotLimit    = 240
 )
 
 type screenState int
@@ -67,6 +71,41 @@ type promptInjectionTracker struct {
 
 type inputActivityWriter struct {
 	tracker *userInputTracker
+}
+
+type screenPollDecision struct {
+	nextIdlePolls int
+	shouldInject  bool
+	reason        string
+}
+
+type screenRuntimeState struct {
+	UpdatedAt     time.Time `json:"updated_at"`
+	SessionID     string    `json:"session_id,omitempty"`
+	Scheduler     string    `json:"scheduler"`
+	ScreenState   string    `json:"screen_state"`
+	Quiet         bool      `json:"quiet"`
+	IdlePolls     int       `json:"idle_polls"`
+	Reason        string    `json:"reason"`
+	LastCheckedAt time.Time `json:"last_checked_at"`
+	LastPromptAt  time.Time `json:"last_prompt_at,omitempty"`
+	ShouldInject  bool      `json:"should_inject"`
+	Injected      bool      `json:"injected"`
+	Snapshot      string    `json:"snapshot,omitempty"`
+}
+
+type screenPollRecord struct {
+	Timestamp    string `json:"timestamp"`
+	SessionID    string `json:"session_id,omitempty"`
+	Scheduler    string `json:"scheduler"`
+	ScreenState  string `json:"screen_state"`
+	Quiet        bool   `json:"quiet"`
+	IdlePolls    int    `json:"idle_polls"`
+	Reason       string `json:"reason"`
+	LastPromptAt string `json:"last_prompt_at,omitempty"`
+	ShouldInject bool   `json:"should_inject"`
+	Injected     bool   `json:"injected"`
+	Snapshot     string `json:"snapshot,omitempty"`
 }
 
 func newTerminalScreen(width, height int) *terminalScreen {
@@ -315,6 +354,30 @@ func trackUserInput(reader io.Reader, tracker *userInputTracker) io.Reader {
 	return io.TeeReader(reader, inputActivityWriter{tracker: tracker})
 }
 
+func screenStateLabel(state screenState) string {
+	switch state {
+	case screenStateIdle:
+		return "idle"
+	case screenStateWorking:
+		return "working"
+	default:
+		return "ambiguous"
+	}
+}
+
+func trimScreenSnapshot(snapshot string) string {
+	snapshot = strings.TrimSpace(snapshot)
+	if snapshot == "" {
+		return ""
+	}
+
+	runes := []rune(snapshot)
+	if len(runes) <= screenSnapshotLimit {
+		return snapshot
+	}
+	return string(runes[:screenSnapshotLimit]) + "..."
+}
+
 func classifyScreenSnapshot(snapshot string) screenState {
 	normalized := normalizeScreenSnapshot(snapshot)
 	if normalized == "" {
@@ -363,6 +426,48 @@ func normalizeScreenSnapshot(snapshot string) string {
 	return strings.Join(strings.Fields(cleaned), " ")
 }
 
+func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState, idlePolls int, lastPromptAt time.Time) screenPollDecision {
+	if screenIdleFallbackDue(now, lastPromptAt, quiet) {
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			shouldInject:  true,
+			reason:        "fallback_due",
+		}
+	}
+	if !quiet {
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			reason:        "recent_input",
+		}
+	}
+
+	switch currentState {
+	case screenStateWorking:
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			reason:        "screen_working",
+		}
+	case screenStateAmbiguous:
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			reason:        "screen_ambiguous",
+		}
+	default:
+		nextIdlePolls := idlePolls + 1
+		if nextIdlePolls < screenIdlePollCount {
+			return screenPollDecision{
+				nextIdlePolls: nextIdlePolls,
+				reason:        "idle_accumulating",
+			}
+		}
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			shouldInject:  true,
+			reason:        "idle_threshold_reached",
+		}
+	}
+}
+
 func screenIdleFallbackDue(now, lastPromptAt time.Time, quiet bool) bool {
 	if !quiet || lastPromptAt.IsZero() {
 		return false
@@ -371,17 +476,47 @@ func screenIdleFallbackDue(now, lastPromptAt time.Time, quiet bool) bool {
 	return now.Sub(lastPromptAt) >= screenIdleFallbackWait
 }
 
-func advanceScreenIdlePolls(idlePolls int, quiet bool, currentState screenState) (nextPolls int, shouldInject bool) {
-	if !quiet || currentState != screenStateIdle {
-		return 0, false
+func screenStateFilePath(projectDir string) string {
+	return filepath.Join(projectDir, "screen-state.json")
+}
+
+func appendScreenPoll(logsDir string, poll screenPollRecord) error {
+	if logsDir == "" {
+		return nil
+	}
+	if err := os.MkdirAll(logsDir, 0o755); err != nil {
+		return err
 	}
 
-	idlePolls++
-	if idlePolls < screenIdlePollCount {
-		return idlePolls, false
+	path := filepath.Join(logsDir, time.Now().Format("2006-01-02")+"-screen.jsonl")
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	enc := json.NewEncoder(file)
+	return enc.Encode(poll)
+}
+
+func saveScreenState(path string, state screenRuntimeState) error {
+	state.UpdatedAt = time.Now()
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
 	}
 
-	return 0, true
+	data, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	return os.WriteFile(path, data, 0o644)
+}
+
+func persistScreenDiagnostics(cfg workspaceConfig, state screenRuntimeState, poll screenPollRecord) {
+	_ = saveScreenState(screenStateFilePath(cfg.ProjectDir), state)
+	_ = appendScreenPoll(cfg.LogsDir, poll)
 }
 
 func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText string, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState) {
@@ -392,6 +527,25 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 	ticker := time.NewTicker(screenIdlePollInterval)
 	defer ticker.Stop()
 
+	persistScreenDiagnostics(cfg, screenRuntimeState{
+		SessionID:     state.SessionID,
+		Scheduler:     screenIdleHeartbeatSummary(),
+		ScreenState:   screenStateLabel(screenStateAmbiguous),
+		Quiet:         true,
+		IdlePolls:     0,
+		Reason:        "starting",
+		LastCheckedAt: time.Now(),
+		LastPromptAt:  promptTracker.LastPromptAt(),
+	}, screenPollRecord{
+		Timestamp:   time.Now().Format(time.RFC3339),
+		SessionID:   state.SessionID,
+		Scheduler:   screenIdleHeartbeatSummary(),
+		ScreenState: screenStateLabel(screenStateAmbiguous),
+		Quiet:       true,
+		IdlePolls:   0,
+		Reason:      "starting",
+	})
+
 	idlePolls := 0
 	for {
 		select {
@@ -400,9 +554,48 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 		case <-ticker.C:
 			now := time.Now()
 			quiet := inputTracker.IsQuiet(now, screenIdleQuietWindow)
-			if screenIdleFallbackDue(now, promptTracker.LastPromptAt(), quiet) {
+			lastPromptAt := promptTracker.LastPromptAt()
+			snapshot := screen.RecentSnapshot(screenIdleRecentLines)
+			currentState := screenStateAmbiguous
+			if quiet {
+				currentState = classifyScreenSnapshot(snapshot)
+			}
+
+			decision := evaluateScreenIdlePoll(now, quiet, currentState, idlePolls, lastPromptAt)
+			idlePolls = decision.nextIdlePolls
+
+			poll := screenPollRecord{
+				Timestamp:    now.Format(time.RFC3339),
+				SessionID:    state.SessionID,
+				Scheduler:    screenIdleHeartbeatSummary(),
+				ScreenState:  screenStateLabel(currentState),
+				Quiet:        quiet,
+				IdlePolls:    idlePolls,
+				Reason:       decision.reason,
+				LastPromptAt: lastPromptAt.Format(time.RFC3339),
+				ShouldInject: decision.shouldInject,
+				Snapshot:     trimScreenSnapshot(snapshot),
+			}
+			runtimeState := screenRuntimeState{
+				SessionID:     state.SessionID,
+				Scheduler:     screenIdleHeartbeatSummary(),
+				ScreenState:   screenStateLabel(currentState),
+				Quiet:         quiet,
+				IdlePolls:     idlePolls,
+				Reason:        decision.reason,
+				LastCheckedAt: now,
+				LastPromptAt:  lastPromptAt,
+				ShouldInject:  decision.shouldInject,
+				Snapshot:      trimScreenSnapshot(snapshot),
+			}
+
+			if decision.shouldInject {
 				if err := injectPrompt(writer, promptText); err == nil {
 					promptTracker.Mark(now)
+					poll.Injected = true
+					poll.LastPromptAt = now.Format(time.RFC3339)
+					runtimeState.Injected = true
+					runtimeState.LastPromptAt = now
 					appendEvent(cfg.LogsDir, logEvent{
 						Timestamp: now.Format(time.RFC3339),
 						Type:      "heartbeat_injected",
@@ -410,30 +603,9 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 						Message:   screenIdleHeartbeatSummary(),
 					})
 				}
-				idlePolls = 0
-				continue
 			}
 
-			currentState := screenStateAmbiguous
-			if quiet {
-				currentState = classifyScreenSnapshot(screen.RecentSnapshot(screenIdleRecentLines))
-			}
-
-			var shouldInject bool
-			idlePolls, shouldInject = advanceScreenIdlePolls(idlePolls, quiet, currentState)
-			if !shouldInject {
-				continue
-			}
-
-			if err := injectPrompt(writer, promptText); err == nil {
-				promptTracker.Mark(now)
-				appendEvent(cfg.LogsDir, logEvent{
-					Timestamp: now.Format(time.RFC3339),
-					Type:      "heartbeat_injected",
-					SessionID: state.SessionID,
-					Message:   screenIdleHeartbeatSummary(),
-				})
-			}
+			persistScreenDiagnostics(cfg, runtimeState, poll)
 		}
 	}
 }
