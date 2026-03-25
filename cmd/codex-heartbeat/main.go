@@ -331,6 +331,7 @@ func runInteractiveCommand(args []string) error {
 	cmd.Env = os.Environ()
 
 	startedAt := time.Now()
+	promptTracker := newPromptInjectionTracker(startedAt)
 	appendEvent(cfg.LogsDir, logEvent{
 		Timestamp: startedAt.Format(time.RFC3339),
 		Type:      "run_start",
@@ -389,8 +390,14 @@ func runInteractiveCommand(args []string) error {
 
 	go trackSessionID(ctx, cfg, &state, startedAt)
 	if useScreenIdleHeartbeat {
-		go injectScreenIdleLoop(ctx, ptmx, promptText, screen, inputTracker, startedAt, cfg, &state)
+		go injectScreenIdleLoop(ctx, ptmx, promptText, screen, inputTracker, promptTracker, cfg, &state)
+		if strings.TrimSpace(state.SessionID) == "" {
+			go injectStartupPromptAfterDelay(ctx, ptmx, promptText, startupHeartbeatDelay, promptTracker, cfg, &state)
+		}
 	} else if interval.IsSet() {
+		if strings.TrimSpace(state.SessionID) == "" {
+			injectImmediately = true
+		}
 		go injectHeartbeatLoop(ctx, ptmx, promptText, interval.Duration(), injectImmediately, cfg, &state)
 	}
 
@@ -828,7 +835,7 @@ func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, send
 
 func interactiveLaunchBehavior(sessionID string) (sendPromptOnLaunch bool, injectHeartbeatImmediately bool) {
 	hasSession := strings.TrimSpace(sessionID) != ""
-	return !hasSession, hasSession
+	return false, hasSession
 }
 
 func resolveNoAltScreen(flagNoAltScreen, flagAltScreen bool) (bool, error) {
@@ -1135,6 +1142,30 @@ func samePath(left, right string) bool {
 	}
 
 	return false
+}
+
+func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, promptText string, delay time.Duration, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState) {
+	if delay <= 0 || strings.TrimSpace(promptText) == "" {
+		return
+	}
+
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-timer.C:
+		if err := injectPrompt(writer, promptText); err == nil {
+			promptTracker.Mark(time.Now())
+			appendEvent(cfg.LogsDir, logEvent{
+				Timestamp: time.Now().Format(time.RFC3339),
+				Type:      "heartbeat_injected",
+				SessionID: state.SessionID,
+				Message:   fmt.Sprintf("startup=%s", formatFlexibleDuration(delay)),
+			})
+		}
+	}
 }
 
 func injectHeartbeatLoop(ctx context.Context, writer io.Writer, promptText string, interval time.Duration, immediate bool, cfg workspaceConfig, state *workspaceState) {

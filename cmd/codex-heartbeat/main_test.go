@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -75,8 +77,8 @@ func TestInteractiveLaunchBehaviorNewSession(t *testing.T) {
 	t.Parallel()
 
 	sendPromptOnLaunch, injectImmediately := interactiveLaunchBehavior("")
-	if !sendPromptOnLaunch {
-		t.Fatal("interactiveLaunchBehavior() should send the prompt when no session exists")
+	if sendPromptOnLaunch {
+		t.Fatal("interactiveLaunchBehavior() should not send the prompt on launch for a brand-new session")
 	}
 	if injectImmediately {
 		t.Fatal("interactiveLaunchBehavior() should not inject immediately for a brand-new session")
@@ -284,8 +286,8 @@ func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] != promptText {
-		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	if args[len(args)-1] == promptText {
+		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
 	}
 }
 
@@ -328,8 +330,8 @@ func TestRunInteractiveCommandScreenIdleLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] != promptText {
-		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	if args[len(args)-1] == promptText {
+		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
 	}
 }
 
@@ -372,8 +374,30 @@ func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] != promptText {
-		t.Fatalf("last arg = %q, want prompt %q; full args: %v", args[len(args)-1], promptText, args)
+	if args[len(args)-1] == promptText {
+		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
+	}
+}
+
+func TestInjectStartupPromptAfterDelay(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	cfg := workspaceConfig{LogsDir: t.TempDir()}
+	state := workspaceState{SessionID: "session-123"}
+	promptTracker := newPromptInjectionTracker(time.Time{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	injectStartupPromptAfterDelay(ctx, &output, "hello", 10*time.Millisecond, promptTracker, cfg, &state)
+
+	got := output.String()
+	if !strings.Contains(got, "hello") {
+		t.Fatalf("injectStartupPromptAfterDelay() output = %q, want injected prompt text", got)
+	}
+	if promptTracker.LastPromptAt().IsZero() {
+		t.Fatal("injectStartupPromptAfterDelay() should update the prompt tracker")
 	}
 }
 

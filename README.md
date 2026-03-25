@@ -120,6 +120,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 
 - `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
 - `run` now defaults to the screen-aware scheduler. It polls the live Codex screen every 10 seconds, injects after 3 consecutive idle polls, and falls back to a heartbeat after 60 minutes without an injected prompt.
+- Fresh interactive boots leave Codex alone for about 5 seconds before sending the initial prompt so the UI can settle first.
 - `run --interval 15m` keeps the live UI attached but switches to an explicit timed scheduler. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
 - `--screen-idle-heartbeat` is still accepted as an explicit alias for the default screen-aware scheduler.
 - `--interval` and `--screen-idle-heartbeat` are mutually exclusive because they choose different heartbeat schedulers.

@@ -60,6 +60,11 @@ type userInputTracker struct {
 	lastInputAt time.Time
 }
 
+type promptInjectionTracker struct {
+	mu           sync.RWMutex
+	lastPromptAt time.Time
+}
+
 type inputActivityWriter struct {
 	tracker *userInputTracker
 }
@@ -271,6 +276,31 @@ func (t *userInputTracker) IsQuiet(now time.Time, window time.Duration) bool {
 	return now.Sub(lastInputAt) >= window
 }
 
+func newPromptInjectionTracker(initial time.Time) *promptInjectionTracker {
+	return &promptInjectionTracker{lastPromptAt: initial}
+}
+
+func (t *promptInjectionTracker) Mark(at time.Time) {
+	if t == nil {
+		return
+	}
+
+	t.mu.Lock()
+	t.lastPromptAt = at
+	t.mu.Unlock()
+}
+
+func (t *promptInjectionTracker) LastPromptAt() time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+
+	t.mu.RLock()
+	lastPromptAt := t.lastPromptAt
+	t.mu.RUnlock()
+	return lastPromptAt
+}
+
 func (w inputActivityWriter) Write(p []byte) (int, error) {
 	if len(p) > 0 && w.tracker != nil {
 		w.tracker.Mark(time.Now())
@@ -354,7 +384,7 @@ func advanceScreenIdlePolls(idlePolls int, quiet bool, currentState screenState)
 	return 0, true
 }
 
-func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText string, screen *terminalScreen, inputTracker *userInputTracker, lastPromptAt time.Time, cfg workspaceConfig, state *workspaceState) {
+func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText string, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState) {
 	if strings.TrimSpace(promptText) == "" || screen == nil {
 		return
 	}
@@ -370,9 +400,9 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 		case <-ticker.C:
 			now := time.Now()
 			quiet := inputTracker.IsQuiet(now, screenIdleQuietWindow)
-			if screenIdleFallbackDue(now, lastPromptAt, quiet) {
+			if screenIdleFallbackDue(now, promptTracker.LastPromptAt(), quiet) {
 				if err := injectPrompt(writer, promptText); err == nil {
-					lastPromptAt = now
+					promptTracker.Mark(now)
 					appendEvent(cfg.LogsDir, logEvent{
 						Timestamp: now.Format(time.RFC3339),
 						Type:      "heartbeat_injected",
@@ -396,7 +426,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 			}
 
 			if err := injectPrompt(writer, promptText); err == nil {
-				lastPromptAt = now
+				promptTracker.Mark(now)
 				appendEvent(cfg.LogsDir, logEvent{
 					Timestamp: now.Format(time.RFC3339),
 					Type:      "heartbeat_injected",
