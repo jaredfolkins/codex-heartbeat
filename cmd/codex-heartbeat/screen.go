@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	screenIdlePollInterval = 10 * time.Second
+	screenIdlePollInterval = 5 * time.Second
 	screenIdlePollCount    = 3
 	screenIdleRecentLines  = 8
-	screenIdleQuietWindow  = screenIdlePollInterval * screenIdlePollCount
+	screenIdleQuietWindow  = 20 * time.Second
 	screenIdleFallbackWait = 60 * time.Minute
 	screenSnapshotLimit    = 240
 )
@@ -434,13 +434,6 @@ func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState,
 			reason:        "fallback_due",
 		}
 	}
-	if !quiet {
-		return screenPollDecision{
-			nextIdlePolls: 0,
-			reason:        "recent_input",
-		}
-	}
-
 	switch currentState {
 	case screenStateWorking:
 		return screenPollDecision{
@@ -453,11 +446,23 @@ func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState,
 			reason:        "screen_ambiguous",
 		}
 	default:
-		nextIdlePolls := idlePolls + 1
+		nextIdlePolls := min(idlePolls+1, screenIdlePollCount)
 		if nextIdlePolls < screenIdlePollCount {
+			if !quiet {
+				return screenPollDecision{
+					nextIdlePolls: nextIdlePolls,
+					reason:        "idle_accumulating_recent_input",
+				}
+			}
 			return screenPollDecision{
 				nextIdlePolls: nextIdlePolls,
 				reason:        "idle_accumulating",
+			}
+		}
+		if !quiet {
+			return screenPollDecision{
+				nextIdlePolls: nextIdlePolls,
+				reason:        "idle_ready_recent_input",
 			}
 		}
 		return screenPollDecision{
@@ -519,8 +524,8 @@ func persistScreenDiagnostics(cfg workspaceConfig, state screenRuntimeState, pol
 	_ = appendScreenPoll(cfg.LogsDir, poll)
 }
 
-func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText string, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState) {
-	if strings.TrimSpace(promptText) == "" || screen == nil {
+func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptSource, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+	if screen == nil {
 		return
 	}
 
@@ -556,10 +561,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 			quiet := inputTracker.IsQuiet(now, screenIdleQuietWindow)
 			lastPromptAt := promptTracker.LastPromptAt()
 			snapshot := screen.RecentSnapshot(screenIdleRecentLines)
-			currentState := screenStateAmbiguous
-			if quiet {
-				currentState = classifyScreenSnapshot(snapshot)
-			}
+			currentState := classifyScreenSnapshot(snapshot)
 
 			decision := evaluateScreenIdlePoll(now, quiet, currentState, idlePolls, lastPromptAt)
 			idlePolls = decision.nextIdlePolls
@@ -590,6 +592,11 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 			}
 
 			if decision.shouldInject {
+				promptText, err := prompts.Resolve()
+				if err != nil {
+					reportAsyncError(errCh, err)
+					return
+				}
 				if err := injectPrompt(writer, promptText); err == nil {
 					promptTracker.Mark(now)
 					poll.Injected = true
@@ -612,7 +619,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, promptText stri
 
 func screenIdleHeartbeatSummary() string {
 	fallback := fmt.Sprintf("%dm", int(screenIdleFallbackWait/time.Minute))
-	return fmt.Sprintf("screen-idle=%dx%s/fallback=%s", screenIdlePollCount, formatFlexibleDuration(screenIdlePollInterval), fallback)
+	return fmt.Sprintf("screen-idle=%dx%s/quiet=%s/fallback=%s", screenIdlePollCount, formatFlexibleDuration(screenIdlePollInterval), formatFlexibleDuration(screenIdleQuietWindow), fallback)
 }
 
 func (s *terminalScreen) flushUTF8Buffer() {

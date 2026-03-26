@@ -47,7 +47,7 @@ If blocked, write the blocker clearly and propose the next action.
 Do not restart from scratch.
 ```
 
-`--prompt` is optional. If you do not provide it, codex-heartbeat uses the embedded `heartbeat.md` that ships inside the binary.
+`--prompt` is optional. If you do not provide it, codex-heartbeat uses the embedded `heartbeat.md` that ships inside the binary. When you do provide `--prompt`, codex-heartbeat re-reads that file every time it emits a prompt, refreshes the cached workspace copy on success, and falls back to the cached copy if the file later disappears.
 
 Bootstrap or pulse once:
 
@@ -73,7 +73,7 @@ Open the interactive Codex UI and auto-paste the prompt file every 15 minutes:
 ./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
 ```
 
-Explicitly select the default screen-aware mode, which waits for 30 seconds of idle screen state and falls back to a heartbeat after 60 minutes without an injected prompt:
+Explicitly select the default screen-aware mode, which looks for 15 seconds of idle screen state, waits for 20 seconds of quiet local input, and falls back to a heartbeat after 60 minutes without an injected prompt:
 
 ```bash
 ./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --screen-idle-heartbeat
@@ -110,6 +110,7 @@ By default the wrapper writes:
 - `~/.codex-heartbeat/projects/<workspace-key>/state.json`
 - `~/.codex-heartbeat/projects/<workspace-key>/screen-state.json`
 - `~/.codex-heartbeat/projects/<workspace-key>/heartbeat.lock`
+- `~/.codex-heartbeat/projects/<workspace-key>/prompts/<hash>.txt`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-run.log`
@@ -121,7 +122,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 ## Notes
 
 - `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
-- `run` now defaults to the screen-aware scheduler. It polls the live Codex screen every 10 seconds, injects after 3 consecutive idle polls, and falls back to a heartbeat after 60 minutes without an injected prompt.
+- `run` now defaults to the screen-aware scheduler. It polls the live Codex screen every 5 seconds, treats 3 consecutive idle polls as idle readiness, waits for 20 seconds of quiet local input before injecting, and falls back to a heartbeat after 60 minutes without an injected prompt.
 - Fresh interactive boots leave Codex alone for about 5 seconds before sending the initial prompt so the UI can settle first.
 - `run --interval 15m` keeps the live UI attached but switches to an explicit timed scheduler. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
 - `--screen-idle-heartbeat` is still accepted as an explicit alias for the default screen-aware scheduler.
@@ -129,8 +130,9 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - `run` prints a short `codex-heartbeat` banner before attach. In Ghostty on macOS it defaults to inline mode so that banner stays visible; use `--alt-screen` to force the alternate screen or `--no-alt-screen` on other terminals when you want the same inline behavior.
 - `run` also sets the terminal title to `codex-heartbeat | <workdir>` so heartbeat tabs are easy to spot at a glance.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
-- The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, refuses to accumulate idle polls while you have typed locally within the last 30 seconds, and only uses the 60 minute fallback once input has been quiet long enough to avoid clobbering active typing.
+- The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, keeps tracking idle screen state even while the recent-input guard is active, and only injects once local input has been quiet for 20 seconds.
 - The latest screen classifier snapshot is written to `screen-state.json`, and every screen poll is appended to `YYYY-MM-DD-screen.jsonl` so you can audit why the wrapper thought Codex was working, idle, ambiguous, or blocked by recent input.
+- Prompt emissions now re-read the explicit `--prompt` file on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.
 - `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.

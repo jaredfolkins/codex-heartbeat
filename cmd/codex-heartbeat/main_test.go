@@ -383,14 +383,26 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	t.Parallel()
 
 	var output bytes.Buffer
-	cfg := workspaceConfig{LogsDir: t.TempDir()}
+	projectDir := t.TempDir()
+	cfg := workspaceConfig{
+		LogsDir:    filepath.Join(projectDir, "logs"),
+		ProjectDir: projectDir,
+	}
 	state := workspaceState{SessionID: "session-123"}
 	promptTracker := newPromptInjectionTracker(time.Time{})
+	promptPath := filepath.Join(projectDir, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+	prompts, err := newPromptSource(promptPath, projectDir)
+	if err != nil {
+		t.Fatalf("newPromptSource() returned error: %v", err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	injectStartupPromptAfterDelay(ctx, &output, "hello", 10*time.Millisecond, promptTracker, cfg, &state)
+	injectStartupPromptAfterDelay(ctx, &output, prompts, 10*time.Millisecond, promptTracker, cfg, &state, nil)
 
 	got := output.String()
 	if !strings.Contains(got, "hello") {
@@ -398,6 +410,55 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	}
 	if promptTracker.LastPromptAt().IsZero() {
 		t.Fatal("injectStartupPromptAfterDelay() should update the prompt tracker")
+	}
+}
+
+func TestPromptSourceResolveCachesExplicitPrompt(t *testing.T) {
+	t.Parallel()
+
+	projectDir := t.TempDir()
+	promptPath := filepath.Join(projectDir, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte("first prompt\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+
+	prompts, err := newPromptSource(promptPath, projectDir)
+	if err != nil {
+		t.Fatalf("newPromptSource() returned error: %v", err)
+	}
+
+	if got, err := prompts.Resolve(); err != nil || got != "first prompt" {
+		t.Fatalf("Resolve() = (%q, %v), want first prompt", got, err)
+	}
+
+	if err := os.WriteFile(promptPath, []byte("second prompt\n"), 0o644); err != nil {
+		t.Fatalf("overwrite prompt file: %v", err)
+	}
+	if got, err := prompts.Resolve(); err != nil || got != "second prompt" {
+		t.Fatalf("Resolve() after overwrite = (%q, %v), want second prompt", got, err)
+	}
+
+	if err := os.Remove(promptPath); err != nil {
+		t.Fatalf("remove prompt file: %v", err)
+	}
+	if got, err := prompts.Resolve(); err != nil || got != "second prompt" {
+		t.Fatalf("Resolve() with missing prompt file = (%q, %v), want cached second prompt", got, err)
+	}
+}
+
+func TestPromptSourceResolveFailsWithoutPromptCache(t *testing.T) {
+	t.Parallel()
+
+	projectDir := t.TempDir()
+	promptPath := filepath.Join(projectDir, "missing.md")
+
+	prompts, err := newPromptSource(promptPath, projectDir)
+	if err != nil {
+		t.Fatalf("newPromptSource() returned error: %v", err)
+	}
+
+	if _, err := prompts.Resolve(); err == nil {
+		t.Fatal("Resolve() unexpectedly succeeded without a prompt file or cache")
 	}
 }
 

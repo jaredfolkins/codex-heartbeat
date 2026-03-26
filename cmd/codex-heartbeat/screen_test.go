@@ -90,7 +90,7 @@ func TestTerminalScreenRecentSnapshotKeepsLiveWorkingText(t *testing.T) {
 func TestScreenIdleHeartbeatSummary(t *testing.T) {
 	t.Parallel()
 
-	if got, want := screenIdleHeartbeatSummary(), "screen-idle=3x10s/fallback=60m"; got != want {
+	if got, want := screenIdleHeartbeatSummary(), "screen-idle=3x5s/quiet=20s/fallback=60m"; got != want {
 		t.Fatalf("screenIdleHeartbeatSummary() = %q, want %q", got, want)
 	}
 }
@@ -169,7 +169,8 @@ func TestEvaluateScreenIdlePoll(t *testing.T) {
 		{name: "first idle poll", idlePolls: 0, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 1, wantReason: "idle_accumulating"},
 		{name: "second idle poll", idlePolls: 1, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating"},
 		{name: "third idle poll injects", idlePolls: 2, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantInject: true, wantReason: "idle_threshold_reached"},
-		{name: "recent input resets idle accumulation", idlePolls: 2, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantReason: "recent_input"},
+		{name: "recent input still accumulates idle evidence", idlePolls: 1, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating_recent_input"},
+		{name: "recent input holds ready idle screen", idlePolls: 2, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 3, wantReason: "idle_ready_recent_input"},
 		{name: "working screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateWorking, lastPrompt: lastPromptAt, wantReason: "screen_working"},
 		{name: "ambiguous screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateAmbiguous, lastPrompt: lastPromptAt, wantReason: "screen_ambiguous"},
 		{name: "fallback injects after 60m", idlePolls: 0, quiet: true, state: screenStateWorking, lastPrompt: now.Add(-screenIdleFallbackWait), wantInject: true, wantReason: "fallback_due"},
