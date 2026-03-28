@@ -9,6 +9,7 @@
 - Adopting the real upstream Codex CLI flags first was a low-risk way to make progress without pretending the wrapper already controls the full prompt stack.
 - Passing reasoning effort as `--config model_reasoning_effort=...` kept the first implementation aligned with upstream Codex behavior.
 - Turning the remaining Hermes differences into an explicit checklist made the current "not the same yet" answer much less ambiguous.
+- A short README section was enough to align operator-facing docs with the current phase-1 implementation and the parity-gap plan.
 
 ## What Failed
 
@@ -23,6 +24,7 @@
 - Do not leave safety boundaries implicit when the feature name itself invites an unsafe interpretation.
 - Do not claim Hermes parity from wrapper-safe model/profile pass-through alone.
 - Do not leave the parity answer buried in prose when it can be captured as a short checklist in the planning artifact.
+- Do not leave the README behind once a safe implementation slice exists; docs should reflect the current supported surface area.
 
 ## Promising Next Directions
 

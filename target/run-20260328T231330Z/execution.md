@@ -30,6 +30,9 @@
 - Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a parity-clarification cycle.
 - Updated `PLANNING.md` with a `Hermes Parity Gap` checklist that names the remaining non-parity items: stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and an explicit parity claim rule.
 - Evaluator: `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md` -> pass
+- Re-read `target/latest-context.md`, `README.md`, and `cmd/codex-heartbeat/main.go` to establish the baseline for a docs-alignment cycle.
+- Updated `README.md` to document the phase-1 launch-profile flags (`--profile`, `--model`, `--model-reasoning-effort`) and to say explicitly that the current wrapper is still not equivalent to Hermes Agent's `godmode`.
+- Evaluator: `rg -n "^## Launch Profiles|--profile NAME|--model-reasoning-effort LEVEL|not equivalent to Hermes Agent's|phase-1 prompt-profile feature" README.md` -> pass
 
 ## Deviations
 
@@ -57,3 +60,10 @@
 - 2026-03-28T23:37:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-28T23:37:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-28T23:37:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:38:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:39:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:39:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:40:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:40:20Z screen-idle heartbeat injected with prompt source `program_md`
+- The docs-alignment cycle also used a safe text-structure evaluator because the human-written evaluator was comparative rather than command-shaped.
+- 2026-03-28T23:40:55Z screen-idle heartbeat injected with prompt source `program_md`
