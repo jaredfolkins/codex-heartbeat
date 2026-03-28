@@ -383,26 +383,32 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	t.Parallel()
 
 	var output bytes.Buffer
-	projectDir := t.TempDir()
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+	projectDir := filepath.Join(root, "runtime")
 	cfg := workspaceConfig{
 		LogsDir:    filepath.Join(projectDir, "logs"),
 		ProjectDir: projectDir,
 	}
 	state := workspaceState{SessionID: "session-123"}
 	promptTracker := newPromptInjectionTracker(time.Time{})
-	promptPath := filepath.Join(projectDir, "heartbeat.md")
+	promptPath := filepath.Join(root, "heartbeat.md")
 	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
 		t.Fatalf("write prompt file: %v", err)
 	}
-	prompts, err := newPromptSource(promptPath, projectDir)
+	prompts, err := newPromptResolver(workdir, promptPath, projectDir)
 	if err != nil {
-		t.Fatalf("newPromptSource() returned error: %v", err)
+		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
+	artifacts := newAutoresearchArtifacts(workdir, time.Now())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	injectStartupPromptAfterDelay(ctx, &output, prompts, 10*time.Millisecond, promptTracker, cfg, &state, nil)
+	injectStartupPromptAfterDelay(ctx, &output, prompts, artifacts, 10*time.Millisecond, promptTracker, cfg, &state, nil)
 
 	got := output.String()
 	if !strings.Contains(got, "hello") {
@@ -495,6 +501,12 @@ func TestDaemonSubcommandHelpReturnsZero(t *testing.T) {
 func TestStatusSubcommandHelpReturnsZero(t *testing.T) {
 	if got := run([]string{"status", "--help"}); got != 0 {
 		t.Fatalf("run(status --help) = %d, want 0", got)
+	}
+}
+
+func TestInitSubcommandHelpReturnsZero(t *testing.T) {
+	if got := run([]string{"init", "--help"}); got != 0 {
+		t.Fatalf("run(init --help) = %d, want 0", got)
 	}
 }
 

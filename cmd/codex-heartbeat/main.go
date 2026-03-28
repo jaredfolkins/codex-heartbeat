@@ -98,6 +98,8 @@ func run(args []string) int {
 		err = runDaemonCommand(args[1:])
 	case "run":
 		err = runInteractiveCommand(args[1:])
+	case "init":
+		err = runInitCommand(args[1:])
 	case "status":
 		err = runStatusCommand(args[1:])
 	case "-h", "--help", "help":
@@ -156,7 +158,16 @@ func runPulseCommand(args []string) error {
 	}
 	defer lock.Close()
 
-	return executePulse(cfg, &state, prompts, opts)
+	artifacts := newAutoresearchArtifacts(cfg.Workdir, time.Now())
+	resolution, err := prompts.Resolve(artifacts)
+	if err != nil {
+		return err
+	}
+	if err := recordRunStart(artifacts, resolution, "pulse"); err != nil {
+		return err
+	}
+
+	return executePulse(cfg, &state, prompts, artifacts, opts)
 }
 
 func runDaemonCommand(args []string) error {
@@ -199,6 +210,15 @@ func runDaemonCommand(args []string) error {
 	}
 	defer lock.Close()
 
+	artifacts := newAutoresearchArtifacts(cfg.Workdir, time.Now())
+	resolution, err := prompts.Resolve(artifacts)
+	if err != nil {
+		return err
+	}
+	if err := recordRunStart(artifacts, resolution, "daemon"); err != nil {
+		return err
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -225,7 +245,7 @@ func runDaemonCommand(args []string) error {
 			return nil
 		}
 
-		if err := executePulse(cfg, &state, prompts, opts); err != nil {
+		if err := executePulse(cfg, &state, prompts, artifacts, opts); err != nil {
 			return err
 		}
 
@@ -313,6 +333,15 @@ func runInteractiveCommand(args []string) error {
 	}
 	defer lock.Close()
 
+	artifacts := newAutoresearchArtifacts(cfg.Workdir, time.Now())
+	initialResolution, err := prompts.Resolve(artifacts)
+	if err != nil {
+		return err
+	}
+	if err := recordRunStart(artifacts, initialResolution, "run"); err != nil {
+		return err
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -332,10 +361,7 @@ func runInteractiveCommand(args []string) error {
 	sendPromptOnLaunch, injectImmediately := interactiveLaunchBehavior(state.SessionID)
 	launchPromptText := ""
 	if sendPromptOnLaunch {
-		launchPromptText, err = prompts.Resolve()
-		if err != nil {
-			return err
-		}
+		launchPromptText = initialResolution.Text
 	}
 	argsForCodex := buildInteractiveArgs(cfg.Workdir, launchPromptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen)
 	cmd := exec.Command("codex", argsForCodex...)
@@ -403,15 +429,15 @@ func runInteractiveCommand(args []string) error {
 	go trackSessionID(ctx, cfg, &state, startedAt)
 	schedulerErrors := make(chan error, 1)
 	if useScreenIdleHeartbeat {
-		go injectScreenIdleLoop(ctx, ptmx, prompts, screen, inputTracker, promptTracker, cfg, &state, schedulerErrors)
+		go injectScreenIdleLoop(ctx, ptmx, prompts, artifacts, screen, inputTracker, promptTracker, cfg, &state, schedulerErrors)
 		if strings.TrimSpace(state.SessionID) == "" || strings.TrimSpace(opts.promptPath) != "" {
-			go injectStartupPromptAfterDelay(ctx, ptmx, prompts, startupHeartbeatDelay, promptTracker, cfg, &state, schedulerErrors)
+			go injectStartupPromptAfterDelay(ctx, ptmx, prompts, artifacts, startupHeartbeatDelay, promptTracker, cfg, &state, schedulerErrors)
 		}
 	} else if interval.IsSet() {
 		if strings.TrimSpace(state.SessionID) == "" {
 			injectImmediately = true
 		}
-		go injectHeartbeatLoop(ctx, ptmx, prompts, interval.Duration(), injectImmediately, cfg, &state, schedulerErrors)
+		go injectHeartbeatLoop(ctx, ptmx, prompts, artifacts, interval.Duration(), injectImmediately, cfg, &state, schedulerErrors)
 	}
 
 	outputDone := make(chan error, 1)
@@ -544,6 +570,37 @@ func runStatusCommand(args []string) error {
 	return enc.Encode(state)
 }
 
+func runInitCommand(args []string) error {
+	var opts sharedOptions
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to scaffold for autoresearch")
+	fs.Usage = func() {
+		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat init --workdir DIR")
+		fs.PrintDefaults()
+	}
+
+	help, err := parseFlagSet(fs, args)
+	if err != nil {
+		return err
+	}
+	if help {
+		return nil
+	}
+	if fs.NArg() != 0 {
+		return fmt.Errorf("init does not accept positional arguments")
+	}
+	if strings.TrimSpace(opts.workdir) == "" {
+		return fmt.Errorf("--workdir is required")
+	}
+
+	cfg, err := newWorkspaceConfig(opts.workdir)
+	if err != nil {
+		return err
+	}
+	return scaffoldAutoresearchWorkspace(cfg.Workdir)
+}
+
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
 	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
 	fs.StringVar(&opts.promptPath, "prompt", "", "Optional heartbeat prompt file; reloaded on each emission and cached per workspace")
@@ -569,33 +626,33 @@ func parseFlagSet(fs *flag.FlagSet, args []string) (helpRequested bool, err erro
 	return false, nil
 }
 
-func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptSource, workspaceState, error) {
+func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, workspaceState, error) {
 	if strings.TrimSpace(opts.workdir) == "" {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, fmt.Errorf("--workdir is required")
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, fmt.Errorf("--workdir is required")
 	}
 
 	cfg, err := newWorkspaceConfig(opts.workdir)
 	if err != nil {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, err
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
 	if err := migrateLegacyProjectDir(cfg); err != nil {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, err
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
 	if err := os.MkdirAll(cfg.LogsDir, 0o755); err != nil {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, fmt.Errorf("create runtime dirs: %w", err)
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, fmt.Errorf("create runtime dirs: %w", err)
 	}
 
-	prompts, err := newPromptSource(opts.promptPath, cfg.ProjectDir)
+	prompts, err := newPromptResolver(cfg.Workdir, opts.promptPath, cfg.ProjectDir)
 	if err != nil {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, err
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
-	if _, err := prompts.Resolve(); err != nil {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, err
+	if err := prompts.Validate(); err != nil {
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
 
 	state, err := loadState(cfg.StatePath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return workspaceConfig{}, promptSource{}, workspaceState{}, err
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
 	if errors.Is(err, fs.ErrNotExist) {
 		state = workspaceState{Workdir: cfg.Workdir}
@@ -807,33 +864,39 @@ func newPromptSource(path, projectDir string) (promptSource, error) {
 }
 
 func (p promptSource) Resolve() (string, error) {
+	prompt, _, err := p.ResolveWithMetadata()
+	return prompt, err
+}
+
+func (p promptSource) ResolveWithMetadata() (string, bool, error) {
 	if strings.TrimSpace(p.path) == "" {
-		return normalizePromptText([]byte(defaultPrompt), "embedded heartbeat.md")
+		prompt, err := normalizePromptText([]byte(defaultPrompt), "embedded heartbeat.md")
+		return prompt, false, err
 	}
 
 	data, err := os.ReadFile(p.path)
 	if err == nil {
 		prompt, err := normalizePromptText(data, p.path)
 		if err != nil {
-			return "", err
+			return "", false, err
 		}
 		if err := p.saveCache(prompt); err != nil {
-			return "", err
+			return "", false, err
 		}
-		return prompt, nil
+		return prompt, false, nil
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
-		return "", fmt.Errorf("read prompt file %q: %w", p.path, err)
+		return "", false, fmt.Errorf("read prompt file %q: %w", p.path, err)
 	}
 
 	prompt, cacheErr := p.loadCache()
 	if cacheErr == nil {
-		return prompt, nil
+		return prompt, true, nil
 	}
 	if errors.Is(cacheErr, fs.ErrNotExist) {
-		return "", fmt.Errorf("prompt file %q was not found and no cached prompt is available", p.path)
+		return "", false, fmt.Errorf("prompt file %q was not found and no cached prompt is available", p.path)
 	}
-	return "", cacheErr
+	return "", false, cacheErr
 }
 
 func (p promptSource) saveCache(prompt string) error {
@@ -1058,13 +1121,13 @@ func shortenPath(path string) string {
 	return path
 }
 
-func executePulse(cfg workspaceConfig, state *workspaceState, prompts promptSource, opts sharedOptions) error {
-	promptText, err := prompts.Resolve()
+func executePulse(cfg workspaceConfig, state *workspaceState, prompts promptResolver, artifacts autoresearchArtifacts, opts sharedOptions) error {
+	resolution, err := prompts.Resolve(artifacts)
 	if err != nil {
 		return err
 	}
 
-	args := buildExecArgs(cfg.Workdir, promptText, state.SessionID, opts)
+	args := buildExecArgs(cfg.Workdir, resolution.Text, state.SessionID, opts)
 	cmd := exec.Command("codex", args...)
 	cmd.Dir = cfg.Workdir
 	cmd.Env = os.Environ()
@@ -1078,6 +1141,7 @@ func executePulse(cfg workspaceConfig, state *workspaceState, prompts promptSour
 		SessionID: state.SessionID,
 		Command:   "codex " + strings.Join(args, " "),
 	})
+	_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("executing pulse with prompt source `%s`", resolution.Source))
 
 	err = cmd.Run()
 	exitCode := exitCodeFromError(err)
@@ -1088,6 +1152,7 @@ func executePulse(cfg workspaceConfig, state *workspaceState, prompts promptSour
 		Command:   "codex " + strings.Join(args, " "),
 		ExitCode:  intPointer(exitCode),
 	})
+	_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("pulse exited with code %d", exitCode))
 
 	if refreshErr := refreshSessionID(cfg, state, startedAt); refreshErr != nil {
 		fmt.Fprintf(os.Stderr, "warning: %v\n", refreshErr)
@@ -1253,7 +1318,7 @@ func samePath(left, right string) bool {
 	return false
 }
 
-func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompts promptSource, delay time.Duration, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, delay time.Duration, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
 	if delay <= 0 {
 		return
 	}
@@ -1265,13 +1330,14 @@ func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompt
 	case <-ctx.Done():
 		return
 	case <-timer.C:
-		promptText, err := prompts.Resolve()
+		resolution, err := prompts.Resolve(artifacts)
 		if err != nil {
 			reportAsyncError(errCh, err)
 			return
 		}
-		if err := injectPrompt(writer, promptText); err == nil {
+		if err := injectPrompt(writer, resolution.Text); err == nil {
 			promptTracker.Mark(time.Now())
+			_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("startup heartbeat injected with prompt source `%s`", resolution.Source))
 			appendEvent(cfg.LogsDir, logEvent{
 				Timestamp: time.Now().Format(time.RFC3339),
 				Type:      "heartbeat_injected",
@@ -1282,7 +1348,7 @@ func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompt
 	}
 }
 
-func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptSource, interval time.Duration, immediate bool, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, interval time.Duration, immediate bool, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
 	if interval <= 0 {
 		return
 	}
@@ -1301,12 +1367,13 @@ func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptSo
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			promptText, err := prompts.Resolve()
+			resolution, err := prompts.Resolve(artifacts)
 			if err != nil {
 				reportAsyncError(errCh, err)
 				return
 			}
-			if err := injectPrompt(writer, promptText); err == nil {
+			if err := injectPrompt(writer, resolution.Text); err == nil {
+				_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("timed heartbeat injected with prompt source `%s`", resolution.Source))
 				appendEvent(cfg.LogsDir, logEvent{
 					Timestamp: time.Now().Format(time.RFC3339),
 					Type:      "heartbeat_injected",
@@ -1380,6 +1447,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "codex-heartbeat wraps the Codex CLI and can inject heartbeat prompts based on screen state or a timer.")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Usage:")
+	fmt.Fprintln(w, "  codex-heartbeat init --workdir DIR")
 	fmt.Fprintln(w, "  codex-heartbeat pulse --workdir DIR [--prompt FILE]")
 	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
 	fmt.Fprintln(w, "  codex-heartbeat daemon --workdir DIR --interval 5m [--end-in 2 hours]")

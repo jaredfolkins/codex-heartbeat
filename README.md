@@ -35,19 +35,51 @@ go build ./cmd/codex-heartbeat
 
 ## Basic usage
 
-Put a standing prompt in your target workspace, for example `heartbeat.md`:
+Initialize an autoresearch-style workspace once:
 
-```text
-IF you are already in the middle of an active step, finish that step before changing direction.
-Continue the current task from where you left off.
-Work in bounded steps.
-Update notes/files in this workspace.
-Where appropriate, use sub-agents.
-If blocked, write the blocker clearly and propose the next action.
-Do not restart from scratch.
+```bash
+./codex-heartbeat init --workdir /path/to/workdir
 ```
 
-`--prompt` is optional. If you do not provide it, codex-heartbeat uses the embedded `heartbeat.md` that ships inside the binary. When you do provide `--prompt`, codex-heartbeat re-reads that file every time it emits a prompt, refreshes the cached workspace copy on success, and falls back to the cached copy if the file later disappears.
+That scaffolds:
+
+- `program.md`
+- `PLANNING.md`
+- `target/results.jsonl`
+- `target/latest-context.md`
+- `target/templates/{plan,execution,results,insights}.md`
+
+The normal loop is:
+
+1. The human edits `program.md`.
+2. The agent works in the target workspace.
+3. `codex-heartbeat` keeps re-injecting a bounded experiment-loop prompt and points the agent at the run artifacts under `target/`.
+4. The agent writes memory into `target/run-<timestamp>/` and `target/results.jsonl`.
+
+Minimal `program.md` example:
+
+```md
+# Program
+
+Objective: Fix the current failure with the smallest safe change.
+Primary evaluator: go test ./...
+Prompt mode: autoresearch
+Council after failures: 3
+Checkpoint commits: true
+
+## Notes
+
+- Keep one hypothesis per cycle.
+- Record keep, discard, or revert in target/results.jsonl.
+```
+
+Prompt precedence is:
+
+1. `--prompt`
+2. repo-local `program.md`
+3. the embedded fallback prompt template
+
+`--prompt` is a full override. When it is present, codex-heartbeat re-reads that file on every emission, refreshes the cached copy on success, and falls back to the cached copy if the file later disappears. When `--prompt` is absent, codex-heartbeat re-reads `program.md` on every emission and renders the embedded autoresearch loop template around it. If neither exists, it renders the embedded fallback template by itself.
 
 Bootstrap or pulse once:
 
@@ -67,7 +99,7 @@ Keep the wrapper banner and Codex output in normal scrollback:
 ./codex-heartbeat run --workdir /path/to/workdir --no-alt-screen
 ```
 
-Open the interactive Codex UI and auto-paste the prompt file every 15 minutes:
+Use an explicit prompt override instead of `program.md`:
 
 ```bash
 ./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
@@ -76,7 +108,7 @@ Open the interactive Codex UI and auto-paste the prompt file every 15 minutes:
 Explicitly select the default screen-aware mode, which looks for 15 seconds of idle screen state, waits for 20 seconds of quiet local input, and falls back to a heartbeat after 60 minutes without an injected prompt:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --screen-idle-heartbeat
+./codex-heartbeat run --workdir /path/to/workdir --screen-idle-heartbeat
 ```
 
 Run the interactive heartbeat for a bounded amount of time:
@@ -85,16 +117,16 @@ Run the interactive heartbeat for a bounded amount of time:
 ./codex-heartbeat run --workdir /path/to/workdir --interval 15m --end-in 2 hours
 ```
 
-Run the old unattended heartbeat loop:
+Run the unattended heartbeat loop:
 
 ```bash
-./codex-heartbeat daemon --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 5m
+./codex-heartbeat daemon --workdir /path/to/workdir --interval 5m
 ```
 
 Stop the unattended heartbeat after one day:
 
 ```bash
-./codex-heartbeat daemon --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 5m --end-in 1 day
+./codex-heartbeat daemon --workdir /path/to/workdir --interval 5m --end-in 1 day
 ```
 
 Inspect the stored session:
@@ -102,6 +134,38 @@ Inspect the stored session:
 ```bash
 ./codex-heartbeat status --workdir /path/to/workdir
 ```
+
+Example autoresearch programs ship in:
+
+- `examples/program-debugging.md`
+- `examples/program-benchmark.md`
+- `examples/program-manual-validation.md`
+
+## Autoresearch Model
+
+The default embedded prompt is no longer a generic “keep going” reminder. It is an experiment/debug loop contract that tells Codex to:
+
+- work on a single objective
+- reuse a single primary evaluator
+- choose one hypothesis per cycle
+- explicitly keep, discard, or revert
+- read memory from `target/latest-context.md`
+- write memory into `target/run-<timestamp>/` and `target/results.jsonl`
+
+The 3-agent council is now a fallback, not the default first move. The prompt tells Codex to use the council only when it is blocked or when the recent failure streak in `target/results.jsonl` reaches the configured threshold from `program.md`.
+
+`Prompt mode: manual-test-first` is a guidance mode for workflows where Codex should prepare the next candidate fix and validation steps, then stop before the final human gate.
+
+## Recommended Workspace Contract
+
+For long-running loops, a target workspace should ideally contain:
+
+- `program.md`: human-authored objective, evaluator, and constraints
+- `PLANNING.md`: optional broader notes or backlog
+- `AGENTS.md`: repo-local rules for the agent
+- `target/run-<timestamp>/insights.md`: concise memory from each run
+- `target/results.jsonl`: compact experiment ledger
+- `target/latest-context.md`: bounded summary used on the next heartbeat
 
 ## State and logs
 
@@ -114,6 +178,12 @@ By default the wrapper writes:
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-run.log`
+
+Autoresearch mode also writes bounded memory into the target workspace:
+
+- `<workdir>/target/results.jsonl`
+- `<workdir>/target/latest-context.md`
+- `<workdir>/target/run-<timestamp>/{plan,execution,results,insights}.md`
 
 `<workspace-key>` is derived from the selected `--workdir` so each workspace gets its own runtime state under your home directory. If an older `<workdir>/.codex-heartbeat` directory exists and you are using the default paths, the wrapper moves it into `~/.codex-heartbeat/projects/` automatically.
 
@@ -132,7 +202,10 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
 - The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, keeps tracking idle screen state even while the recent-input guard is active, and only injects once local input has been quiet for 20 seconds.
 - The latest screen classifier snapshot is written to `screen-state.json`, and every screen poll is appended to `YYYY-MM-DD-screen.jsonl` so you can audit why the wrapper thought Codex was working, idle, ambiguous, or blocked by recent input.
-- Prompt emissions now re-read the explicit `--prompt` file on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
+- Prompt emissions now resolve prompt sources in this order: `--prompt`, then repo-local `program.md`, then the embedded fallback template.
+- Explicit `--prompt` files are re-read on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
+- `program.md` is also re-read on every send so the human can change the research/debugging program while the agent works in the target workspace.
+- The default prompt writes bounded memory into `target/` and treats the 3-agent council as a fallback after repeated failed cycles, not as the default first action on every heartbeat.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
 - `daemon` is the old timed heartbeat loop for unattended runs.
 - `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.

@@ -493,7 +493,11 @@ func appendScreenPoll(logsDir string, poll screenPollRecord) error {
 		return err
 	}
 
-	path := filepath.Join(logsDir, time.Now().Format("2006-01-02")+"-screen.jsonl")
+	logDate := time.Now()
+	if parsed, err := time.Parse(time.RFC3339, poll.Timestamp); err == nil {
+		logDate = parsed
+	}
+	path := filepath.Join(logsDir, logDate.Format("2006-01-02")+"-screen.jsonl")
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
@@ -524,7 +528,7 @@ func persistScreenDiagnostics(cfg workspaceConfig, state screenRuntimeState, pol
 	_ = appendScreenPoll(cfg.LogsDir, poll)
 }
 
-func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptSource, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
 	if screen == nil {
 		return
 	}
@@ -592,17 +596,18 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptS
 			}
 
 			if decision.shouldInject {
-				promptText, err := prompts.Resolve()
+				resolution, err := prompts.Resolve(artifacts)
 				if err != nil {
 					reportAsyncError(errCh, err)
 					return
 				}
-				if err := injectPrompt(writer, promptText); err == nil {
+				if err := injectPrompt(writer, resolution.Text); err == nil {
 					promptTracker.Mark(now)
 					poll.Injected = true
 					poll.LastPromptAt = now.Format(time.RFC3339)
 					runtimeState.Injected = true
 					runtimeState.LastPromptAt = now
+					_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("screen-idle heartbeat injected with prompt source `%s`", resolution.Source))
 					appendEvent(cfg.LogsDir, logEvent{
 						Timestamp: now.Format(time.RFC3339),
 						Type:      "heartbeat_injected",
