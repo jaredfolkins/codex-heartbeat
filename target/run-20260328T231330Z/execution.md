@@ -33,6 +33,12 @@
 - Re-read `target/latest-context.md`, `README.md`, and `cmd/codex-heartbeat/main.go` to establish the baseline for a docs-alignment cycle.
 - Updated `README.md` to document the phase-1 launch-profile flags (`--profile`, `--model`, `--model-reasoning-effort`) and to say explicitly that the current wrapper is still not equivalent to Hermes Agent's `godmode`.
 - Evaluator: `rg -n "^## Launch Profiles|--profile NAME|--model-reasoning-effort LEVEL|not equivalent to Hermes Agent's|phase-1 prompt-profile feature" README.md` -> pass
+- Re-read `target/latest-context.md`, `program.md`, `cmd/codex-heartbeat/autoresearch.go`, `cmd/codex-heartbeat/main.go`, and the focused tests after the user clarified that model/profile/reasoning-effort should live in `program.md`, not as top-level wrapper flags.
+- Updated `cmd/codex-heartbeat/autoresearch.go` so `programConfig` parses `Profile`, `Model`, and `Model reasoning effort` metadata from `program.md`.
+- Updated `cmd/codex-heartbeat/main.go` so `run` no longer exposes top-level `--profile`, `--model`, or `--model-reasoning-effort`; launch overrides now come from `initialResolution.Program`.
+- Updated `cmd/codex-heartbeat/main_test.go` and `cmd/codex-heartbeat/autoresearch_test.go` to cover metadata parsing, verify those wrapper flags are absent, and confirm the child launch still receives the resolved override args.
+- Updated `README.md` so launch-profile guidance now tells operators to set `Profile`, `Model`, and `Model reasoning effort` in `program.md`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
 
 ## Deviations
 
@@ -67,3 +73,7 @@
 - 2026-03-28T23:40:20Z screen-idle heartbeat injected with prompt source `program_md`
 - The docs-alignment cycle also used a safe text-structure evaluator because the human-written evaluator was comparative rather than command-shaped.
 - 2026-03-28T23:40:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:43:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:44:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:44:40Z screen-idle heartbeat injected with prompt source `program_md`
+- The user clarified that model/profile/reasoning-effort belong in `program.md` rather than as top-level wrapper flags, so this cycle migrated the feature into repo-local program metadata instead of keeping the broader CLI surface.

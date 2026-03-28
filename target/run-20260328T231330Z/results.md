@@ -2,23 +2,16 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `rg -n "^## Launch Profiles|--profile NAME|--model-reasoning-effort LEVEL|not equivalent to Hermes Agent's|phase-1 prompt-profile feature" README.md`
+- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
 
 ## Observable Signals
 
-- `PLANNING.md` now contains a concrete `[ ]` checklist for a safe prompt-profile feature derived from the Hermes Godmode architecture.
-- The evaluator confirmed the key upstream gap: `codex-heartbeat` currently launches `codex` / `codex resume` through `buildInteractiveArgs()`, while upstream Codex SDK and app-server surfaces expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`.
-- Hermes's "Godmode" implementation depends on system prompt injection, ephemeral prefill, model-family strategy selection, and canary scoring. Those are stronger primitives than the current heartbeat wrapper's user-message reinjection path.
-- The exact X post text was not dependable enough to use as the primary source, but the Hermes repo supplied enough concrete implementation detail to build the checklist.
-- `PLANNING.md` now also separates implementation tasks, blocked/non-goals, and acceptance criteria, which makes the next implementation pass less ambiguous.
-- The planning-structure evaluator found all three sections plus the checkbox items in one place.
-- `PLANNING.md` now also includes a `Phase 1 Recommendation`, so the next safe implementation pass has a clear starting slice instead of only a broad backlog.
-- `codex-heartbeat run` now accepts wrapper-safe `--profile`, `--model`, and `--model-reasoning-effort` flags and forwards them to the child Codex CLI in upstream-compatible syntax.
-- `buildInteractiveArgs()` now emits `--profile`, `--model`, and `--config model_reasoning_effort="high"` before launching or resuming Codex.
-- The focused evaluator passed, covering both direct arg-building and a fake-child launch path.
-- The function still does not appear to be the same as Hermes Agent: the wrapper now exposes phase-1 launch selection, but it still lacks Hermes-style base/developer instruction injection, ephemeral prefill, and canary scoring.
-- `PLANNING.md` now contains a dedicated `Hermes Parity Gap` checklist, so the repo records the exact remaining conditions that keep the parity answer at "no".
-- `README.md` now documents the phase-1 launch-profile flags and says explicitly that the current wrapper is still not equivalent to Hermes Agent's `godmode` design.
+- `program.md` can now carry `Profile`, `Model`, and `Model reasoning effort` metadata through `programConfig`.
+- `codex-heartbeat run` no longer exposes top-level `--profile`, `--model`, or `--model-reasoning-effort` flags; those settings now come from the resolved autoresearch program.
+- The child Codex launch behavior stayed stable: the wrapper still emits `--profile`, `--model`, and `--config model_reasoning_effort="high"` once those values are present in `program.md`.
+- The focused evaluator passed for metadata parsing, absent wrapper flags, and fake-child launch arg forwarding.
+- The README now documents launch selection through `program.md` metadata instead of wrapper flags.
+- The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, and benign canary scoring.
 
 ## Disposition
 

@@ -65,6 +65,9 @@ type programConfig struct {
 	Path                 string
 	Objective            string
 	PrimaryEvaluator     string
+	Profile              string
+	Model                string
+	ModelReasoningEffort string
 	PromptMode           promptMode
 	CouncilAfterFailures int
 	CheckpointCommits    bool
@@ -332,6 +335,12 @@ func applyProgramMetadata(cfg *programConfig, key, value string) {
 		cfg.Objective = value
 	case "primaryevaluator", "evaluator", "evaluatorcommand":
 		cfg.PrimaryEvaluator = value
+	case "profile", "launchprofile":
+		cfg.Profile = value
+	case "model":
+		cfg.Model = value
+	case "modelreasoningeffort", "reasoningeffort", "launchreasoningeffort":
+		cfg.ModelReasoningEffort = value
 	case "promptmode", "mode":
 		switch strings.ToLower(strings.TrimSpace(value)) {
 		case string(promptModeManualTestFirst):

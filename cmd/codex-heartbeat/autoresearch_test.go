@@ -86,6 +86,9 @@ Checkpoint commits: true
 	if resolution.Source != promptSourceProgram {
 		t.Fatalf("Resolve().Source = %q, want %q", resolution.Source, promptSourceProgram)
 	}
+	if resolution.Program.Profile != "" || resolution.Program.Model != "" || resolution.Program.ModelReasoningEffort != "" {
+		t.Fatalf("Resolve().Program launch settings = %+v, want empty defaults", resolution.Program)
+	}
 	if !strings.Contains(resolution.Text, "tighten the retry loop") {
 		t.Fatalf("Resolve().Text missing objective: %q", resolution.Text)
 	}
@@ -215,6 +218,38 @@ Primary evaluator: go test ./...
 	}
 	if strings.Contains(resolution.Text, "stale explicit prompt") {
 		t.Fatalf("Resolve().Text incorrectly reused cached explicit prompt: %q", resolution.Text)
+	}
+}
+
+func TestLoadProgramConfigParsesLaunchOverrides(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	path := filepath.Join(root, defaultProgramFilename)
+	program := `# Program
+
+Objective: use program launch settings
+Primary evaluator: go test ./cmd/codex-heartbeat
+Profile: safe-research
+Model: gpt-5.3-codex-spark
+Model reasoning effort: high
+`
+	if err := os.WriteFile(path, []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	cfg, err := loadProgramConfig(path)
+	if err != nil {
+		t.Fatalf("loadProgramConfig() returned error: %v", err)
+	}
+	if cfg.Profile != "safe-research" {
+		t.Fatalf("Profile = %q, want safe-research", cfg.Profile)
+	}
+	if cfg.Model != "gpt-5.3-codex-spark" {
+		t.Fatalf("Model = %q, want gpt-5.3-codex-spark", cfg.Model)
+	}
+	if cfg.ModelReasoningEffort != "high" {
+		t.Fatalf("ModelReasoningEffort = %q, want high", cfg.ModelReasoningEffort)
 	}
 }
 

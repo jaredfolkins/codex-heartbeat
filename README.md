@@ -107,10 +107,14 @@ Use the council repeatedly during autoresearch instead of only as a stuck-state 
 ./codex-heartbeat --workdir /path/to/workdir --council
 ```
 
-Pass through a safe launch profile, model, and reasoning-effort selection to the child Codex CLI:
+Set a safe launch profile, model, and reasoning-effort selection in `program.md`:
 
 ```bash
-./codex-heartbeat --workdir /path/to/workdir --profile safe-research --model gpt-5.3-codex-spark --model-reasoning-effort high
+cat >> /path/to/workdir/program.md <<'EOF'
+Profile: safe-research
+Model: gpt-5.3-codex-spark
+Model reasoning effort: high
+EOF
 ```
 
 This is a phase-1 prompt-profile feature, not Hermes parity. Today it only forwards wrapper-safe launch settings to the Codex CLI. It does not yet provide Hermes-style base/developer instruction injection, ephemeral prefill, or canary scoring.
@@ -158,11 +162,11 @@ When you pass `--council`, the prompt switches to a frequent-council mode: use t
 
 ## Launch Profiles
 
-`codex-heartbeat` now exposes a small wrapper-safe launch-profile layer:
+`codex-heartbeat` now exposes a small wrapper-safe launch-profile layer through `program.md` metadata:
 
-- `--profile NAME` forwards Codex's config profile selection.
-- `--model NAME` forwards an explicit model choice.
-- `--model-reasoning-effort LEVEL` forwards `--config model_reasoning_effort="LEVEL"` to the child Codex CLI.
+- `Profile: NAME` forwards Codex's config profile selection.
+- `Model: NAME` forwards an explicit model choice.
+- `Model reasoning effort: LEVEL` forwards `--config model_reasoning_effort="LEVEL"` to the child Codex CLI.
 
 This is enough to make model/profile selection reproducible in `codex-heartbeat`, but it is still not equivalent to Hermes Agent's `godmode` design. The wrapper does not yet control stronger launch-time instruction channels such as `base_instructions`, `developer_instructions`, ephemeral prefill, or a benign canary-scoring harness.
 

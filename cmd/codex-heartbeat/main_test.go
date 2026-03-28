@@ -158,8 +158,8 @@ func TestRegisterRunFlagsOmitsSkipGitRepoCheck(t *testing.T) {
 		t.Fatal("registerRunFlags() unexpectedly exposed --skip-git-repo-check")
 	}
 	for _, flagName := range []string{"profile", "model", "model-reasoning-effort"} {
-		if fs.Lookup(flagName) == nil {
-			t.Fatalf("registerRunFlags() missing --%s", flagName)
+		if fs.Lookup(flagName) != nil {
+			t.Fatalf("registerRunFlags() unexpectedly exposed --%s", flagName)
 		}
 	}
 }
@@ -414,12 +414,19 @@ func TestRunInteractiveCommandPassesLaunchOverrides(t *testing.T) {
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("TERM_PROGRAM", "")
 
-	if err := runInteractiveCommand([]string{
-		"--workdir", workdir,
-		"--profile", "safe-research",
-		"--model", "gpt-5.3-codex-spark",
-		"--model-reasoning-effort", "high",
-	}); err != nil {
+	program := `# Program
+
+Objective: safe launch overrides
+Primary evaluator: go test ./cmd/codex-heartbeat
+Profile: safe-research
+Model: gpt-5.3-codex-spark
+Model reasoning effort: high
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	if err := runInteractiveCommand([]string{"--workdir", workdir}); err != nil {
 		t.Fatalf("runInteractiveCommand() returned error: %v", err)
 	}
 

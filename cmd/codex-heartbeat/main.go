@@ -40,13 +40,10 @@ const (
 var errWorkspaceLocked = errors.New("workspace is already locked")
 
 type sharedOptions struct {
-	workdir               string
-	promptPath            string
-	profile               string
-	model                 string
-	modelReasoningEffort  string
-	council               bool
-	safe                  bool
+	workdir    string
+	promptPath string
+	council    bool
+	safe       bool
 }
 
 type launchOverrides struct {
@@ -146,7 +143,7 @@ func runInteractiveCommand(args []string) error {
 	fs.BoolVar(&altScreen, "alt-screen", false, "Force Codex to use the alternate screen")
 	fs.BoolVar(&screenIdleHeartbeat, "screen-idle-heartbeat", false, "Explicitly select the default screen-aware heartbeat mode (15s idle detection, 20s input quiet gate, and 60m fallback)")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--profile NAME] [--model NAME] [--model-reasoning-effort LEVEL] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
+		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
 		fs.PrintDefaults()
 	}
 
@@ -210,7 +207,7 @@ func runInteractiveCommand(args []string) error {
 	if sendPromptOnLaunch {
 		launchPromptText = initialResolution.Text
 	}
-	overrides := newLaunchOverrides(opts)
+	overrides := newLaunchOverrides(initialResolution.Program)
 	argsForCodex := buildInteractiveArgs(cfg.Workdir, launchPromptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen, overrides)
 	if summary := overrides.Summary(); summary != "" {
 		if err := appendExecutionNote(artifacts.ExecutionPath, "launch overrides: "+summary); err != nil {
@@ -426,9 +423,6 @@ func runStatusCommand(args []string) error {
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
 	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
 	fs.StringVar(&opts.promptPath, "prompt", "", "Optional heartbeat prompt file; reloaded on each emission and cached per workspace")
-	fs.StringVar(&opts.profile, "profile", "", "Optional Codex config profile to pass through on launch")
-	fs.StringVar(&opts.model, "model", "", "Optional Codex model to pass through on launch")
-	fs.StringVar(&opts.modelReasoningEffort, "model-reasoning-effort", "", "Optional Codex reasoning effort to pass through via --config model_reasoning_effort=...")
 	fs.BoolVar(&opts.council, "council", false, "Use the council repeatedly during autoresearch instead of only as a fallback")
 	fs.BoolVar(&opts.safe, "safe", false, "Do not pass --dangerously-bypass-approvals-and-sandbox to child Codex runs")
 }
@@ -822,11 +816,11 @@ func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, send
 	return append(args, promptText)
 }
 
-func newLaunchOverrides(opts sharedOptions) launchOverrides {
+func newLaunchOverrides(program programConfig) launchOverrides {
 	return launchOverrides{
-		Profile:              strings.TrimSpace(opts.profile),
-		Model:                strings.TrimSpace(opts.model),
-		ModelReasoningEffort: strings.TrimSpace(opts.modelReasoningEffort),
+		Profile:              strings.TrimSpace(program.Profile),
+		Model:                strings.TrimSpace(program.Model),
+		ModelReasoningEffort: strings.TrimSpace(program.ModelReasoningEffort),
 	}
 }
 
