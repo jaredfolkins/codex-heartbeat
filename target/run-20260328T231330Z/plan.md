@@ -2,24 +2,24 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Move launch profile selection into `program.md` metadata so the autoresearch program owns model/profile/effort instead of top-level wrapper flags.
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Objective: Record the resolved `program.md` launch settings in the run artifacts so the current Hermes-parity answer is backed by saved evidence, not just code inspection.
+- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `Profile`, `Model`, and `Model reasoning effort` move into `program.md` metadata and the wrapper stops exposing them as top-level flags, the launch surface will better match the autoresearch contract without changing the downstream child Codex CLI args.
+- If `latest-context` and the run-start ledger note record the resolved `Profile`, `Model`, and `Model reasoning effort`, the parity answer will be easier to verify from the saved artifacts without changing the actual child Codex launch behavior.
 
 ## Steps
 
-1. Re-read the current memory, `program.md`, and the current launch-profile seam.
-2. Make one bounded change by moving launch selection into `program.md` parsing and removing the redundant wrapper flags.
+1. Re-read the current memory and the current artifact-writing seam around `buildLatestContext()` and `recordRunStart()`.
+2. Make one bounded change by threading the resolved launch settings into the saved run artifacts.
 3. Run the focused evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
 ## Assumptions
 
-- `program.md` is the authoritative human-edited configuration surface for autoresearch runs.
-- The child Codex CLI still needs the same `--profile`, `--model`, and `--config model_reasoning_effort=...` args once the wrapper resolves them from `program.md`.
+- `program.md` remains the authoritative human-edited configuration surface for autoresearch runs.
+- The parity answer is still expected to be "no"; this cycle is about making that answer observable in artifacts rather than expanding the actual feature surface.

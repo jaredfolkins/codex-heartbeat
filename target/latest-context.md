@@ -1,17 +1,18 @@
 # Latest Context
 
-- Objective: Move launch profile selection into `program.md` metadata so the autoresearch program owns model/profile/effort instead of top-level wrapper flags.
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Objective: Record the resolved `program.md` launch settings in the run artifacts so the current Hermes-parity answer is backed by saved evidence, not just code inspection.
+- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
 - Prompt mode: `autoresearch`
 - Council policy: `fallback`
 - Recent failure streak: 0 / 3
+- Launch settings: `profile=safe-research, model=gpt-5.3-codex-spark, model_reasoning_effort=high`
 
 ## Recent Ledger
-- `keep` via `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Moved `Profile`, `Model`, and `Model reasoning effort` into `program.md` metadata, removed the top-level wrapper flags, kept the child Codex CLI launch args the same, and updated tests plus README; Hermes parity is still not there.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added launch-setting evidence to `latest-context` and the run-start ledger note so artifact memory now shows which `program.md` launch metadata was used; Hermes parity is still not there.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Moved launch selection into `program.md` metadata, removed the top-level wrapper flags, kept the child Codex CLI args the same, and updated tests plus README; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 - `keep` via `rg -n "^## Launch Profiles|--profile NAME|--model-reasoning-effort LEVEL|not equivalent to Hermes Agent's|phase-1 prompt-profile feature" README.md`: pass | Documented the phase-1 launch-profile flags in README and stated explicitly that the current wrapper still is not equivalent to Hermes Agent's `godmode` design.
 - `keep` via `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`: pass | Added a dedicated Hermes parity-gap checklist covering stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a parity-claim rule.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added wrapper-safe launch override flags, forwarded them in upstream-compatible Codex CLI syntax, and confirmed the child launch args with focused tests; the wrapper still lacks Hermes-style base/developer instructions, prefill, and canary scoring.
-- `keep` via `rg -n "^### Phase 1 Recommendation|^### Task List|^### Blocked / Non-Goals|^### Acceptance Criteria For The Safe Alternative|^- \[ \]" PLANNING.md`: pass | Added a phase-1 recommendation to PLANNING.md covering `--profile`, wrapper-safe fields only, observable logging, and a benign canary evaluator.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

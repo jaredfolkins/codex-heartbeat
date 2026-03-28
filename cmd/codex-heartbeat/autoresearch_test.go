@@ -307,6 +307,9 @@ func TestRecordRunStartWritesEvaluatorToResultsLedger(t *testing.T) {
 
 Objective: record evaluator
 Primary evaluator: make manual-lab-up
+Profile: safe-research
+Model: gpt-5.3-codex-spark
+Model reasoning effort: high
 `
 	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
 		t.Fatalf("write program: %v", err)
@@ -346,6 +349,49 @@ Primary evaluator: make manual-lab-up
 	}
 	if !strings.Contains(entry.Notes, "council_policy=`frequent`") {
 		t.Fatalf("ledger notes = %q, want frequent council policy", entry.Notes)
+	}
+	if !strings.Contains(entry.Notes, "launch_settings=`profile=safe-research, model=gpt-5.3-codex-spark, model_reasoning_effort=high`") {
+		t.Fatalf("ledger notes = %q, want recorded launch settings", entry.Notes)
+	}
+}
+
+func TestPromptResolverWritesLaunchSettingsToLatestContext(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	projectDir := filepath.Join(root, "runtime")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	program := `# Program
+
+Objective: record launch settings in context
+Primary evaluator: go test ./cmd/codex-heartbeat
+Profile: safe-research
+Model: gpt-5.3-codex-spark
+Model reasoning effort: high
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 28, 20, 7, 0, 0, time.UTC))
+	if _, err := resolver.Resolve(artifacts); err != nil {
+		t.Fatalf("Resolve() returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(artifacts.LatestContextPath)
+	if err != nil {
+		t.Fatalf("read latest context: %v", err)
+	}
+	if !strings.Contains(string(data), "- Launch settings: `profile=safe-research, model=gpt-5.3-codex-spark, model_reasoning_effort=high`") {
+		t.Fatalf("latest context missing launch settings: %q", string(data))
 	}
 }
 

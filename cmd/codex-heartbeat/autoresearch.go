@@ -561,9 +561,14 @@ func buildLatestContext(artifacts autoresearchArtifacts, program programConfig, 
 		fmt.Sprintf("- Prompt mode: `%s`", program.PromptMode),
 		fmt.Sprintf("- Council policy: `%s`", councilPolicyLabel(councilRequested)),
 		fmt.Sprintf("- Recent failure streak: %d / %d", streak, threshold),
+	}
+	if launchSummary := newLaunchOverrides(program).Summary(); launchSummary != "" {
+		lines = append(lines, fmt.Sprintf("- Launch settings: `%s`", launchSummary))
+	}
+	lines = append(lines,
 		"",
 		"## Recent Ledger",
-	}
+	)
 
 	recentLedger := recentLedgerSummary(entries, 5)
 	if len(recentLedger) == 0 {
@@ -707,6 +712,9 @@ func appendResultLedgerEntry(path string, entry resultLedgerEntry) error {
 
 func recordRunStart(artifacts autoresearchArtifacts, resolution promptResolution, commandName string) error {
 	note := fmt.Sprintf("started via `%s`; prompt source=`%s`; mode=`%s`; council_policy=`%s`; council_triggered=%t", commandName, resolution.Source, resolution.Program.PromptMode, councilPolicyLabel(resolution.CouncilRequested), resolution.CouncilTriggered)
+	if launchSummary := newLaunchOverrides(resolution.Program).Summary(); launchSummary != "" {
+		note += "; launch_settings=`" + launchSummary + "`"
+	}
 	if resolution.UsedCache {
 		note += "; prompt cache fallback used"
 	}

@@ -39,6 +39,11 @@
 - Updated `cmd/codex-heartbeat/main_test.go` and `cmd/codex-heartbeat/autoresearch_test.go` to cover metadata parsing, verify those wrapper flags are absent, and confirm the child launch still receives the resolved override args.
 - Updated `README.md` so launch-profile guidance now tells operators to set `Profile`, `Model`, and `Model reasoning effort` in `program.md`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/autoresearch.go`, and `cmd/codex-heartbeat/autoresearch_test.go` to establish the baseline for an artifact-evidence cycle.
+- Updated `cmd/codex-heartbeat/autoresearch.go` so `buildLatestContext()` includes `Launch settings` when `program.md` resolves a profile/model/reasoning-effort and `recordRunStart()` includes the same launch summary in the pending ledger note.
+- Updated `cmd/codex-heartbeat/autoresearch_test.go` so the run-start ledger test verifies the recorded launch summary and a new latest-context test verifies that the artifact includes the resolved launch settings.
+- Ran `gofmt -w cmd/codex-heartbeat/autoresearch.go cmd/codex-heartbeat/autoresearch_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
 
 ## Deviations
 
@@ -77,3 +82,5 @@
 - 2026-03-28T23:44:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-28T23:44:40Z screen-idle heartbeat injected with prompt source `program_md`
 - The user clarified that model/profile/reasoning-effort belong in `program.md` rather than as top-level wrapper flags, so this cycle migrated the feature into repo-local program metadata instead of keeping the broader CLI surface.
+- This cycle still did not attempt to reproduce Hermes's stronger launch-time instruction channels, ephemeral prefill, or canary scoring; it only made the current non-parity easier to verify from saved artifacts.
+- 2026-03-28T23:49:50Z screen-idle heartbeat injected with prompt source `program_md`
