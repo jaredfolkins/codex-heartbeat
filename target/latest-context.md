@@ -1,14 +1,15 @@
 # Latest Context
 
-- Objective: Implement the AGENTS.md autoresearch loop in `codex-heartbeat`.
+- Objective: Improve the screen-idle heartbeat detector against real upstream Codex TUI status patterns.
 - Primary evaluator: `go test ./...`
-- Prompt mode: `autoresearch`
+- Prompt mode: `manual review + detector hardening`
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
 
-- `keep` via `go test ./...`: pass | `go test ./...` and `go test -race ./...` passed after the autoresearch prompt/memory refactor.
+- `keep` via `go test ./...`: pass | Replaced phrase-only screen classification with recent-line evidence scoring, added upstream-derived negative guards, and passed unit + race tests.
 
 ## Prior Insights
 
-- No prior `target/*/insights.md` artifacts existed before this run.
+- Stage refactors so scheduler semantics stay stable while detector logic changes.
+- Avoid broad phrase matches that treat queued-message or history/footer text as live work.

@@ -2,7 +2,7 @@
 
 Goal: make `codex-heartbeat` support an `autoresearch`-style autonomous loop instead of only re-injecting a generic standing prompt.
 
-Status: completed in the current implementation pass on 2026-03-28.
+Status: completed in the current implementation pass on 2026-03-28 and re-reviewed after the 2026-03-28 heartbeat-detector hardening pass. Checklist remains complete.
 
 ## Prompt Model
 

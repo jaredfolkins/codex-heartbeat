@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,8 @@ const (
 	screenIdleFallbackWait = 60 * time.Minute
 	screenSnapshotLimit    = 240
 )
+
+var screenElapsedPattern = regexp.MustCompile(`\((?:\d+h )?(?:\d+m )?\d+s\b`)
 
 type screenState int
 
@@ -379,25 +382,147 @@ func trimScreenSnapshot(snapshot string) string {
 }
 
 func classifyScreenSnapshot(snapshot string) screenState {
-	normalized := normalizeScreenSnapshot(snapshot)
-	if normalized == "" {
+	lines := screenSnapshotEvidenceLines(snapshot)
+	if len(lines) == 0 {
 		return screenStateAmbiguous
 	}
 
-	activePhrases := []string{
-		"working (",
-		"working(",
-		"esc to interrupt",
-		"booting mcp server",
-		"messages to be submitted after next tool call",
-		"background terminal running",
-	}
-	for _, phrase := range activePhrases {
-		if strings.Contains(normalized, phrase) {
-			return screenStateWorking
+	activeScore := 0
+	idleScore := 0
+	for i, line := range lines {
+		weight := screenEvidenceWeight(i, len(lines))
+		window := line.normalized
+		if i+1 < len(lines) {
+			window = window + " " + lines[i+1].normalized
 		}
+
+		activeLineScore := 0
+		if !screenHasPendingInterruptHint(window) && !screenHasHistoricalActivity(window) {
+			hasElapsed := screenElapsedPattern.MatchString(window)
+			hasInterrupt := screenHasInterruptHint(window)
+			hasHeader := screenHasActiveHeader(window)
+			hasStatusLead := screenHasStatusLead(line.raw)
+			hasLiveBackground := screenHasLiveBackgroundCue(window)
+
+			switch {
+			case hasElapsed && (hasInterrupt || hasHeader):
+				activeLineScore = 4
+			case hasElapsed && hasStatusLead:
+				activeLineScore = 3
+			case hasHeader && hasInterrupt:
+				activeLineScore = 3
+			case hasLiveBackground && (hasElapsed || hasHeader || hasInterrupt):
+				activeLineScore = 2
+			}
+		}
+		activeScore += activeLineScore * weight
+
+		idleLineScore := 0
+		if screenHasIdleMarker(window) {
+			idleLineScore = 4
+		}
+		if screenHasPromptReady(line.raw, line.normalized) {
+			idleLineScore = max(idleLineScore, 2)
+		}
+		idleScore += idleLineScore * weight
 	}
 
+	switch {
+	case activeScore >= 4 && activeScore > idleScore:
+		return screenStateWorking
+	case idleScore >= 4 && idleScore >= activeScore:
+		return screenStateIdle
+	case idleScore >= 2 && activeScore <= 0:
+		return screenStateIdle
+	default:
+		return screenStateAmbiguous
+	}
+}
+
+type screenEvidenceLine struct {
+	raw        string
+	normalized string
+}
+
+func screenSnapshotEvidenceLines(snapshot string) []screenEvidenceLine {
+	rawLines := strings.Split(snapshot, "\n")
+	lines := make([]screenEvidenceLine, 0, len(rawLines))
+	for _, raw := range rawLines {
+		normalized := normalizeScreenSnapshot(raw)
+		if normalized == "" {
+			continue
+		}
+		lines = append(lines, screenEvidenceLine{
+			raw:        raw,
+			normalized: normalized,
+		})
+	}
+
+	return lines
+}
+
+func screenEvidenceWeight(index, total int) int {
+	switch {
+	case index >= total-2:
+		return 3
+	case index >= total-screenIdleRecentLines:
+		return 2
+	default:
+		return 1
+	}
+}
+
+func screenHasInterruptHint(normalized string) bool {
+	return strings.Contains(normalized, "esc to interrupt") ||
+		strings.Contains(normalized, "esc to …") ||
+		strings.Contains(normalized, "esc to ...") ||
+		strings.Contains(normalized, "esc to")
+}
+
+func screenHasPendingInterruptHint(normalized string) bool {
+	return strings.Contains(normalized, "press esc to interrupt and send immediately")
+}
+
+func screenHasHistoricalActivity(normalized string) bool {
+	historicalPhrases := []string{
+		"waited for background terminal",
+		"interacted with background terminal",
+		"no background terminals running",
+		"no background terminal running",
+	}
+	for _, phrase := range historicalPhrases {
+		if strings.Contains(normalized, phrase) {
+			return true
+		}
+	}
+	return false
+}
+
+func screenHasActiveHeader(normalized string) bool {
+	activeHeaders := []string{
+		"working",
+		"booting mcp server",
+		"starting mcp",
+		"analyzing",
+		"investigating",
+		"reviewing",
+		"waiting for background terminal",
+	}
+	for _, phrase := range activeHeaders {
+		if strings.Contains(normalized, phrase) {
+			return true
+		}
+	}
+	return false
+}
+
+func screenHasLiveBackgroundCue(normalized string) bool {
+	return strings.Contains(normalized, "background terminal running") ||
+		strings.Contains(normalized, "background terminals running") ||
+		strings.Contains(normalized, "/ps to view")
+}
+
+func screenHasIdleMarker(normalized string) bool {
 	idlePhrases := []string{
 		"token usage:",
 		"conversation interrupted - tell the model what to do differently",
@@ -405,15 +530,19 @@ func classifyScreenSnapshot(snapshot string) screenState {
 	}
 	for _, phrase := range idlePhrases {
 		if strings.Contains(normalized, phrase) {
-			return screenStateIdle
+			return true
 		}
 	}
+	return false
+}
 
-	if strings.Contains(snapshot, "›") && !strings.Contains(normalized, "loading /model to change") {
-		return screenStateIdle
-	}
+func screenHasPromptReady(raw, normalized string) bool {
+	return strings.Contains(raw, "›") && !strings.Contains(normalized, "loading /model to change")
+}
 
-	return screenStateAmbiguous
+func screenHasStatusLead(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	return strings.HasPrefix(trimmed, "• ") || strings.HasPrefix(trimmed, "◦ ")
 }
 
 func normalizeScreenSnapshot(snapshot string) string {

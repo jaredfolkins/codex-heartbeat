@@ -36,6 +36,60 @@ func TestClassifyScreenSnapshotAmbiguous(t *testing.T) {
 	}
 }
 
+func TestClassifyScreenSnapshotWorkingWithoutInterruptHint(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Working (0s)\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateWorking {
+		t.Fatalf("classifyScreenSnapshot() = %v, want working without interrupt hint", got)
+	}
+}
+
+func TestClassifyScreenSnapshotWorkingWithUnknownHeader(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Exploring repo state (0s \u2022 esc to interrupt)\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateWorking {
+		t.Fatalf("classifyScreenSnapshot() = %v, want working for unknown active header", got)
+	}
+}
+
+func TestClassifyScreenSnapshotWorkingWhenInterruptWraps(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Waiting for background terminal (0s \u2022 esc to\ninterrupt)\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateWorking {
+		t.Fatalf("classifyScreenSnapshot() = %v, want working for wrapped interrupt hint", got)
+	}
+}
+
+func TestClassifyScreenSnapshotPendingSteerIsNotWorking(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Messages to be submitted after next tool call\n  (press esc to interrupt and send immediately)\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot() = %v, want idle for pending steer preview", got)
+	}
+}
+
+func TestClassifyScreenSnapshotBackgroundFooterNeedsStatusRow(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "  1 background terminal running \u00b7 /ps to view \u00b7 /s\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot() = %v, want idle without a live status row", got)
+	}
+}
+
+func TestClassifyScreenSnapshotHistoricalBackgroundWaitIsNotWorking(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Waited for background terminal \u00b7 cargo test -p codex-core\n\u203a Ask Codex to do anything\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot() = %v, want idle for historical background-terminal text", got)
+	}
+}
+
 func TestTerminalScreenSnapshotTracksCurrentStatus(t *testing.T) {
 	t.Parallel()
 
@@ -57,7 +111,7 @@ func TestTerminalScreenSnapshotTracksCurrentStatus(t *testing.T) {
 	}
 }
 
-func TestTerminalScreenRecentSnapshotIgnoresStaleWorkingText(t *testing.T) {
+func TestTerminalScreenSnapshotIgnoresStaleWorkingText(t *testing.T) {
 	t.Parallel()
 
 	screen := newTerminalScreen(80, 12)
@@ -66,8 +120,8 @@ func TestTerminalScreenRecentSnapshotIgnoresStaleWorkingText(t *testing.T) {
 	screen.cells[10] = []rune("› Continue task" + strings.Repeat(" ", 65))
 	screen.cells[11] = []rune("Token usage: total=20" + strings.Repeat(" ", 59))
 
-	if got := classifyScreenSnapshot(screen.Snapshot()); got != screenStateWorking {
-		t.Fatalf("classifyScreenSnapshot(full snapshot) = %v, want working", got)
+	if got := classifyScreenSnapshot(screen.Snapshot()); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot(full snapshot) = %v, want idle", got)
 	}
 	if got := classifyScreenSnapshot(screen.RecentSnapshot(screenIdleRecentLines)); got != screenStateIdle {
 		t.Fatalf("classifyScreenSnapshot(recent snapshot) = %v, want idle", got)
