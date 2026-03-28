@@ -84,3 +84,15 @@
 - The user clarified that model/profile/reasoning-effort belong in `program.md` rather than as top-level wrapper flags, so this cycle migrated the feature into repo-local program metadata instead of keeping the broader CLI surface.
 - This cycle still did not attempt to reproduce Hermes's stronger launch-time instruction channels, ephemeral prefill, or canary scoring; it only made the current non-parity easier to verify from saved artifacts.
 - 2026-03-28T23:49:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:53:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:55:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:55:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:55:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:56:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:56:25Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and `cmd/codex-heartbeat/main_test.go` to establish the baseline for a `status`-surface cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `status` loads `program.md`, derives `launch_settings` from the resolved profile/model/reasoning-effort, and includes that nested object in JSON output when present.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for `status` returning the resolved launch settings from `program.md`.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
+- This cycle again did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only surfaced the current program-driven launch settings through the operator-facing `status` command.

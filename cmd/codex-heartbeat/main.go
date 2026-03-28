@@ -47,9 +47,14 @@ type sharedOptions struct {
 }
 
 type launchOverrides struct {
-	Profile              string
-	Model                string
-	ModelReasoningEffort string
+	Profile              string `json:"profile,omitempty"`
+	Model                string `json:"model,omitempty"`
+	ModelReasoningEffort string `json:"model_reasoning_effort,omitempty"`
+}
+
+type statusOutput struct {
+	workspaceState
+	LaunchSettings *launchOverrides `json:"launch_settings,omitempty"`
 }
 
 type promptSource struct {
@@ -415,9 +420,26 @@ func runStatusCommand(args []string) error {
 		state.Workdir = cfg.Workdir
 	}
 
+	var launchSettings *launchOverrides
+	program, err := loadProgramConfig(filepath.Join(cfg.Workdir, defaultProgramFilename))
+	switch {
+	case err == nil:
+		overrides := newLaunchOverrides(program)
+		if overrides.Summary() != "" {
+			launchSettings = &overrides
+		}
+	case errors.Is(err, fs.ErrNotExist), errors.Is(err, errProgramTooLarge), errors.Is(err, errEmptyProgram):
+		// Missing or unusable program metadata should not break status output.
+	default:
+		return err
+	}
+
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	return enc.Encode(state)
+	return enc.Encode(statusOutput{
+		workspaceState: state,
+		LaunchSettings: launchSettings,
+	})
 }
 
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
