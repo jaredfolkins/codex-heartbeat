@@ -189,6 +189,24 @@ Autoresearch mode also writes bounded memory into the target workspace:
 
 The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` or `~/.codex/sessions` for the newest `session_meta` record whose `cwd` matches the selected workspace.
 
+## Heartbeat Detection: Triage And Validation
+
+### For operators
+
+- Think of the screen-aware scheduler as a guarded workflow: it prefers a live active status row over stale transcript text, waits on ambiguous screens, and only injects after local input has been quiet for 20 seconds.
+- If heartbeat did not fire when you expected, inspect `~/.codex-heartbeat/projects/<workspace-key>/screen-state.json` first. Check `screen_state`, `reason`, `quiet`, `idle_polls`, and `should_inject` to see whether Codex still looked active, recent local input was blocking injection, or the screen stayed ambiguous.
+- Tail `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl` when you need a timeline instead of just the latest state. That log shows each poll decision and is the fastest way to confirm whether the wrapper saw `working`, `idle`, or `ambiguous` before it injected.
+- If heartbeat fired unexpectedly, compare the recent screen log against known false-positive traps such as queued-message previews, footer-only background-terminal text, or historical background-terminal output. The fixture corpus in `cmd/codex-heartbeat/testdata/screen/` shows the kinds of snapshots the detector is expected to classify safely.
+- If the council triggered unexpectedly, inspect the trailing dispositions in `<workdir>/target/results.jsonl`. Council fallback follows consecutive failure-like dispositions, not a single bad outcome.
+- When a run feels off, inspect the latest `<workdir>/target/run-<timestamp>/{plan,execution,results,insights}.md` alongside `target/latest-context.md`. Those files show what the loop believed it was doing and whether the recent failure streak or evaluator history explains the current behavior.
+
+### For contributors
+
+- Reproduce detector behavior without attaching to a live PTY first. The focused verification path is `go test ./cmd/codex-heartbeat -run 'Screen|Replay' -count=1`.
+- Reproduce autoresearch and council-threshold behavior with `go test ./cmd/codex-heartbeat -run 'Autoresearch|Council|ResultLedger|ShouldTriggerCouncil' -count=1`.
+- The fixture-backed screen evidence lives in `cmd/codex-heartbeat/testdata/screen/`, and the replay-oriented detector coverage lives in `cmd/codex-heartbeat/screen_replay_test.go`.
+- When docs and behavior diverge, update the README, the relevant fixtures, and the focused tests together. The docs should describe observable outcomes and evidence paths, not freeze every detector heuristic as a permanent contract.
+
 ## Notes
 
 - `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
@@ -200,7 +218,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - `run` prints a short `codex-heartbeat` banner before attach. In Ghostty on macOS it defaults to inline mode so that banner stays visible; use `--alt-screen` to force the alternate screen or `--no-alt-screen` on other terminals when you want the same inline behavior.
 - `run` also sets the terminal title to `codex-heartbeat | <workdir>` so heartbeat tabs are easy to spot at a glance.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
-- The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, keeps tracking idle screen state even while the recent-input guard is active, and only injects once local input has been quiet for 20 seconds.
+- The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, keeps tracking idle screen state even while the recent-input guard is active, and only injects once local input has been quiet for 20 seconds. See `Heartbeat Detection: Triage And Validation` above for the artifact-driven troubleshooting flow.
 - The latest screen classifier snapshot is written to `screen-state.json`, and every screen poll is appended to `YYYY-MM-DD-screen.jsonl` so you can audit why the wrapper thought Codex was working, idle, ambiguous, or blocked by recent input.
 - Prompt emissions now resolve prompt sources in this order: `--prompt`, then repo-local `program.md`, then the embedded fallback template.
 - Explicit `--prompt` files are re-read on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
