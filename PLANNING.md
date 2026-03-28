@@ -53,3 +53,10 @@
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Add a benign canary evaluator for the selected profile before attempting any transport-layer refactor.
+
+### Hermes Parity Gap
+
+- [ ] Add a stronger launch-time instruction channel than plain user-message reinjection, because Hermes `godmode` depends on system-style instruction control.
+- [ ] Add optional ephemeral prefill for new and resumed sessions so the wrapper can shape the first turn without persisting prompt hacks into workspace files.
+- [ ] Add a harmless canary-scoring harness that can distinguish "profile attached" from "profile actually changed behavior" in a repeatable way.
+- [ ] Define a parity claim rule that stays false until the wrapper can prove equivalent launch-time control and benign evaluation coverage.

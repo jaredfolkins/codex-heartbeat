@@ -2,25 +2,24 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Implement the wrapper-safe phase-1 prompt-profile slice so `codex-heartbeat` can launch Codex with an explicit profile, model, and reasoning effort.
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Objective: Make the Hermes parity gap explicit in the task list so the repo records exactly why the current wrapper is still not the same feature.
+- Primary evaluator: `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
-- Checkpoint commits: false
+- Checkpoint commits: true
 
 ## Hypothesis
 
-- If I add wrapper-safe `--profile`, `--model`, and `--model-reasoning-effort` pass-through plus focused tests, the wrapper will move closer to Hermes's launch profile shape without claiming feature parity.
+- If I add an explicit Hermes parity-gap checklist to `PLANNING.md`, the repo can answer the current evaluator with a concrete delta instead of only a freeform explanation.
 
 ## Steps
 
-1. Read the current memory, local wrapper seam, and upstream Codex CLI syntax.
-2. Make one bounded change by adding wrapper-safe launch override flags and observable logging.
-3. Add focused tests for the flag registration and child-arg builder.
-4. Run the focused evaluator exactly once.
+1. Read the current memory and existing planning backlog.
+2. Make one bounded change by adding an explicit Hermes parity-gap checklist.
+3. Run the planning evaluator exactly once.
 5. Record the result and choose keep, discard, or revert.
 
 ## Assumptions
 
-- Upstream Codex CLI already supports `--profile`, `--model`, and config-based `model_reasoning_effort`, so the wrapper can pass them through safely.
-- Matching Hermes's full behavior still requires stronger launch-time instruction channels like base/developer instructions, prefill, and canary scoring.
+- The current backlog already contains most of the raw ingredients; the missing piece is an explicit parity checklist.
+- A clearer gap list is useful enough to justify a small follow-up save point.

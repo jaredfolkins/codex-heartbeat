@@ -2,7 +2,7 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Primary evaluator: `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`
 
 ## Observable Signals
 
@@ -17,6 +17,7 @@
 - `buildInteractiveArgs()` now emits `--profile`, `--model`, and `--config model_reasoning_effort="high"` before launching or resuming Codex.
 - The focused evaluator passed, covering both direct arg-building and a fake-child launch path.
 - The function still does not appear to be the same as Hermes Agent: the wrapper now exposes phase-1 launch selection, but it still lacks Hermes-style base/developer instruction injection, ephemeral prefill, and canary scoring.
+- `PLANNING.md` now contains a dedicated `Hermes Parity Gap` checklist, so the repo records the exact remaining conditions that keep the parity answer at "no".
 
 ## Disposition
 

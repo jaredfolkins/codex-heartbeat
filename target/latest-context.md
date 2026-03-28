@@ -1,18 +1,18 @@
 # Latest Context
 
-- Objective: Implement the wrapper-safe phase-1 prompt-profile slice so `codex-heartbeat` can launch Codex with an explicit profile, model, and reasoning effort.
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Objective: Make the Hermes parity gap explicit in the task list so the repo records exactly why the current wrapper is still not the same feature.
+- Primary evaluator: `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council policy: `fallback`
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
-- `keep` via `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added wrapper-safe `--profile`, `--model`, and `--model-reasoning-effort` support, forwarded them in upstream-compatible Codex CLI syntax, and confirmed the child launch args with focused tests.
+- `keep` via `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`: pass | Added a dedicated Hermes parity-gap checklist so the repo now records the exact remaining non-parity items instead of leaving the comparison only in prose.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added wrapper-safe launch override flags, forwarded them in upstream-compatible Codex CLI syntax, and confirmed the child launch args with focused tests; the wrapper still lacks Hermes-style base/developer instructions, prefill, and canary scoring.
 - `keep` via `rg -n "^### Phase 1 Recommendation|^### Task List|^### Blocked / Non-Goals|^### Acceptance Criteria For The Safe Alternative|^- \[ \]" PLANNING.md`: pass | Added a phase-1 recommendation to PLANNING.md covering `--profile`, wrapper-safe fields only, observable logging, and a benign canary evaluator.
 - `keep` via `rg -n "^### Task List|^### Blocked / Non-Goals|^### Acceptance Criteria For The Safe Alternative|^- \[ \]" PLANNING.md`: pass | Refined PLANNING.md so the GODMODE-inspired request is framed as a safe prompt-profile feature with explicit non-goals and measurable acceptance criteria.
 - `keep` via `rg -n "base_instructions|developer_instructions|model_reasoning_effort|buildInteractiveArgs" PLANNING.md cmd/codex-heartbeat/main.go tmp/openai-codex/codex-rs/exec/src/lib.rs tmp/openai-codex/sdk/python/docs/api-reference.md tmp/openai-codex/codex-rs/app-server/README.md`: pass | Wrote a safe checkbox plan into PLANNING.md and verified that upstream Codex exposes instruction/profile seams that the current CLI-wrapper path does not.
 - `planned` via `if we use GODMODE on 5.3-codex-spark high does it work?`: pending | started via `run`; prompt source=`program_md`; mode=`autoresearch`; council_policy=`fallback`; council_triggered=false
-- `planned` via `Replace this with one command or manual validation step.`: pending | started via `run`; prompt source=`program_md`; mode=`autoresearch`; council_policy=`fallback`; council_triggered=false
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

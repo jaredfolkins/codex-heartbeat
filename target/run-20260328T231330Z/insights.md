@@ -8,6 +8,7 @@
 - Adding a prioritized phase-1 slice made the plan much more likely to turn into real implementation work on the next pass.
 - Adopting the real upstream Codex CLI flags first was a low-risk way to make progress without pretending the wrapper already controls the full prompt stack.
 - Passing reasoning effort as `--config model_reasoning_effort=...` kept the first implementation aligned with upstream Codex behavior.
+- Turning the remaining Hermes differences into an explicit checklist made the current "not the same yet" answer much less ambiguous.
 
 ## What Failed
 
@@ -21,6 +22,7 @@
 - Do not anchor a task plan on an X post alone when the linked repository already contains the concrete mechanics.
 - Do not leave safety boundaries implicit when the feature name itself invites an unsafe interpretation.
 - Do not claim Hermes parity from wrapper-safe model/profile pass-through alone.
+- Do not leave the parity answer buried in prose when it can be captured as a short checklist in the planning artifact.
 
 ## Promising Next Directions
 

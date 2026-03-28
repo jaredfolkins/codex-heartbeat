@@ -27,6 +27,9 @@
 - Updated `cmd/codex-heartbeat/main.go` to add wrapper flags for `--profile`, `--model`, and `--model-reasoning-effort`, pass those values through `buildInteractiveArgs()`, and record the selected launch overrides in execution notes and runtime logs.
 - Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for launch override pass-through, new flag registration, and an end-to-end fake-`codex` launch that verifies the child args.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a parity-clarification cycle.
+- Updated `PLANNING.md` with a `Hermes Parity Gap` checklist that names the remaining non-parity items: stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and an explicit parity claim rule.
+- Evaluator: `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md` -> pass
 
 ## Deviations
 
@@ -48,3 +51,9 @@
 - 2026-03-28T23:31:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-28T23:31:50Z screen-idle heartbeat injected with prompt source `program_md`
 - The follow-up implementation cycle stayed on the safe wrapper path and did not attempt Hermes-style launch-time instruction injection, prefill, or jailbreak evaluation.
+- 2026-03-28T23:35:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:35:55Z screen-idle heartbeat injected with prompt source `program_md`
+- The parity-clarification cycle again used a safe text-structure evaluator because the human-written evaluator was comparative rather than command-shaped.
+- 2026-03-28T23:37:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:37:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-28T23:37:55Z screen-idle heartbeat injected with prompt source `program_md`
