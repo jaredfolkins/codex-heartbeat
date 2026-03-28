@@ -328,6 +328,61 @@ func TestShouldTriggerCouncilAfterThreshold(t *testing.T) {
 	}
 }
 
+func TestLoadResultLedgerEntriesSkipsCorruptedLines(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "results.jsonl")
+	content := strings.Join([]string{
+		`{"timestamp":"2026-03-28T20:19:41Z","disposition":"blocked","command":"go test ./..."}`,
+		`not-json-at-all`,
+		`{"timestamp":"2026-03-28T20:20:41Z","disposition":"revert","command":"go test ./..."}`,
+		"",
+	}, "\n")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile(results ledger) returned error: %v", err)
+	}
+
+	entries, err := loadResultLedgerEntries(path)
+	if err != nil {
+		t.Fatalf("loadResultLedgerEntries() returned error: %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("len(loadResultLedgerEntries()) = %d, want 2", len(entries))
+	}
+	if entries[0].Disposition != "blocked" || entries[1].Disposition != "revert" {
+		t.Fatalf("unexpected ledger entries: %+v", entries)
+	}
+}
+
+func TestShouldTriggerCouncilIgnoresPendingAndPartialEntries(t *testing.T) {
+	t.Parallel()
+
+	entries := []resultLedgerEntry{
+		{Disposition: "planned"},
+		{Disposition: "blocked"},
+		{},
+		{Disposition: "revert"},
+		{Disposition: "blocked"},
+	}
+	if !shouldTriggerCouncil(entries, 3) {
+		t.Fatal("shouldTriggerCouncil() should count consecutive failures across partial/pending entries")
+	}
+}
+
+func TestShouldTriggerCouncilStopsAtUnknownDisposition(t *testing.T) {
+	t.Parallel()
+
+	entries := []resultLedgerEntry{
+		{Disposition: "blocked"},
+		{Disposition: "custom"},
+		{Disposition: "revert"},
+		{Disposition: "blocked"},
+	}
+	if shouldTriggerCouncil(entries, 3) {
+		t.Fatal("shouldTriggerCouncil() should stop the streak at unknown dispositions")
+	}
+}
+
 func TestRunInitCommandScaffoldsWorkspace(t *testing.T) {
 	t.Parallel()
 

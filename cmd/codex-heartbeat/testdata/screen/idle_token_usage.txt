@@ -1,0 +1,2 @@
+› Ask Codex to do anything
+Token usage: total=20 input=10 output=10

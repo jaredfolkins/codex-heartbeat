@@ -1,0 +1,4 @@
+• Messages to be submitted after next tool call
+  (press esc to interrupt and send immediately)
+
+› Ask Codex to do anything
