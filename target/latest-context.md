@@ -1,17 +1,24 @@
 # Latest Context
 
-- Objective: Update the docs so heartbeat behavior is easier to triage and verify from stable artifacts and focused test commands.
-- Primary evaluator: `go test ./...`
-- Prompt mode: `documentation + verification`
+- Objective: Implement the wrapper-safe phase-1 prompt-profile slice so `codex-heartbeat` can launch Codex with an explicit profile, model, and reasoning effort.
+- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Prompt mode: `autoresearch`
+- Council policy: `fallback`
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
-- `keep` via `go test ./...`: pass | Added a README playbook for heartbeat triage and contributor verification, validated the documented focused test commands, and kept the docs artifact-first instead of implementation-frozen.
-- `keep` via `go test ./...`: pass | Ran a 3-agent council against the already-complete checklist, chose layered classifier/scheduler/council-threshold tests, added screen fixtures plus replay and ledger robustness tests, and passed focused, full, and race suites.
-- `keep` via `go test ./...`: pass | Cloned upstream Codex into ignored tmp/openai-codex, reviewed live status-row snapshots, replaced phrase-only matching with weighted recent-line evidence, and passed focused, full, and race tests.
-- `keep` via `go test ./...`: pass | Implemented program.md precedence, bounded target/ memory artifacts, init scaffolding, examples, README updates, and passing unit+races tests.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'BuildInteractiveArgs|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added wrapper-safe `--profile`, `--model`, and `--model-reasoning-effort` support, forwarded them in upstream-compatible Codex CLI syntax, and confirmed the child launch args with focused tests.
+- `keep` via `rg -n "^### Phase 1 Recommendation|^### Task List|^### Blocked / Non-Goals|^### Acceptance Criteria For The Safe Alternative|^- \[ \]" PLANNING.md`: pass | Added a phase-1 recommendation to PLANNING.md covering `--profile`, wrapper-safe fields only, observable logging, and a benign canary evaluator.
+- `keep` via `rg -n "^### Task List|^### Blocked / Non-Goals|^### Acceptance Criteria For The Safe Alternative|^- \[ \]" PLANNING.md`: pass | Refined PLANNING.md so the GODMODE-inspired request is framed as a safe prompt-profile feature with explicit non-goals and measurable acceptance criteria.
+- `keep` via `rg -n "base_instructions|developer_instructions|model_reasoning_effort|buildInteractiveArgs" PLANNING.md cmd/codex-heartbeat/main.go tmp/openai-codex/codex-rs/exec/src/lib.rs tmp/openai-codex/sdk/python/docs/api-reference.md tmp/openai-codex/codex-rs/app-server/README.md`: pass | Wrote a safe checkbox plan into PLANNING.md and verified that upstream Codex exposes instruction/profile seams that the current CLI-wrapper path does not.
+- `planned` via `if we use GODMODE on 5.3-codex-spark high does it work?`: pending | started via `run`; prompt source=`program_md`; mode=`autoresearch`; council_policy=`fallback`; council_triggered=false
+- `planned` via `Replace this with one command or manual validation step.`: pending | started via `run`; prompt source=`program_md`; mode=`autoresearch`; council_policy=`fallback`; council_triggered=false
 
 ## Prior Insights
+- run-20260328T230944Z/insights.md: - - -
+- run-20260328T230938Z/insights.md: - - -
+- run-20260328T214448Z/insights.md: Reviewing the upstream TUI snapshots again kept the change narrow and tied to real Codex screen states instead of guessed phrases. Explicit post-turn markers are a safe place to reduce ambiguity without relaxing live working detection. A rollout tiebreaker that only runs after `screenStateAmbiguous` keeps the existing scheduler semantics intact while still using stronger persisted signals. `task_complete`, `context_compacted`, `task_started`, and unmatched `function_call` entries are high-signal rollout markers for post-turn versus in-flight states.
+- run-20260328T205704Z/insights.md: The council converged on a docs update that was short, practical, and artifact-first instead of implementation-frozen. README is a good home for a two-track section when the operator and contributor paths are both concise. Cleaning up aborted placeholder runs kept the memory trail high-signal. The interrupted docs attempt created low-value placeholder artifacts and noisy pending ledger entries.
 - run-20260328T204940Z/insights.md: Challenging the “AGENTS is already complete” assumption still produced useful work: deeper layered tests instead of unnecessary runtime churn. Layered tests gave better failure localization than a monolithic replay harness would have. The existing runtime behavior held up under the stronger replay and ledger tests. Nothing new failed in runtime behavior; the gap was confidence, not functionality.
 - run-20260328T203641Z/insights.md: Reviewing the real upstream TUI snapshots immediately exposed which strings were status-row signals versus footer/history text. Keeping the scheduler untouched and hardening only the classifier made the change easy to validate. Recent-line weighting is a good fit for terminal snapshots because stale top-of-screen text no longer dominates the decision. The original phrase-only detector treated queued-message and background-terminal text as live work too often.
 - run-20260328T201941Z/insights.md: Splitting the work into prompt-resolution first and artifact/memory wiring second kept the refactor manageable. A dedicated `autoresearch.go` file kept the new behavior out of the hottest CLI paths. The results ledger is a practical place to drive council fallback thresholds without changing scheduler semantics. The first integration pass left one deterministic screen-log filename bug, which the test suite caught immediately.

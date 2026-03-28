@@ -48,6 +48,7 @@ const (
 type promptResolver struct {
 	workdir  string
 	explicit promptSource
+	council  bool
 }
 
 type promptResolution struct {
@@ -56,6 +57,7 @@ type promptResolution struct {
 	SourcePath       string
 	UsedCache        bool
 	Program          programConfig
+	CouncilRequested bool
 	CouncilTriggered bool
 }
 
@@ -97,7 +99,7 @@ type priorInsight struct {
 	Summary string
 }
 
-func newPromptResolver(workdir, promptPath, projectDir string) (promptResolver, error) {
+func newPromptResolver(workdir, promptPath, projectDir string, council bool) (promptResolver, error) {
 	explicit, err := newPromptSource(promptPath, projectDir)
 	if err != nil {
 		return promptResolver{}, err
@@ -105,6 +107,7 @@ func newPromptResolver(workdir, promptPath, projectDir string) (promptResolver, 
 	return promptResolver{
 		workdir:  workdir,
 		explicit: explicit,
+		council:  council,
 	}, nil
 }
 
@@ -121,11 +124,12 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 
 	if artifacts.TargetDir == "" {
 		return promptResolution{
-			Text:       base.text,
-			Source:     base.source,
-			SourcePath: base.sourcePath,
-			UsedCache:  base.usedCache,
-			Program:    base.program,
+			Text:             base.text,
+			Source:           base.source,
+			SourcePath:       base.sourcePath,
+			UsedCache:        base.usedCache,
+			Program:          base.program,
+			CouncilRequested: r.council,
 		}, nil
 	}
 
@@ -138,9 +142,9 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 	if threshold <= 0 {
 		threshold = defaultCouncilAfterFailures
 	}
-	councilTriggered := shouldTriggerCouncil(entries, threshold)
+	councilTriggered := r.council || shouldTriggerCouncil(entries, threshold)
 
-	latestContext, err := buildLatestContext(artifacts, base.program, entries)
+	latestContext, err := buildLatestContext(artifacts, base.program, r.council, entries)
 	if err != nil {
 		return promptResolution{}, err
 	}
@@ -150,7 +154,9 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 
 	text := base.text
 	if base.source != promptSourceCLI {
-		text = renderPromptTemplate(defaultPrompt, buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered))
+		text = renderPromptTemplate(defaultPrompt, buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
+	} else if r.council {
+		text = strings.TrimSpace("Council mode:\n" + buildCouncilInstruction(threshold, councilTriggered, r.council) + "\n\n" + base.text)
 	}
 
 	resolution := promptResolution{
@@ -159,6 +165,7 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 		SourcePath:       base.sourcePath,
 		UsedCache:        base.usedCache,
 		Program:          base.program,
+		CouncilRequested: r.council,
 		CouncilTriggered: councilTriggered,
 	}
 
@@ -362,7 +369,7 @@ func newAutoresearchArtifacts(workdir string, startedAt time.Time) autoresearchA
 	}
 }
 
-func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifacts, latestContext string, councilTriggered bool) map[string]string {
+func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifacts, latestContext string, councilTriggered bool, councilRequested bool) map[string]string {
 	threshold := program.CouncilAfterFailures
 	if threshold <= 0 {
 		threshold = defaultCouncilAfterFailures
@@ -378,10 +385,7 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 		checkpointInstruction = "After meaningful progress, create an intentional save-point commit that explains what changed and why."
 	}
 
-	councilInstruction := fmt.Sprintf("Do not start with the 3-agent council. Use it only if you are blocked or the recent failure streak reaches %d.", threshold)
-	if councilTriggered {
-		councilInstruction = fmt.Sprintf("Recent results indicate a stalled loop. Before choosing the next hypothesis, use the 3-agent council because the failure streak reached the threshold of %d.", threshold)
-	}
+	councilInstruction := buildCouncilInstruction(threshold, councilTriggered, councilRequested)
 
 	return map[string]string{
 		"OBJECTIVE":               strings.TrimSpace(program.Objective),
@@ -396,6 +400,16 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 		"PROGRAM_BODY":            strings.TrimSpace(program.Body),
 		"LATEST_CONTEXT":          strings.TrimSpace(latestContext),
 	}
+}
+
+func buildCouncilInstruction(threshold int, councilTriggered bool, councilRequested bool) string {
+	if councilRequested {
+		return "Use the 3-agent council at many steps in the autoresearch loop: baseline framing, next-hypothesis selection, and post-evaluator interpretation. Keep the root agent on `gpt-5.4` with `xhigh` reasoning. Use `gpt-5.3-codex-spark` with `high` reasoning for the three sub-agents. Still keep each cycle bounded to one hypothesis and one primary evaluator."
+	}
+	if councilTriggered {
+		return fmt.Sprintf("Recent results indicate a stalled loop. Before choosing the next hypothesis, use the 3-agent council because the failure streak reached the threshold of %d.", threshold)
+	}
+	return fmt.Sprintf("Do not start with the 3-agent council. Use it only if you are blocked or the recent failure streak reaches %d.", threshold)
 }
 
 func renderPromptTemplate(template string, vars map[string]string) string {
@@ -448,6 +462,7 @@ func buildArtifactTemplateVars(artifacts autoresearchArtifacts, resolution promp
 		"PROMPT_SOURCE":          resolution.Source,
 		"PROMPT_SOURCE_PATH":     resolution.SourcePath,
 		"PROMPT_MODE":            string(program.PromptMode),
+		"COUNCIL_POLICY":         councilPolicyLabel(resolution.CouncilRequested),
 		"COUNCIL_AFTER_FAILURES": strconv.Itoa(threshold),
 		"COUNCIL_TRIGGERED":      strconv.FormatBool(resolution.CouncilTriggered),
 		"CHECKPOINT_COMMITS":     strconv.FormatBool(program.CheckpointCommits),
@@ -517,7 +532,7 @@ func writeLatestContext(artifacts autoresearchArtifacts, latestContext string) e
 	return writeFileAtomic(artifacts.LatestContextPath, []byte(strings.TrimSpace(latestContext)+"\n"), 0o644)
 }
 
-func buildLatestContext(artifacts autoresearchArtifacts, program programConfig, entries []resultLedgerEntry) (string, error) {
+func buildLatestContext(artifacts autoresearchArtifacts, program programConfig, councilRequested bool, entries []resultLedgerEntry) (string, error) {
 	insights, err := loadPriorInsights(artifacts.TargetDir, artifacts.InsightsPath)
 	if err != nil {
 		return "", err
@@ -535,6 +550,7 @@ func buildLatestContext(artifacts autoresearchArtifacts, program programConfig, 
 		fmt.Sprintf("- Objective: %s", strings.TrimSpace(program.Objective)),
 		fmt.Sprintf("- Primary evaluator: `%s`", strings.TrimSpace(program.PrimaryEvaluator)),
 		fmt.Sprintf("- Prompt mode: `%s`", program.PromptMode),
+		fmt.Sprintf("- Council policy: `%s`", councilPolicyLabel(councilRequested)),
 		fmt.Sprintf("- Recent failure streak: %d / %d", streak, threshold),
 		"",
 		"## Recent Ledger",
@@ -681,7 +697,7 @@ func appendResultLedgerEntry(path string, entry resultLedgerEntry) error {
 }
 
 func recordRunStart(artifacts autoresearchArtifacts, resolution promptResolution, commandName string) error {
-	note := fmt.Sprintf("started via `%s`; prompt source=`%s`; mode=`%s`; council_triggered=%t", commandName, resolution.Source, resolution.Program.PromptMode, resolution.CouncilTriggered)
+	note := fmt.Sprintf("started via `%s`; prompt source=`%s`; mode=`%s`; council_policy=`%s`; council_triggered=%t", commandName, resolution.Source, resolution.Program.PromptMode, councilPolicyLabel(resolution.CouncilRequested), resolution.CouncilTriggered)
 	if resolution.UsedCache {
 		note += "; prompt cache fallback used"
 	}
@@ -698,6 +714,13 @@ func recordRunStart(artifacts autoresearchArtifacts, resolution promptResolution
 		Disposition: defaultDispositionPlaceholder,
 		Notes:       note,
 	})
+}
+
+func councilPolicyLabel(councilRequested bool) string {
+	if councilRequested {
+		return "frequent"
+	}
+	return "fallback"
 }
 
 func appendExecutionNote(path, note string) error {
@@ -820,6 +843,59 @@ func scaffoldAutoresearchWorkspace(workdir string) error {
 	return nil
 }
 
+func ensureAutoresearchWorkspace(workdir string) (string, error) {
+	expected := autoresearchScaffoldPaths(workdir)
+	existing := make([]string, 0, len(expected))
+	missing := make([]string, 0, len(expected))
+	for _, path := range expected {
+		if _, err := os.Stat(path); err == nil {
+			existing = append(existing, path)
+			continue
+		} else if errors.Is(err, fs.ErrNotExist) {
+			missing = append(missing, path)
+			continue
+		} else {
+			return "", err
+		}
+	}
+
+	if len(missing) == 0 {
+		return "", nil
+	}
+
+	warning := ""
+	if len(existing) > 0 {
+		relMissing := make([]string, 0, len(missing))
+		for _, path := range missing {
+			rel, err := filepath.Rel(workdir, path)
+			if err != nil {
+				rel = path
+			}
+			relMissing = append(relMissing, rel)
+		}
+		warning = fmt.Sprintf("warning: autoresearch scaffold is partially present in %s; preserving existing files and creating missing scaffold files: %s", workdir, strings.Join(relMissing, ", "))
+	}
+
+	if err := scaffoldAutoresearchWorkspace(workdir); err != nil {
+		return "", err
+	}
+	return warning, nil
+}
+
+func autoresearchScaffoldPaths(workdir string) []string {
+	artifacts := newAutoresearchArtifacts(workdir, time.Unix(0, 0).UTC())
+	return []string{
+		filepath.Join(workdir, defaultProgramFilename),
+		filepath.Join(workdir, planningFilename),
+		filepath.Join(artifacts.TemplateDir, "plan.md"),
+		filepath.Join(artifacts.TemplateDir, "execution.md"),
+		filepath.Join(artifacts.TemplateDir, "results.md"),
+		filepath.Join(artifacts.TemplateDir, "insights.md"),
+		artifacts.ResultsLedgerPath,
+		artifacts.LatestContextPath,
+	}
+}
+
 const defaultProgramScaffold = `
 # Program
 
@@ -863,6 +939,7 @@ const defaultPlanTemplate = `
 - Objective: {{OBJECTIVE}}
 - Primary evaluator: ` + "`{{PRIMARY_EVALUATOR}}`" + `
 - Prompt mode: ` + "`{{PROMPT_MODE}}`" + `
+- Council policy: ` + "`{{COUNCIL_POLICY}}`" + `
 - Council after failures: {{COUNCIL_AFTER_FAILURES}}
 - Checkpoint commits: {{CHECKPOINT_COMMITS}}
 
@@ -895,6 +972,7 @@ const defaultResultsTemplate = `
 # Results
 
 - Status: pending
+- Council policy: {{COUNCIL_POLICY}}
 - Council triggered at start: {{COUNCIL_TRIGGERED}}
 - Primary evaluator: ` + "`{{PRIMARY_EVALUATOR}}`" + `
 

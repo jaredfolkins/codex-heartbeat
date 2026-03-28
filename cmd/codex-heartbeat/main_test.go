@@ -66,10 +66,30 @@ func TestParseFlexibleDurationRejectsInvalidValues(t *testing.T) {
 func TestBuildInteractiveArgsAddsNoAltScreen(t *testing.T) {
 	t.Parallel()
 
-	args := buildInteractiveArgs("/tmp/work", "prompt", "", false, false, true)
+	args := buildInteractiveArgs("/tmp/work", "prompt", "", false, false, true, launchOverrides{})
 	joined := strings.Join(args, " ")
 	if !strings.Contains(joined, "--no-alt-screen") {
 		t.Fatalf("buildInteractiveArgs() did not include --no-alt-screen: %v", args)
+	}
+}
+
+func TestBuildInteractiveArgsAddsLaunchOverrides(t *testing.T) {
+	t.Parallel()
+
+	args := buildInteractiveArgs("/tmp/work", "prompt", "", false, false, false, launchOverrides{
+		Profile:              "safe-research",
+		Model:                "gpt-5.3-codex-spark",
+		ModelReasoningEffort: "high",
+	})
+	joined := strings.Join(args, " ")
+	for _, expected := range []string{
+		"--profile safe-research",
+		"--model gpt-5.3-codex-spark",
+		`--config model_reasoning_effort="high"`,
+	} {
+		if !strings.Contains(joined, expected) {
+			t.Fatalf("buildInteractiveArgs() missing %q: %v", expected, args)
+		}
 	}
 }
 
@@ -137,16 +157,10 @@ func TestRegisterRunFlagsOmitsSkipGitRepoCheck(t *testing.T) {
 	if fs.Lookup("skip-git-repo-check") != nil {
 		t.Fatal("registerRunFlags() unexpectedly exposed --skip-git-repo-check")
 	}
-}
-
-func TestRegisterExecFlagsIncludesSkipGitRepoCheck(t *testing.T) {
-	t.Parallel()
-
-	var opts sharedOptions
-	fs := flag.NewFlagSet("exec-like", flag.ContinueOnError)
-	registerExecFlags(fs, &opts)
-	if fs.Lookup("skip-git-repo-check") == nil {
-		t.Fatal("registerExecFlags() did not expose --skip-git-repo-check")
+	for _, flagName := range []string{"profile", "model", "model-reasoning-effort"} {
+		if fs.Lookup(flagName) == nil {
+			t.Fatalf("registerRunFlags() missing --%s", flagName)
+		}
 	}
 }
 
@@ -379,6 +393,52 @@ func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
 	}
 }
 
+func TestRunInteractiveCommandPassesLaunchOverrides(t *testing.T) {
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	binDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatalf("mkdir bin dir: %v", err)
+	}
+	argsPath := filepath.Join(root, "codex-args.txt")
+	scriptPath := filepath.Join(binDir, "codex")
+	script := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$@\" > %q\nexit 0\n", argsPath)
+	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake codex: %v", err)
+	}
+
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("TERM_PROGRAM", "")
+
+	if err := runInteractiveCommand([]string{
+		"--workdir", workdir,
+		"--profile", "safe-research",
+		"--model", "gpt-5.3-codex-spark",
+		"--model-reasoning-effort", "high",
+	}); err != nil {
+		t.Fatalf("runInteractiveCommand() returned error: %v", err)
+	}
+
+	argsData, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatalf("read fake codex args: %v", err)
+	}
+	joined := strings.Join(strings.Split(strings.TrimSpace(string(argsData)), "\n"), " ")
+	for _, expected := range []string{
+		"--profile safe-research",
+		"--model gpt-5.3-codex-spark",
+		`--config model_reasoning_effort="high"`,
+	} {
+		if !strings.Contains(joined, expected) {
+			t.Fatalf("runInteractiveCommand() missing %q in args: %s", expected, joined)
+		}
+	}
+}
+
 func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	t.Parallel()
 
@@ -399,7 +459,7 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
 		t.Fatalf("write prompt file: %v", err)
 	}
-	prompts, err := newPromptResolver(workdir, promptPath, projectDir)
+	prompts, err := newPromptResolver(workdir, promptPath, projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -486,15 +546,9 @@ func TestRunSubcommandHelpReturnsZero(t *testing.T) {
 	}
 }
 
-func TestPulseSubcommandHelpReturnsZero(t *testing.T) {
-	if got := run([]string{"pulse", "--help"}); got != 0 {
-		t.Fatalf("run(pulse --help) = %d, want 0", got)
-	}
-}
-
-func TestDaemonSubcommandHelpReturnsZero(t *testing.T) {
-	if got := run([]string{"daemon", "--help"}); got != 0 {
-		t.Fatalf("run(daemon --help) = %d, want 0", got)
+func TestRootHelpReturnsZero(t *testing.T) {
+	if got := run([]string{"--help"}); got != 0 {
+		t.Fatalf("run(--help) = %d, want 0", got)
 	}
 }
 
@@ -504,9 +558,33 @@ func TestStatusSubcommandHelpReturnsZero(t *testing.T) {
 	}
 }
 
-func TestInitSubcommandHelpReturnsZero(t *testing.T) {
-	if got := run([]string{"init", "--help"}); got != 0 {
-		t.Fatalf("run(init --help) = %d, want 0", got)
+func TestRootFlagsDefaultToRun(t *testing.T) {
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	promptPath := filepath.Join(root, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte("heartbeat prompt\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+
+	binDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatalf("mkdir bin dir: %v", err)
+	}
+	scriptPath := filepath.Join(binDir, "codex")
+	script := "#!/bin/sh\nexit 0\n"
+	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake codex: %v", err)
+	}
+
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("TERM_PROGRAM", "")
+
+	if got := run([]string{"--workdir", workdir, "--prompt", promptPath, "--interval", "15m"}); got != 0 {
+		t.Fatalf("run(default flags form) = %d, want 0", got)
 	}
 }
 

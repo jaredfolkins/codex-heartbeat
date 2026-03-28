@@ -33,6 +33,8 @@ func TestClassifyScreenSnapshotFixtures(t *testing.T) {
 		{name: "idle token usage", file: "idle_token_usage.txt", want: screenStateIdle},
 		{name: "pending steer", file: "pending_steer.txt", want: screenStateIdle},
 		{name: "history background", file: "history_background_terminal.txt", want: screenStateIdle},
+		{name: "history background without prompt", file: "history_background_terminal_no_prompt.txt", want: screenStateIdle},
+		{name: "context compacted", file: "context_compacted.txt", want: screenStateIdle},
 		{name: "footer background", file: "footer_background_terminal.txt", want: screenStateIdle},
 	}
 

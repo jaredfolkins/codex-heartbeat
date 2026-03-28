@@ -90,6 +90,24 @@ func TestClassifyScreenSnapshotHistoricalBackgroundWaitIsNotWorking(t *testing.T
 	}
 }
 
+func TestClassifyScreenSnapshotHistoricalBackgroundWaitWithoutPromptIsIdle(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Waited for background terminal \u00b7 cargo test -p codex-core\n\n\u2022 Final response.\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot() = %v, want idle for completed background-terminal text", got)
+	}
+}
+
+func TestClassifyScreenSnapshotContextCompactedIsIdle(t *testing.T) {
+	t.Parallel()
+
+	snapshot := "\u2022 Context compacted\n\n\u2022 Final response.\n"
+	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
+		t.Fatalf("classifyScreenSnapshot() = %v, want idle for context-compacted message", got)
+	}
+}
+
 func TestTerminalScreenSnapshotTracksCurrentStatus(t *testing.T) {
 	t.Parallel()
 

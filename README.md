@@ -35,13 +35,13 @@ go build ./cmd/codex-heartbeat
 
 ## Basic usage
 
-Initialize an autoresearch-style workspace once:
+The first `run` against a workspace now auto-scaffolds the autoresearch files when they are missing:
 
 ```bash
-./codex-heartbeat init --workdir /path/to/workdir
+./codex-heartbeat --workdir /path/to/workdir
 ```
 
-That scaffolds:
+That creates, when absent:
 
 - `program.md`
 - `PLANNING.md`
@@ -81,52 +81,42 @@ Prompt precedence is:
 
 `--prompt` is a full override. When it is present, codex-heartbeat re-reads that file on every emission, refreshes the cached copy on success, and falls back to the cached copy if the file later disappears. When `--prompt` is absent, codex-heartbeat re-reads `program.md` on every emission and renders the embedded autoresearch loop template around it. If neither exists, it renders the embedded fallback template by itself.
 
-Bootstrap or pulse once:
-
-```bash
-./codex-heartbeat pulse --workdir /path/to/workdir
-```
-
 Open the interactive Codex UI with transcript logging and the default screen-aware heartbeat mode:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir
+./codex-heartbeat --workdir /path/to/workdir
 ```
+
+`./codex-heartbeat run --workdir /path/to/workdir` is equivalent. `run` remains available, but bare flags default to `run`.
 
 Keep the wrapper banner and Codex output in normal scrollback:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir --no-alt-screen
+./codex-heartbeat --workdir /path/to/workdir --no-alt-screen
 ```
 
 Use an explicit prompt override instead of `program.md`:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
+./codex-heartbeat --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
+```
+
+Use the council repeatedly during autoresearch instead of only as a stuck-state fallback:
+
+```bash
+./codex-heartbeat --workdir /path/to/workdir --council
 ```
 
 Explicitly select the default screen-aware mode, which looks for 15 seconds of idle screen state, waits for 20 seconds of quiet local input, and falls back to a heartbeat after 60 minutes without an injected prompt:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir --screen-idle-heartbeat
+./codex-heartbeat --workdir /path/to/workdir --screen-idle-heartbeat
 ```
 
 Run the interactive heartbeat for a bounded amount of time:
 
 ```bash
-./codex-heartbeat run --workdir /path/to/workdir --interval 15m --end-in 2 hours
-```
-
-Run the unattended heartbeat loop:
-
-```bash
-./codex-heartbeat daemon --workdir /path/to/workdir --interval 5m
-```
-
-Stop the unattended heartbeat after one day:
-
-```bash
-./codex-heartbeat daemon --workdir /path/to/workdir --interval 5m --end-in 1 day
+./codex-heartbeat --workdir /path/to/workdir --interval 15m --end-in 2 hours
 ```
 
 Inspect the stored session:
@@ -152,7 +142,9 @@ The default embedded prompt is no longer a generic “keep going” reminder. It
 - read memory from `target/latest-context.md`
 - write memory into `target/run-<timestamp>/` and `target/results.jsonl`
 
-The 3-agent council is now a fallback, not the default first move. The prompt tells Codex to use the council only when it is blocked or when the recent failure streak in `target/results.jsonl` reaches the configured threshold from `program.md`.
+By default the 3-agent council is still a fallback, not the default first move. The prompt tells Codex to use the council only when it is blocked or when the recent failure streak in `target/results.jsonl` reaches the configured threshold from `program.md`.
+
+When you pass `--council`, the prompt switches to a frequent-council mode: use the council during baseline framing, next-hypothesis selection, and post-evaluator interpretation. The guidance is to keep the root agent on `gpt-5.4` with `xhigh` reasoning and use `gpt-5.3-codex-spark` with `high` reasoning for the three sub-agents.
 
 `Prompt mode: manual-test-first` is a guidance mode for workflows where Codex should prepare the next candidate fix and validation steps, then stop before the final human gate.
 
@@ -187,7 +179,7 @@ Autoresearch mode also writes bounded memory into the target workspace:
 
 `<workspace-key>` is derived from the selected `--workdir` so each workspace gets its own runtime state under your home directory. If an older `<workdir>/.codex-heartbeat` directory exists and you are using the default paths, the wrapper moves it into `~/.codex-heartbeat/projects/` automatically.
 
-The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` or `~/.codex/sessions` for the newest `session_meta` record whose `cwd` matches the selected workspace.
+The session id is discovered after startup by scanning `$CODEX_HOME/sessions` or `~/.codex/sessions` for the newest `session_meta` record whose `cwd` matches the selected workspace.
 
 ## Heartbeat Detection: Triage And Validation
 
@@ -197,7 +189,8 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - If heartbeat did not fire when you expected, inspect `~/.codex-heartbeat/projects/<workspace-key>/screen-state.json` first. Check `screen_state`, `reason`, `quiet`, `idle_polls`, and `should_inject` to see whether Codex still looked active, recent local input was blocking injection, or the screen stayed ambiguous.
 - Tail `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl` when you need a timeline instead of just the latest state. That log shows each poll decision and is the fastest way to confirm whether the wrapper saw `working`, `idle`, or `ambiguous` before it injected.
 - If heartbeat fired unexpectedly, compare the recent screen log against known false-positive traps such as queued-message previews, footer-only background-terminal text, or historical background-terminal output. The fixture corpus in `cmd/codex-heartbeat/testdata/screen/` shows the kinds of snapshots the detector is expected to classify safely.
-- If the council triggered unexpectedly, inspect the trailing dispositions in `<workdir>/target/results.jsonl`. Council fallback follows consecutive failure-like dispositions, not a single bad outcome.
+- If the council triggered unexpectedly in the default mode, inspect the trailing dispositions in `<workdir>/target/results.jsonl`. Council fallback follows consecutive failure-like dispositions, not a single bad outcome.
+- If you passed `--council`, expect the council to appear throughout the autoresearch loop. In that mode the question is whether the loop stayed bounded around one hypothesis and one evaluator, not whether the council appeared at all.
 - When a run feels off, inspect the latest `<workdir>/target/run-<timestamp>/{plan,execution,results,insights}.md` alongside `target/latest-context.md`. Those files show what the loop believed it was doing and whether the recent failure streak or evaluator history explains the current behavior.
 
 ### For contributors
@@ -209,12 +202,14 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 
 ## Notes
 
-- `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background.
+- `run` acquires the workspace lock, attaches you to the live Codex UI, and keeps a transcript log in the background. Bare flags such as `codex-heartbeat --workdir /repo` resolve to `run`.
 - `run` now defaults to the screen-aware scheduler. It polls the live Codex screen every 5 seconds, treats 3 consecutive idle polls as idle readiness, waits for 20 seconds of quiet local input before injecting, and falls back to a heartbeat after 60 minutes without an injected prompt.
+- Before `run` resolves prompts, it checks for the autoresearch scaffold in the selected workspace. If the scaffold is entirely missing, it creates it automatically. If the scaffold is partial, it warns and creates only the missing files without overwriting the existing ones.
 - Fresh interactive boots leave Codex alone for about 5 seconds before sending the initial prompt so the UI can settle first.
 - `run --interval 15m` keeps the live UI attached but switches to an explicit timed scheduler. On resume it injects one heartbeat after a short startup settle delay, then continues on the configured interval.
 - `--screen-idle-heartbeat` is still accepted as an explicit alias for the default screen-aware scheduler.
 - `--interval` and `--screen-idle-heartbeat` are mutually exclusive because they choose different heartbeat schedulers.
+- `--council` changes the autoresearch prompt policy from fallback-council to frequent-council mode. It does not remove the one-hypothesis/one-evaluator discipline.
 - `run` prints a short `codex-heartbeat` banner before attach. In Ghostty on macOS it defaults to inline mode so that banner stays visible; use `--alt-screen` to force the alternate screen or `--no-alt-screen` on other terminals when you want the same inline behavior.
 - `run` also sets the terminal title to `codex-heartbeat | <workdir>` so heartbeat tabs are easy to spot at a glance.
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
@@ -223,10 +218,7 @@ The session id is discovered after bootstrap by scanning `$CODEX_HOME/sessions` 
 - Prompt emissions now resolve prompt sources in this order: `--prompt`, then repo-local `program.md`, then the embedded fallback template.
 - Explicit `--prompt` files are re-read on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
 - `program.md` is also re-read on every send so the human can change the research/debugging program while the agent works in the target workspace.
-- The default prompt writes bounded memory into `target/` and treats the 3-agent council as a fallback after repeated failed cycles, not as the default first action on every heartbeat.
+- The default prompt writes bounded memory into `target/` and treats the 3-agent council as a fallback after repeated failed cycles, not as the default first action on every heartbeat. `--council` opts into a more collaborative version of the loop where the council is used at multiple decision points.
 - If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
-- `daemon` is the old timed heartbeat loop for unattended runs.
-- `pulse` and `bootstrap` acquire the same lock for a single execution and skip if another process already holds it.
-- `pulse`, `bootstrap`, and `daemon` enable `--skip-git-repo-check` by default so non-interactive child runs can target a plain directory.
-- Child exit codes are preserved for wrapped one-shot and interactive runs such as `pulse`, `bootstrap`, and `run`.
+- Child exit codes are preserved for the wrapped interactive `run`.
 - `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-heartbeat logs the transcript and injects prompts when the scheduler decides it is time.

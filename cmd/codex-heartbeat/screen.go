@@ -525,6 +525,7 @@ func screenHasLiveBackgroundCue(normalized string) bool {
 func screenHasIdleMarker(normalized string) bool {
 	idlePhrases := []string{
 		"token usage:",
+		"context compacted",
 		"conversation interrupted - tell the model what to do differently",
 		"to continue this session, run codex resume",
 	}
@@ -533,7 +534,7 @@ func screenHasIdleMarker(normalized string) bool {
 			return true
 		}
 	}
-	return false
+	return screenHasHistoricalActivity(normalized)
 }
 
 func screenHasPromptReady(raw, normalized string) bool {
@@ -664,6 +665,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 
 	ticker := time.NewTicker(screenIdlePollInterval)
 	defer ticker.Stop()
+	rolloutInspector := newSessionRolloutInspector()
 
 	persistScreenDiagnostics(cfg, screenRuntimeState{
 		SessionID:     state.SessionID,
@@ -695,8 +697,13 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 			lastPromptAt := promptTracker.LastPromptAt()
 			snapshot := screen.RecentSnapshot(screenIdleRecentLines)
 			currentState := classifyScreenSnapshot(snapshot)
+			tiebreakReason := ""
+			currentState, tiebreakReason = rolloutInspector.Resolve(currentState, state.SessionID)
 
 			decision := evaluateScreenIdlePoll(now, quiet, currentState, idlePolls, lastPromptAt)
+			if tiebreakReason != "" {
+				decision.reason = decision.reason + ":" + tiebreakReason
+			}
 			idlePolls = decision.nextIdlePolls
 
 			poll := screenPollRecord{

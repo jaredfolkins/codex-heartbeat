@@ -40,10 +40,19 @@ const (
 var errWorkspaceLocked = errors.New("workspace is already locked")
 
 type sharedOptions struct {
-	workdir          string
-	promptPath       string
-	safe             bool
-	skipGitRepoCheck bool
+	workdir               string
+	promptPath            string
+	profile               string
+	model                 string
+	modelReasoningEffort  string
+	council               bool
+	safe                  bool
+}
+
+type launchOverrides struct {
+	Profile              string
+	Model                string
+	ModelReasoningEffort string
 }
 
 type promptSource struct {
@@ -92,20 +101,18 @@ func run(args []string) int {
 
 	var err error
 	switch args[0] {
-	case "pulse", "bootstrap":
-		err = runPulseCommand(args[1:])
-	case "daemon":
-		err = runDaemonCommand(args[1:])
 	case "run":
 		err = runInteractiveCommand(args[1:])
-	case "init":
-		err = runInitCommand(args[1:])
 	case "status":
 		err = runStatusCommand(args[1:])
 	case "-h", "--help", "help":
 		printRootUsage(os.Stdout)
 		return 0
 	default:
+		if strings.HasPrefix(args[0], "-") {
+			err = runInteractiveCommand(args)
+			break
+		}
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", args[0])
 		printRootUsage(os.Stderr)
 		return 2
@@ -120,166 +127,6 @@ func run(args []string) int {
 		return code
 	}
 	return 1
-}
-
-func runPulseCommand(args []string) error {
-	var opts sharedOptions
-	fs := flag.NewFlagSet("pulse", flag.ContinueOnError)
-	fs.SetOutput(os.Stderr)
-	registerExecFlags(fs, &opts)
-	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat pulse --workdir DIR [--prompt FILE] [--safe]")
-		fs.PrintDefaults()
-	}
-
-	help, err := parseFlagSet(fs, args)
-	if err != nil {
-		return err
-	}
-	if help {
-		return nil
-	}
-	if fs.NArg() != 0 {
-		return fmt.Errorf("pulse does not accept positional arguments")
-	}
-
-	cfg, prompts, state, err := prepareWorkspace(opts)
-	if err != nil {
-		return err
-	}
-
-	lock, err := acquireWorkspaceLock(cfg.LockPath)
-	if err != nil {
-		if errors.Is(err, errWorkspaceLocked) {
-			fmt.Fprintln(os.Stderr, "workspace is already locked; skipping pulse")
-			return nil
-		}
-		return err
-	}
-	defer lock.Close()
-
-	artifacts := newAutoresearchArtifacts(cfg.Workdir, time.Now())
-	resolution, err := prompts.Resolve(artifacts)
-	if err != nil {
-		return err
-	}
-	if err := recordRunStart(artifacts, resolution, "pulse"); err != nil {
-		return err
-	}
-
-	return executePulse(cfg, &state, prompts, artifacts, opts)
-}
-
-func runDaemonCommand(args []string) error {
-	var opts sharedOptions
-	var interval durationFlag
-	var endIn durationFlag
-
-	fs := flag.NewFlagSet("daemon", flag.ContinueOnError)
-	fs.SetOutput(os.Stderr)
-	registerExecFlags(fs, &opts)
-	fs.Var(&interval, "interval", "Heartbeat interval (examples: 15m, 2 hours, 1 day)")
-	fs.Var(&endIn, "end-in", "Stop the heartbeat after this long (examples: 30m, 2 hours, 1 day)")
-	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat daemon --workdir DIR --interval 5m [--prompt FILE] [--end-in 1 day]")
-		fs.PrintDefaults()
-	}
-
-	help, err := parseFlagSet(fs, args)
-	if err != nil {
-		return err
-	}
-	if help {
-		return nil
-	}
-	if fs.NArg() != 0 {
-		return fmt.Errorf("daemon does not accept positional arguments")
-	}
-	if !interval.IsSet() {
-		return fmt.Errorf("--interval is required for daemon")
-	}
-
-	cfg, prompts, state, err := prepareWorkspace(opts)
-	if err != nil {
-		return err
-	}
-
-	lock, err := acquireWorkspaceLock(cfg.LockPath)
-	if err != nil {
-		return err
-	}
-	defer lock.Close()
-
-	artifacts := newAutoresearchArtifacts(cfg.Workdir, time.Now())
-	resolution, err := prompts.Resolve(artifacts)
-	if err != nil {
-		return err
-	}
-	if err := recordRunStart(artifacts, resolution, "daemon"); err != nil {
-		return err
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	var deadline time.Time
-	if endIn.IsSet() {
-		deadline = time.Now().Add(endIn.Duration())
-	}
-
-	appendEvent(cfg.LogsDir, logEvent{
-		Timestamp: time.Now().Format(time.RFC3339),
-		Type:      "daemon_start",
-		SessionID: state.SessionID,
-		Message:   fmt.Sprintf("interval=%s end_in=%s", interval.String(), endIn.String()),
-	})
-
-	for {
-		if !deadline.IsZero() && time.Now().After(deadline) {
-			appendEvent(cfg.LogsDir, logEvent{
-				Timestamp: time.Now().Format(time.RFC3339),
-				Type:      "daemon_stop",
-				SessionID: state.SessionID,
-				Message:   "deadline reached",
-			})
-			return nil
-		}
-
-		if err := executePulse(cfg, &state, prompts, artifacts, opts); err != nil {
-			return err
-		}
-
-		waitFor := interval.Duration()
-		if !deadline.IsZero() {
-			remaining := time.Until(deadline)
-			if remaining <= 0 {
-				appendEvent(cfg.LogsDir, logEvent{
-					Timestamp: time.Now().Format(time.RFC3339),
-					Type:      "daemon_stop",
-					SessionID: state.SessionID,
-					Message:   "deadline reached",
-				})
-				return nil
-			}
-			if remaining < waitFor {
-				waitFor = remaining
-			}
-		}
-
-		timer := time.NewTimer(waitFor)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			appendEvent(cfg.LogsDir, logEvent{
-				Timestamp: time.Now().Format(time.RFC3339),
-				Type:      "daemon_stop",
-				SessionID: state.SessionID,
-				Message:   ctx.Err().Error(),
-			})
-			return nil
-		case <-timer.C:
-		}
-	}
 }
 
 func runInteractiveCommand(args []string) error {
@@ -299,7 +146,7 @@ func runInteractiveCommand(args []string) error {
 	fs.BoolVar(&altScreen, "alt-screen", false, "Force Codex to use the alternate screen")
 	fs.BoolVar(&screenIdleHeartbeat, "screen-idle-heartbeat", false, "Explicitly select the default screen-aware heartbeat mode (15s idle detection, 20s input quiet gate, and 60m fallback)")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
+		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--profile NAME] [--model NAME] [--model-reasoning-effort LEVEL] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
 		fs.PrintDefaults()
 	}
 
@@ -363,7 +210,13 @@ func runInteractiveCommand(args []string) error {
 	if sendPromptOnLaunch {
 		launchPromptText = initialResolution.Text
 	}
-	argsForCodex := buildInteractiveArgs(cfg.Workdir, launchPromptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen)
+	overrides := newLaunchOverrides(opts)
+	argsForCodex := buildInteractiveArgs(cfg.Workdir, launchPromptText, state.SessionID, opts.safe, sendPromptOnLaunch, useNoAltScreen, overrides)
+	if summary := overrides.Summary(); summary != "" {
+		if err := appendExecutionNote(artifacts.ExecutionPath, "launch overrides: "+summary); err != nil {
+			return err
+		}
+	}
 	cmd := exec.Command("codex", argsForCodex...)
 	cmd.Dir = cfg.Workdir
 	cmd.Env = os.Environ()
@@ -375,7 +228,7 @@ func runInteractiveCommand(args []string) error {
 		Type:      "run_start",
 		SessionID: state.SessionID,
 		Command:   "codex " + strings.Join(argsForCodex, " "),
-		Message:   fmt.Sprintf("heartbeat=%s end_in=%s", runHeartbeatMode(interval, screenIdleHeartbeat), endIn.String()),
+		Message:   fmt.Sprintf("heartbeat=%s end_in=%s overrides=%s", runHeartbeatMode(interval, screenIdleHeartbeat), endIn.String(), launchSummaryOrNone(overrides)),
 	})
 
 	printRunBanner(cfg, state, interval, endIn, useNoAltScreen, screenIdleHeartbeat)
@@ -570,46 +423,14 @@ func runStatusCommand(args []string) error {
 	return enc.Encode(state)
 }
 
-func runInitCommand(args []string) error {
-	var opts sharedOptions
-	fs := flag.NewFlagSet("init", flag.ContinueOnError)
-	fs.SetOutput(os.Stderr)
-	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to scaffold for autoresearch")
-	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat init --workdir DIR")
-		fs.PrintDefaults()
-	}
-
-	help, err := parseFlagSet(fs, args)
-	if err != nil {
-		return err
-	}
-	if help {
-		return nil
-	}
-	if fs.NArg() != 0 {
-		return fmt.Errorf("init does not accept positional arguments")
-	}
-	if strings.TrimSpace(opts.workdir) == "" {
-		return fmt.Errorf("--workdir is required")
-	}
-
-	cfg, err := newWorkspaceConfig(opts.workdir)
-	if err != nil {
-		return err
-	}
-	return scaffoldAutoresearchWorkspace(cfg.Workdir)
-}
-
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
 	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
 	fs.StringVar(&opts.promptPath, "prompt", "", "Optional heartbeat prompt file; reloaded on each emission and cached per workspace")
+	fs.StringVar(&opts.profile, "profile", "", "Optional Codex config profile to pass through on launch")
+	fs.StringVar(&opts.model, "model", "", "Optional Codex model to pass through on launch")
+	fs.StringVar(&opts.modelReasoningEffort, "model-reasoning-effort", "", "Optional Codex reasoning effort to pass through via --config model_reasoning_effort=...")
+	fs.BoolVar(&opts.council, "council", false, "Use the council repeatedly during autoresearch instead of only as a fallback")
 	fs.BoolVar(&opts.safe, "safe", false, "Do not pass --dangerously-bypass-approvals-and-sandbox to child Codex runs")
-}
-
-func registerExecFlags(fs *flag.FlagSet, opts *sharedOptions) {
-	registerRunFlags(fs, opts)
-	fs.BoolVar(&opts.skipGitRepoCheck, "skip-git-repo-check", true, "Pass --skip-git-repo-check to non-interactive child Codex runs")
 }
 
 func registerStatusFlags(fs *flag.FlagSet, opts *sharedOptions) {
@@ -642,7 +463,15 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, work
 		return workspaceConfig{}, promptResolver{}, workspaceState{}, fmt.Errorf("create runtime dirs: %w", err)
 	}
 
-	prompts, err := newPromptResolver(cfg.Workdir, opts.promptPath, cfg.ProjectDir)
+	warning, err := ensureAutoresearchWorkspace(cfg.Workdir)
+	if err != nil {
+		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
+	}
+	if warning != "" {
+		fmt.Fprintln(os.Stderr, warning)
+	}
+
+	prompts, err := newPromptResolver(cfg.Workdir, opts.promptPath, cfg.ProjectDir, opts.council)
 	if err != nil {
 		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
@@ -965,26 +794,19 @@ func saveState(path string, state workspaceState) error {
 	return nil
 }
 
-func buildExecArgs(workdir, promptText, sessionID string, opts sharedOptions) []string {
-	args := []string{"exec"}
-	if !opts.safe {
-		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
-	}
-	args = append(args, "--cd", workdir)
-	if opts.skipGitRepoCheck {
-		args = append(args, "--skip-git-repo-check")
-	}
-	if sessionID != "" {
-		args = append(args, "resume", sessionID, promptText)
-		return args
-	}
-	return append(args, promptText)
-}
-
-func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, sendPromptOnLaunch bool, noAltScreen bool) []string {
+func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, sendPromptOnLaunch bool, noAltScreen bool, overrides launchOverrides) []string {
 	args := []string{}
 	if !safe {
 		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
+	}
+	if overrides.Profile != "" {
+		args = append(args, "--profile", overrides.Profile)
+	}
+	if overrides.Model != "" {
+		args = append(args, "--model", overrides.Model)
+	}
+	if overrides.ModelReasoningEffort != "" {
+		args = append(args, "--config", fmt.Sprintf("model_reasoning_effort=%q", overrides.ModelReasoningEffort))
 	}
 	args = append(args, "--cd", workdir)
 	if noAltScreen {
@@ -998,6 +820,35 @@ func buildInteractiveArgs(workdir, promptText, sessionID string, safe bool, send
 		return args
 	}
 	return append(args, promptText)
+}
+
+func newLaunchOverrides(opts sharedOptions) launchOverrides {
+	return launchOverrides{
+		Profile:              strings.TrimSpace(opts.profile),
+		Model:                strings.TrimSpace(opts.model),
+		ModelReasoningEffort: strings.TrimSpace(opts.modelReasoningEffort),
+	}
+}
+
+func (o launchOverrides) Summary() string {
+	parts := []string{}
+	if o.Profile != "" {
+		parts = append(parts, "profile="+o.Profile)
+	}
+	if o.Model != "" {
+		parts = append(parts, "model="+o.Model)
+	}
+	if o.ModelReasoningEffort != "" {
+		parts = append(parts, "model_reasoning_effort="+o.ModelReasoningEffort)
+	}
+	return strings.Join(parts, ", ")
+}
+
+func launchSummaryOrNone(overrides launchOverrides) string {
+	if summary := overrides.Summary(); summary != "" {
+		return summary
+	}
+	return "none"
 }
 
 func interactiveLaunchBehavior(sessionID string) (sendPromptOnLaunch bool, injectHeartbeatImmediately bool) {
@@ -1119,46 +970,6 @@ func shortenPath(path string) string {
 		return "~" + string(os.PathSeparator) + strings.TrimPrefix(path, prefix)
 	}
 	return path
-}
-
-func executePulse(cfg workspaceConfig, state *workspaceState, prompts promptResolver, artifacts autoresearchArtifacts, opts sharedOptions) error {
-	resolution, err := prompts.Resolve(artifacts)
-	if err != nil {
-		return err
-	}
-
-	args := buildExecArgs(cfg.Workdir, resolution.Text, state.SessionID, opts)
-	cmd := exec.Command("codex", args...)
-	cmd.Dir = cfg.Workdir
-	cmd.Env = os.Environ()
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	startedAt := time.Now()
-	appendEvent(cfg.LogsDir, logEvent{
-		Timestamp: startedAt.Format(time.RFC3339),
-		Type:      "pulse_start",
-		SessionID: state.SessionID,
-		Command:   "codex " + strings.Join(args, " "),
-	})
-	_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("executing pulse with prompt source `%s`", resolution.Source))
-
-	err = cmd.Run()
-	exitCode := exitCodeFromError(err)
-	appendEvent(cfg.LogsDir, logEvent{
-		Timestamp: time.Now().Format(time.RFC3339),
-		Type:      "pulse_stop",
-		SessionID: state.SessionID,
-		Command:   "codex " + strings.Join(args, " "),
-		ExitCode:  intPointer(exitCode),
-	})
-	_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("pulse exited with code %d", exitCode))
-
-	if refreshErr := refreshSessionID(cfg, state, startedAt); refreshErr != nil {
-		fmt.Fprintf(os.Stderr, "warning: %v\n", refreshErr)
-	}
-
-	return err
 }
 
 func trackSessionID(ctx context.Context, cfg workspaceConfig, state *workspaceState, startedAt time.Time) {
@@ -1447,12 +1258,11 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "codex-heartbeat wraps the Codex CLI and can inject heartbeat prompts based on screen state or a timer.")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Usage:")
-	fmt.Fprintln(w, "  codex-heartbeat init --workdir DIR")
-	fmt.Fprintln(w, "  codex-heartbeat pulse --workdir DIR [--prompt FILE]")
-	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
-	fmt.Fprintln(w, "  codex-heartbeat daemon --workdir DIR --interval 5m [--end-in 2 hours]")
+	fmt.Fprintln(w, "  codex-heartbeat --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
 	fmt.Fprintln(w, "  codex-heartbeat status --workdir DIR")
 	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Bare flags default to the interactive `run` command.")
 	fmt.Fprintln(w, "The --interval and --end-in flags accept minute, hour, and day units in short or long form.")
 	fmt.Fprintln(w, "Examples: 30m, 2h, 1d, 15 minutes, 2 hours, 1 day")
 }

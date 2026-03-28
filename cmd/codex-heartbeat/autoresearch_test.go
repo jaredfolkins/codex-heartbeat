@@ -27,7 +27,7 @@ func TestPromptResolverPrefersExplicitPromptOverProgram(t *testing.T) {
 		t.Fatalf("write explicit prompt: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, promptPath, projectDir)
+	resolver, err := newPromptResolver(workdir, promptPath, projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -72,7 +72,7 @@ Checkpoint commits: true
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir)
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestPromptResolverFallsBackToEmbeddedTemplate(t *testing.T) {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir)
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -150,7 +150,7 @@ Prompt mode: manual-test-first
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir)
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -200,7 +200,7 @@ Primary evaluator: go test ./...
 		t.Fatalf("remove explicit prompt: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir)
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -277,7 +277,7 @@ Primary evaluator: make manual-lab-up
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir)
+	resolver, err := newPromptResolver(workdir, "", projectDir, true)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -308,6 +308,53 @@ Primary evaluator: make manual-lab-up
 	}
 	if entry.Disposition != defaultDispositionPlaceholder {
 		t.Fatalf("ledger disposition = %q, want %q", entry.Disposition, defaultDispositionPlaceholder)
+	}
+	if !strings.Contains(entry.Notes, "council_policy=`frequent`") {
+		t.Fatalf("ledger notes = %q, want frequent council policy", entry.Notes)
+	}
+}
+
+func TestPromptResolverCouncilFlagUsesFrequentCouncilPolicy(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	projectDir := filepath.Join(root, "runtime")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	program := `# Program
+
+Objective: fix the flaky evaluator
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	resolver, err := newPromptResolver(workdir, "", projectDir, true)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 28, 20, 6, 0, 0, time.UTC))
+	resolution, err := resolver.Resolve(artifacts)
+	if err != nil {
+		t.Fatalf("Resolve() returned error: %v", err)
+	}
+
+	if !resolution.CouncilRequested {
+		t.Fatal("Resolve() should record council mode when --council is set")
+	}
+	if !resolution.CouncilTriggered {
+		t.Fatal("Resolve() should trigger council guidance when --council is set")
+	}
+	if !strings.Contains(resolution.Text, "Use the 3-agent council at many steps") {
+		t.Fatalf("Resolve().Text missing frequent council policy: %q", resolution.Text)
+	}
+	if !strings.Contains(resolution.Text, "gpt-5.4") || !strings.Contains(resolution.Text, "gpt-5.3-codex-spark") {
+		t.Fatalf("Resolve().Text missing requested council model split: %q", resolution.Text)
 	}
 }
 
@@ -383,12 +430,14 @@ func TestShouldTriggerCouncilStopsAtUnknownDisposition(t *testing.T) {
 	}
 }
 
-func TestRunInitCommandScaffoldsWorkspace(t *testing.T) {
+func TestEnsureAutoresearchWorkspaceScaffoldsWorkspace(t *testing.T) {
 	t.Parallel()
 
 	workdir := t.TempDir()
-	if err := runInitCommand([]string{"--workdir", workdir}); err != nil {
-		t.Fatalf("runInitCommand() returned error: %v", err)
+	if warning, err := ensureAutoresearchWorkspace(workdir); err != nil {
+		t.Fatalf("ensureAutoresearchWorkspace() returned error: %v", err)
+	} else if warning != "" {
+		t.Fatalf("ensureAutoresearchWorkspace() warning = %q, want empty warning for a blank workspace", warning)
 	}
 
 	paths := []string{
@@ -405,5 +454,38 @@ func TestRunInitCommandScaffoldsWorkspace(t *testing.T) {
 		if _, err := os.Stat(path); err != nil {
 			t.Fatalf("scaffold missing %s: %v", path, err)
 		}
+	}
+}
+
+func TestEnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	programPath := filepath.Join(workdir, defaultProgramFilename)
+	existingProgram := "# Program\n\nObjective: preserve me.\n"
+	if err := os.WriteFile(programPath, []byte(existingProgram), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	warning, err := ensureAutoresearchWorkspace(workdir)
+	if err != nil {
+		t.Fatalf("ensureAutoresearchWorkspace() returned error: %v", err)
+	}
+	if !strings.Contains(warning, "partially present") {
+		t.Fatalf("ensureAutoresearchWorkspace() warning = %q, want partial scaffold warning", warning)
+	}
+	if !strings.Contains(warning, "PLANNING.md") {
+		t.Fatalf("ensureAutoresearchWorkspace() warning = %q, want missing scaffold path list", warning)
+	}
+
+	data, err := os.ReadFile(programPath)
+	if err != nil {
+		t.Fatalf("read program: %v", err)
+	}
+	if string(data) != existingProgram {
+		t.Fatalf("program.md was overwritten: got %q want %q", string(data), existingProgram)
+	}
+	if _, err := os.Stat(filepath.Join(workdir, planningFilename)); err != nil {
+		t.Fatalf("PLANNING.md missing after ensureAutoresearchWorkspace(): %v", err)
 	}
 }
