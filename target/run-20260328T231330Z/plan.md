@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated-progress-display semantics.
-- Primary evaluator: `rg -n 'delegated-progress-display semantics|real-time tree-view of child tool calls|batched parent progress updates|progress callback' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style GPT tool-use enforcement semantics.
+- Primary evaluator: `rg -n 'GPT tool-use enforcement semantics|GPT_TOOL_USE_GUIDANCE|tool-use enforcement for GPT models|budget warning stripping' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style delegated-progress-display items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving progress visibility implicit.
+- If `PLANNING.md` explicitly includes Hermes-style GPT tool-use enforcement items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving GPT tool guidance implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style delegated-progress-display items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style GPT tool-use enforcement items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

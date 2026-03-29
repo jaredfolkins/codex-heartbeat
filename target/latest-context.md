@@ -6,9 +6,8 @@
 - Council policy: `fallback`
 - Recent failure streak: 0 / 3
 
--## Recent Ledger
+## Recent Ledger
 - `keep` via `rg -n 'delegated-progress-display semantics|real-time tree-view of child tool calls|batched parent progress updates|progress callback' PLANNING.md`: pass | Added Hermes-style delegated-progress-display items to `PLANNING.md` so the safe backlog now covers delegated progress visibility instead of leaving it implicit.
-- `keep` via `rg -n 'plugin lifecycle semantics|pre_llm_call|post_llm_call|on_session_start|on_session_end' PLANNING.md`: pass | Added Hermes-style plugin lifecycle items to `PLANNING.md` so the safe backlog now covers plugin hook visibility instead of leaving it implicit.
 - `keep` via `rg -n 'cron scheduler semantics|scheduled automations|delivery to any platform|natural language cron job' PLANNING.md`: pass | Added Hermes-style scheduled automation items to `PLANNING.md` so the safe backlog now covers cron scheduler semantics instead of leaving them implicit.
 - `keep` via `rg -n 'model-selection surface semantics|provider-specific model discovery|live `/models` probes|custom endpoints are verified or normalized|where model/provider changes happen' PLANNING.md`: pass | Added Hermes-style model-selection surface items to `PLANNING.md` so the safe backlog now covers model/provider switching and discovery instead of leaving them implicit.
 - `keep` via `rg -n 'live-status semantics|`/status` reports live session state and token usage|effective model and provider|status surface reports live session state, token usage, and the effective model/provider' PLANNING.md`: pass | Added Hermes-style live-status items to `PLANNING.md` so the safe backlog now covers runtime status visibility instead of leaving it implicit.
