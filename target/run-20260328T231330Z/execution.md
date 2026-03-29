@@ -526,6 +526,15 @@
 - Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that resume-by-name picks the most recent titled lineage variant and that session storage keeps lineage across compressed/resumed sessions.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-lineage semantics.
 - Evaluator: `rg -n 'session-lineage semantics|resume-by-name picks the most recent session in a title lineage|latest session in a lineage|lineage across compressed/resumed sessions|lineage variants like `my project`, `my project #2`, and `my project #3`' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a session-naming-lifecycle planning cycle.
+- Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that titles may be auto-generated after the first exchange, `/title` can queue before the session exists, and sessions can later be renamed explicitly from the CLI.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-naming lifecycle semantics.
+- Evaluator: `rg -n 'session-naming lifecycle semantics|titles may be auto-generated after the first exchange|/title can be queued before the session exists|sessions can later be renamed explicitly from the CLI|session titles are auto-generated' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
 - 2026-03-29T02:21:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:21:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:22:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:23:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:23:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:24:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:24:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:24:30Z screen-idle heartbeat injected with prompt source `program_md`

@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style session-lineage semantics.
-- Primary evaluator: `rg -n 'session-lineage semantics|resume-by-name picks the most recent session in a title lineage|latest session in a lineage|lineage across compressed/resumed sessions|lineage variants like `my project`, `my project #2`, and `my project #3`' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style session-naming lifecycle semantics.
+- Primary evaluator: `rg -n 'session-naming lifecycle semantics|titles may be auto-generated after the first exchange|/title can be queued before the session exists|sessions can later be renamed explicitly from the CLI|session titles are auto-generated' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style session-lineage items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving resume-by-name lineage behavior implicit.
+- If `PLANNING.md` explicitly includes Hermes-style session-naming lifecycle items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving title-generation and rename behavior implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style session-lineage items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style session-naming lifecycle items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
