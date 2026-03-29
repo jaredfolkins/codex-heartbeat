@@ -40,6 +40,7 @@
 - Resumed-session UX also needs explicit recap semantics; otherwise a safe implementation can describe session resume without saying whether users return to a compact "Previous Conversation" panel or only a one-line resume hint.
 - Long-lived titled sessions also need explicit lineage semantics; otherwise a safe implementation can say “resume by name” without telling users whether that means an exact match or the newest session in a lineage.
 - Session naming also needs explicit lifecycle semantics; otherwise a safe implementation can mention titles without saying whether they are generated automatically, queued before the first message, or renamed later from a non-chat surface.
+- Session persistence also needs explicit exit discoverability semantics; otherwise a safe implementation can support session resume in theory while leaving operators unsure what identifier or command they should use when a session ends.
 
 ## What Failed
 
@@ -90,3 +91,4 @@
 - If phase 1 exposes longer-lived sessions, decide early whether resume shows a compact recap panel or only a minimal one-liner, and surface any `resume_display`-style toggle so resumed-session UX stays predictable.
 - If phase 1 exposes longer-lived titled sessions, decide early whether resume-by-name targets the newest lineage variant and how compressed/resumed descendants are grouped so named-session workflows stay predictable over time.
 - If phase 1 exposes session naming, decide early whether titles are auto-generated, whether `/title` can queue before the first message, and whether rename exists outside chat so title behavior stays predictable across the whole session lifecycle.
+- If phase 1 exposes session persistence, decide early whether exit prints the session ID and a direct resume command so the return path to an earlier session stays obvious without extra browsing steps.

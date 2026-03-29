@@ -32,6 +32,7 @@
 - Hermes also exposes first-class resume-recap behavior: resuming a session shows a "Previous Conversation" panel with a compact recap by default, while config can switch back to a minimal one-liner resume display.
 - Hermes also exposes first-class session-lineage behavior: resume-by-name picks the most recent session in a title lineage, and CLI storage keeps lineage across compressed/resumed sessions instead of treating every resume as an unrelated flat history entry.
 - Hermes also exposes first-class session-naming lifecycle behavior: titles may be auto-generated after the first exchange, `/title` can be queued before the session exists, and sessions can later be renamed explicitly from the CLI.
+- Hermes also exposes first-class session-exit discoverability behavior: when a CLI session ends, Hermes shows the session ID and prints a direct resume command instead of making operators rediscover how to get back into the same conversation.
 - Hermes also separates global identity/personality concerns from project context files, so the operator model needs an explicit precedence rule for which layer wins when a named bundle, global persona, and repo-local context all provide overlapping instructions.
 - Hermes also exposes a distinct global identity file contract: `SOUL.md` lives only in `HERMES_HOME`, occupies identity slot `#1`, stays separate from project context discovery, and falls back to a built-in default identity when absent or empty.
 - Hermes treats `AGENTS.md` as a hierarchical project-context input, combining multiple files across a monorepo instead of assuming a single repo-root instruction file.
@@ -72,6 +73,7 @@
 - [ ] Define resume-recap semantics explicitly, so operators know whether resuming a session shows a compact "Previous Conversation" recap, what content is hidden or truncated, and whether a minimal one-liner display mode exists.
 - [ ] Define session-lineage semantics explicitly, so operators know whether resume-by-name selects the newest session in a title lineage and whether resumed/compressed descendants are grouped as one lineage instead of a flat list of unrelated sessions.
 - [ ] Define session-naming lifecycle semantics explicitly, so operators know whether titles are auto-generated, whether `/title` may be queued before the first message, and whether a later rename flow exists outside the live chat surface.
+- [ ] Define session-exit discoverability semantics explicitly, so operators know whether session IDs are shown on exit, whether a direct resume command is printed, and whether the return path to an earlier session is discoverable without browsing internal state by hand.
 - [ ] Record profile-change history in operator-visible artifacts or status so it is clear when a bundle was selected, cleared, deferred, or promoted to the default.
 - [ ] Define how prompt-profile selection interacts with persistent memory or user-profile state, so operators know whether choosing a bundle changes only instructions or also affects saved context.
 - [ ] Define instruction-layer precedence explicitly, so operators know whether global persona/profile settings or repo-local context files win when they overlap.
@@ -127,6 +129,7 @@
 - [ ] A user can tell whether resuming a session shows a compact "Previous Conversation" panel or only a minimal one-liner, and can tell what recap content is shown, hidden, or truncated.
 - [ ] A user can tell whether resuming by title picks the latest session in a lineage, how lineage variants like `my project`, `my project #2`, and `my project #3` are treated, and whether compressed/resumed descendants stay grouped as one lineage.
 - [ ] A user can tell whether session titles are auto-generated, whether a pre-first-message title request is queued until the session starts, and whether sessions can later be renamed explicitly outside the live `/title` surface.
+- [ ] A user can tell whether exiting a session shows the session ID, whether exit prints a direct resume command, and how to return to that exact session without digging through hidden state.
 - [ ] A user can inspect a timestamped record of recent profile changes so active and pending bundle state is auditable instead of purely ephemeral.
 - [ ] A user can tell whether a selected bundle affects persistent memory/user-profile context or only the prompt stack for the current workspace/session.
 - [ ] A user can tell which instruction layer wins when global persona settings, a named bundle, and repo-local context files overlap.
@@ -171,6 +174,7 @@
 - [ ] In phase 1, document whether resume shows a compact recap panel by default or only a minimal one-liner, and surface any `resume_display`-style toggle so resumed-session UX stays predictable.
 - [ ] In phase 1, document whether resume-by-name picks the latest session in a lineage and how compressed/resumed descendants remain grouped, so long-lived titled-session workflows stay predictable instead of feeling flat or ambiguous.
 - [ ] In phase 1, document whether session titles are auto-generated, whether `/title` can queue before the first message, and whether an explicit rename flow exists, so session naming stays predictable across the whole session lifecycle.
+- [ ] In phase 1, document whether exit shows the session ID and prints a direct resume command, so returning to the same session stays discoverable without extra session-browsing steps.
 - [ ] If phase 1 adds profile selection, record profile-change events in `target/` artifacts or `status` so deferred and persisted changes remain explainable after the fact.
 - [ ] In phase 1, either keep profile selection isolated from persistent memory/user-profile state or document the exact interaction explicitly in status/help/artifacts.
 - [ ] In phase 1, document a simple precedence rule across global persona settings, named bundles, and repo-local context files so overlapping instructions are explainable before any richer transport work starts.
