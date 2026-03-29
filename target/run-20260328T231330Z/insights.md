@@ -2,6 +2,7 @@
 
 ## What Worked
 
+- If phase 1 expects operators to switch providers and models confidently, decide early where model changes happen and whether endpoint verification or provider-specific model discovery is surfaced so that workflow does not stay buried in config edits.
 - If phase 1 expects operators to trust runtime state, decide early whether a live status surface reports session state, token usage, and effective model/provider so users do not have to infer that state from logs or prompt chrome.
 - `PLANNING.md` is still the best place to express the requested `[ ]` implementation backlog once the status/help/docs surfaces already agree.
 - A simple grep evaluator was enough to keep the planning cycle bounded while still checking that the exact reviewed links showed up in the planning artifact.

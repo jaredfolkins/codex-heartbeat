@@ -581,6 +581,10 @@
 - Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.3.0.md`; confirmed that `/status` reports live state and tokens and shows the effective model and provider.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style live-status semantics.
 - Evaluator: `rg -n 'live-status semantics|`/status` reports live session state and token usage|effective model and provider|status surface reports live session state, token usage, and the effective model/provider' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a model-selection planning cycle.
+- Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.5.0.md`, `tmp/hermes-agent-src/RELEASE_v0.3.0.md`, and `tmp/hermes-agent-src/README.md`; confirmed that Hermes exposes explicit model/provider selection UX plus provider-aware routing, custom endpoint support, and provider-specific discovery such as curated lists or live `/models` probes.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style model-selection surface semantics.
+- Evaluator: `rg -n 'model-selection surface semantics|provider-specific model discovery|live `/models` probes|custom endpoints are verified or normalized|where model/provider changes happen' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
 - 2026-03-29T02:33:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:33:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:34:05Z screen-idle heartbeat injected with prompt source `program_md`
@@ -609,3 +613,6 @@
 - 2026-03-29T02:46:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:47:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:48:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:51:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:53:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:53:20Z screen-idle heartbeat injected with prompt source `program_md`
