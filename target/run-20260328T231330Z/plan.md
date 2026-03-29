@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated progress-display semantics.
-- Primary evaluator: `rg -n "delegated-progress-display semantics|real-time CLI tree-view|per-task completion lines|batched parent progress callback updates|child progress is shown as real-time per-task tool activity" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style tool-activity display semantics.
+- Primary evaluator: `rg -n "tool-activity display semantics|tool progress is off, new-only, all, or verbose|tool activity is hidden, new-only, all, or verbose|operator-visible toggle like /verbose|display is `off`, `new`, `all`, or `verbose`" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style delegated progress-display items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving child-progress surfacing implicit.
+- If `PLANNING.md` explicitly includes Hermes-style tool-activity display items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving tool-progress visibility implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style delegated progress-display items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style tool-activity display items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

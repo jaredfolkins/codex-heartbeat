@@ -465,6 +465,10 @@
 - Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that CLI mode shows a real-time tree-view with per-task completion lines while gateway mode batches delegated progress through the parent progress callback.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated progress-display semantics.
 - Evaluator: `rg -n "delegated-progress-display semantics|real-time CLI tree-view|per-task completion lines|batched parent progress callback updates|child progress is shown as real-time per-task tool activity" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a tool-activity-display planning cycle.
+- Reviewed Hermes messaging docs in `tmp/hermes-agent-src/website/docs/user-guide/messaging/index.md`; confirmed that tool activity display is configurable as `off`, `new`, `all`, or `verbose`, with an optional `/verbose` toggle in messaging.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style tool-activity display semantics.
+- Evaluator: `rg -n "tool-activity display semantics|tool progress is off, new-only, all, or verbose|tool activity is hidden, new-only, all, or verbose|operator-visible toggle like /verbose|display is \`off\`, \`new\`, \`all\`, or \`verbose\`" PLANNING.md` -> pass
 - 2026-03-29T02:00:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:45Z screen-idle heartbeat injected with prompt source `program_md`
@@ -475,3 +479,7 @@
 - 2026-03-29T02:04:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:05:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:05:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:06:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:07:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:07:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:08:00Z screen-idle heartbeat injected with prompt source `program_md`
