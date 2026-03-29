@@ -221,6 +221,10 @@
 - Updated `PLANNING.md` so the `Task List`, `Phase 1 Recommendation`, and `Hermes Parity Gap` sections now include Hermes-style delegated cross-review work items grounded in the reviewed sources.
 - Evaluator: `rg -n "delegated cross-review|Hermes Parity Gap|Phase 1 Recommendation|Task List" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only tightened the source-grounded implementation backlog.
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a planning-traceability cycle.
+- Updated `PLANNING.md` so the backlog now includes source-traceability work items around `review_basis` in the main task list, acceptance criteria, and Hermes parity-gap checklist.
+- Evaluator: `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only tightened how the planning backlog expresses source-grounded parity evidence.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -232,3 +236,4 @@
 - 2026-03-29T00:49:05Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:49:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:49:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:50:20Z screen-idle heartbeat injected with prompt source `program_md`

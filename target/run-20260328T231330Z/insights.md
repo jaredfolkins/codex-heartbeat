@@ -3,8 +3,8 @@
 ## What Worked
 
 - `PLANNING.md` is still the best place to express the requested `[ ]` implementation backlog once the status/help/docs surfaces already agree.
-- A simple grep evaluator was enough to keep the planning cycle bounded while still checking the exact sections that should carry the new task.
-- The reviewed Hermes multi-LLM workflow belongs in the backlog itself, not only in parity notes and docs.
+- A simple grep evaluator was enough to keep the planning cycle bounded while still checking the exact sections that should carry the new traceability task.
+- Source-grounding details such as `review_basis` belong in the backlog itself, not only in status/docs surfaces.
 
 ## What Failed
 
@@ -12,7 +12,7 @@
 
 ## Avoid Next Time
 
-- Do not let the planning backlog drift behind the already-documented parity gaps.
+- Do not let the planning backlog drift behind the already-documented parity and traceability surfaces.
 - Do not claim Hermes parity from a more complete task list alone.
 
 ## Promising Next Directions

@@ -31,6 +31,7 @@
 - [ ] Add a Hermes-style delegated cross-review surface for benign evaluator and council work so multi-agent review is a first-class workflow instead of an improvised fallback.
 - [ ] Add a safe evaluator harness that tests harmless instruction-following canaries on `gpt-5.3-codex-spark` with `high` reasoning, so we can verify whether the prompt stack sticks without attempting to bypass safeguards.
 - [ ] Record the selected profile, model, reasoning effort, and instruction-source metadata in `target/` artifacts and runtime logs for reproducibility.
+- [ ] Record source-traceability metadata such as `review_basis` anywhere parity claims are surfaced so operators can see which Hermes materials the comparison is grounded in.
 - [ ] Add tests for profile precedence, new-vs-resume session behavior, evaluator recording, and any SDK/app-server integration seam.
 - [ ] Document the limitation clearly: user-message heartbeat injections are weaker than base/developer instruction channels, so "GODMODE works" is not a meaningful claim unless the wrapper controls the full prompt stack.
 
@@ -46,6 +47,7 @@
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
+- [ ] The parity explanation stays traceable to reviewed source material instead of only local shorthand.
 - [ ] The docs clearly separate "prompt-profile support" from any unsupported or unsafe "GODMODE" expectation.
 
 ### Phase 1 Recommendation
@@ -62,4 +64,5 @@
 - [ ] Add optional ephemeral prefill for new and resumed sessions so the wrapper can shape the first turn without persisting prompt hacks into workspace files.
 - [ ] Add a harmless canary-scoring harness that can distinguish "profile attached" from "profile actually changed behavior" in a repeatable way.
 - [ ] Add a Hermes-style delegated cross-review workflow so the wrapper can support the reviewed multi-LLM research pattern, not just single-agent prompt stacking.
+- [ ] Keep parity claims source-grounded with explicit review-basis evidence instead of relying on local wording alone.
 - [ ] Define a parity claim rule that stays false until the wrapper can prove equivalent launch-time control and benign evaluation coverage.
