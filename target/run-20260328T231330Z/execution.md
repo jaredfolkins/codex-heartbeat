@@ -269,6 +269,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover the order and source labeling for hierarchical `AGENTS.md` merges.
 - Evaluator: `rg -n "repo-context merge semantics|order in which hierarchical|relative path header|source label|merge order and expose source labels" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about how multiple repo-context files combine in monorepos.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes context-file compatibility notes to establish the baseline for a repo-guidance-compatibility planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether existing repo guidance files like `.cursorrules` are ignored, imported, or merged alongside `AGENTS.md`.
+- Evaluator: `rg -n "\\.cursorrules|context-file compatibility semantics|existing repo guidance files|existing repo instruction files|compatibility files like" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about compatibility with adjacent repo instruction-file conventions.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -346,3 +350,7 @@
 - 2026-03-29T01:24:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:25:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:25:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:26:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:26:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:26:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:27:05Z screen-idle heartbeat injected with prompt source `program_md`

@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style hierarchical repo-context merge order and path labeling.
-- Primary evaluator: `rg -n "repo-context merge semantics|order in which hierarchical|relative path header|source label|merge order and expose source labels" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style compatibility with adjacent repo instruction-file conventions.
+- Primary evaluator: `rg -n "\\.cursorrules|context-file compatibility semantics|existing repo guidance files|existing repo instruction files|compatibility files like" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style hierarchical repo-context merge-order and path-labeling items, the implementation backlog will better match the reviewed Hermes operator workflow instead of only discovering files without explaining how they combine.
+- If `PLANNING.md` explicitly includes Hermes-style context-file compatibility items, the implementation backlog will better match the reviewed Hermes operator workflow instead of treating `AGENTS.md` as the only repo-guidance format worth considering.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style hierarchical repo-context merge-order and path-labeling items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style context-file compatibility items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
