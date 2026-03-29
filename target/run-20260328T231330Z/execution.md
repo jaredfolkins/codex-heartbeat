@@ -211,9 +211,16 @@
 - Updated `README.md` so the documented `hermes_parity` status surface now includes `review_basis` alongside `task_list` and `claim_rule`.
 - Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|review_basis|delegated cross-review|not equivalent to Hermes Agent's" README.md` -> pass
 - This cycle did not change runtime behavior; it only aligned the operator docs with the current safe parity surface more completely.
+- Re-read `target/latest-context.md`, the current `status.hermes_parity` surface, and the root-help text to establish the baseline for a CLI-help cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `printRootUsage()` now says the `status` parity details include `review_basis` alongside the safe `task_list`, `claim_rule`, and Hermes-style review gap.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for root help mentioning `` `review_basis` `` alongside the existing `launch_settings`, `hermes_parity`, `task_list`, `claim_rule`, and Hermes-style review gap expectations.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle did not change runtime behavior; it only aligned the built-in CLI help with the current full safe parity surface.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:39:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:41:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:43:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:45:55Z screen-idle heartbeat injected with prompt source `program_md`

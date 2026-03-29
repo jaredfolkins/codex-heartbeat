@@ -716,6 +716,7 @@ func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
 		"`hermes_parity`",
 		"`task_list`",
 		"`claim_rule`",
+		"`review_basis`",
 		"Hermes-style review gap",
 	} {
 		if !strings.Contains(output.String(), expected) {

@@ -1313,7 +1313,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  codex-heartbeat status --workdir DIR")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Bare flags default to the interactive `run` command.")
-	fmt.Fprintln(w, "The `status` command reports session state plus resolved `launch_settings` and `hermes_parity` details, including the safe parity `task_list`, `claim_rule`, and Hermes-style review gap.")
+	fmt.Fprintln(w, "The `status` command reports session state plus resolved `launch_settings` and `hermes_parity` details, including the safe parity `task_list`, `claim_rule`, `review_basis`, and Hermes-style review gap.")
 	fmt.Fprintln(w, "The --interval and --end-in flags accept minute, hour, and day units in short or long form.")
 	fmt.Fprintln(w, "Examples: 30m, 2h, 1d, 15 minutes, 2 hours, 1 day")
 }

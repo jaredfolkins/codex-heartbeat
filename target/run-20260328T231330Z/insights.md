@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- README is a good follow-up surface once the status payload already carries the right source-grounding data.
-- A single grep-based evaluator was enough to keep the docs cycle bounded while still checking the key parity terms together.
-- Once `review_basis` existed in `status`, mirroring it in README completed the main operator-visible parity explanation path.
+- Root CLI help is a good final parity-discoverability surface once README and raw `status` JSON already agree.
+- Reusing the focused root-help/status test kept the cycle bounded while still rechecking the parity and launch-setting surfaces together.
+- Once `review_basis` existed in `status` and README, mirroring it in root help completed the main operator-visible parity explanation path.
 
 ## What Failed
 
@@ -12,8 +12,8 @@
 
 ## Avoid Next Time
 
-- Do not update docs in a way that drifts from the actual `status` JSON surface.
-- Do not claim Hermes parity from more complete parity docs alone.
+- Do not update help text in a way that drifts from the actual `status` JSON surface.
+- Do not claim Hermes parity from more complete help text alone.
 
 ## Promising Next Directions
 
