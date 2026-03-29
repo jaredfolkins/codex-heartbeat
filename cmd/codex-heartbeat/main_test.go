@@ -708,6 +708,7 @@ func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
 		"codex-heartbeat status --workdir DIR",
 		"`launch_settings`",
 		"`hermes_parity`",
+		"`task_list`",
 	} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("printRootUsage() missing %q: %s", expected, output.String())

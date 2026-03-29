@@ -7,6 +7,7 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Added `task_list` to the built-in root-help status summary so CLI help now points at the same safe parity-gap surface as `status` and README.
 - `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|not equivalent to Hermes Agent's" README.md`: pass | Documented that `hermes_parity` includes a safe `task_list`, so the README now matches the current parity-gap status surface.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Added a safe `task_list` to `status.hermes_parity` so the current non-parity answer includes concrete next steps, not just missing capabilities.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceSeedsPlanningGuardrails|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1`: pass | Seeded the default `PLANNING.md` scaffold with generic blocked/non-goals and acceptance-criteria checklists so fresh autoresearch workspaces start with safer planning guardrails.

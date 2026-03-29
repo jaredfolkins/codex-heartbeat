@@ -162,3 +162,13 @@
 - 2026-03-29T00:22:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:23:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:23:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:24:25Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and the root-help tests to establish the baseline for a CLI-help cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `printRootUsage()` now says the `status` command's `hermes_parity` details include the safe parity `task_list`.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for root help mentioning `` `task_list` `` alongside `` `launch_settings` `` and `` `hermes_parity` ``.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle did not change runtime behavior; it only aligned the built-in CLI help with the current `hermes_parity.task_list` status surface.
+- 2026-03-29T00:26:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:27:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:27:15Z screen-idle heartbeat injected with prompt source `program_md`
