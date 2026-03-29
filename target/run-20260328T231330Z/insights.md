@@ -97,3 +97,4 @@
 - If phase 1 spans both CLI and messaging, decide early which control commands are shared across interfaces and which remain platform-specific so operators do not have to rediscover the control surface every time they switch entry points.
 - If phase 1 exposes reset/new-session flows, decide early what configuration is surfaced at that moment so operators can confirm which model/personality/profile/tooling state the fresh session actually picked up.
 - If phase 1 expects operators to reason about active model/provider/profile state mid-session, decide early whether there is an always-visible config/status bar and whether that surface can be toggled without detouring through a separate status command.
+- If phase 1 exposes in-flight operator control, decide early whether follow-up prompts may be queued without interruption and when queued input runs, so users do not have to choose blindly between waiting and force-interrupting active work.
