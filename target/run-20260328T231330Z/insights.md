@@ -27,6 +27,7 @@
 - Delegated child-agent review also needs an explicit tool-narrowing rule; otherwise operators still cannot tell whether a child inherits the parent tool surface or runs under a smaller allowed toolset.
 - Delegated child-agent review also needs an explicit recursion limit; otherwise operators still cannot tell whether child agents may spawn grandchildren or whether delegation intentionally stops after one layer.
 - Delegated child-agent review also needs an explicit context-handoff rule; otherwise operators still cannot tell what goal/context package the parent actually sends or whether the child silently inherits ambient conversation state.
+- Delegated child-agent review also needs an explicit summary schema; otherwise operators still cannot tell what a child report must contain beyond a vague final summary.
 
 ## What Failed
 
@@ -64,3 +65,4 @@
 - If phase 1 exposes delegated child-agent review, decide early whether child tools are narrowed to a subset and where the allowed toolsets appear so delegated scope stays explainable.
 - If phase 1 exposes delegated child-agent review, decide early whether recursion stops at one child layer and where that limit is surfaced so delegation fan-out stays predictable.
 - If phase 1 exposes delegated child-agent review, decide early what goal/context handoff is shown to the operator so child inputs stay auditable instead of implicit.
+- If phase 1 exposes delegated child-agent review, decide early what summary fields every child must return so delegated outputs stay comparable instead of free-form.
