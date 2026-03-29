@@ -412,6 +412,10 @@
 - Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-summary-schema planning cycle.
 - Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that child agents are expected to return a structured summary covering what they did, what they found, files modified, and issues encountered.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-summary schema semantics.
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-concurrency-cap planning cycle.
+- Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that parallel delegation is capped at a bounded number of concurrent child agents instead of allowing unlimited fan-out.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-concurrency-cap semantics.
+- Evaluator: `rg -n "delegated-concurrency-cap semantics|how many child agents may run concurrently|maximum concurrent child-agent fan-out|bounded number of concurrent child agents|unlimited delegated fan-out" PLANNING.md` -> pass
 - Evaluator: `rg -n "delegated-summary schema semantics|what it did|what it found|files touched|issues encountered|expected child-summary fields" PLANNING.md` -> pass
 - 2026-03-29T01:39:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:39:55Z screen-idle heartbeat injected with prompt source `program_md`
@@ -432,3 +436,8 @@
 - 2026-03-29T01:52:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:52:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:52:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:53:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:53:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:54:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:54:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:54:50Z screen-idle heartbeat injected with prompt source `program_md`
