@@ -7,12 +7,12 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "active and pending bundle|queued next-session bundle|active-versus-pending profile state|what is in effect now versus what will apply" PLANNING.md`: pass | Added Hermes-style active-versus-pending profile-state items to `PLANNING.md` so the safe backlog now covers how deferred bundle changes stay visible before reset/new session.
 - `keep` via `rg -n "fresh-session flows|one-step reset/new-session flow|fresh session with the selected bundle|next-session-only switching" PLANNING.md`: pass | Added Hermes-style reset/new-session flow items to `PLANNING.md` so the safe backlog now covers how next-session-only bundle changes become usable from operator UX.
 - `keep` via `rg -n "profile-switch scope semantics|switching profiles takes effect immediately|apply to current session|next fresh thread|next reset/new session" PLANNING.md`: pass | Added Hermes-style profile-switch scope items to `PLANNING.md` so the safe backlog now covers whether named bundles apply to the active conversation or only to future sessions.
 - `keep` via `rg -n "discoverable profile-selection|current selection from the wrapper's own UX|selected profile discoverable|list and switch named bundles" PLANNING.md`: pass | Added Hermes-style profile discoverability/switching UX items to `PLANNING.md` so the safe backlog now covers listing and confirming named bundles, not just defining them.
 - `keep` via `rg -n "personalities|context files|operator-visible|personality-style bundle|phase-1 UX close to Hermes" PLANNING.md`: pass | Added Hermes-style personality/context-file UX items to `PLANNING.md` so the safe implementation backlog now covers named, operator-visible instruction bundles rather than only hidden prompt-plumbing fields.
 - `keep` via `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded|Phase 1 Recommendation" PLANNING.md`: pass | Added a phase-1 `review_basis` traceability item so the planning backlog now carries source-grounded parity evidence through the near-term implementation track too.
-- `keep` via `rg -n "^### Review Basis|2037294903814738261|github.com/nousresearch/hermes-agent|cross-review|launch-time instruction control" PLANNING.md`: pass | Added a `Review Basis` section to `PLANNING.md` so the source-grounded task list now points directly at the two reviewed links instead of only summarizing them indirectly.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

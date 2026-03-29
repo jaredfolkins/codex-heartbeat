@@ -249,6 +249,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover a one-step fresh-session path when profile switching only takes effect on new conversations.
 - Evaluator: `rg -n "fresh-session flows|one-step reset/new-session flow|fresh session with the selected bundle|next-session-only switching" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about how next-session-only profile changes should be used from operator UX.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for an active-versus-pending profile-state planning cycle.
+- Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover showing both the active bundle and the queued next-session bundle when switching is deferred.
+- Evaluator: `rg -n "active and pending bundle|queued next-session bundle|active-versus-pending profile state|what is in effect now versus what will apply" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about how deferred profile changes stay visible before reset/new session.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -281,3 +285,6 @@
 - 2026-03-29T01:04:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:05:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:05:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:06:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:07:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:07:25Z screen-idle heartbeat injected with prompt source `program_md`
