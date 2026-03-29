@@ -686,6 +686,52 @@ Primary evaluator: go test ./...
 	}
 }
 
+func TestInjectHeartbeatLoopRespectsPromptCooldown(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+	projectDir := filepath.Join(root, "runtime")
+	cfg := workspaceConfig{
+		LogsDir:    filepath.Join(projectDir, "logs"),
+		ProjectDir: projectDir,
+	}
+	state := workspaceState{SessionID: "session-123"}
+	program := `# Program
+
+Objective: hello objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+	prompts, err := newPromptResolver(workdir, false)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+	artifacts := newAutoresearchArtifacts(workdir, time.Now())
+	promptTracker := newPromptInjectionTracker(time.Now())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		injectHeartbeatLoop(ctx, &output, prompts, artifacts, 10*time.Millisecond, false, promptTracker, cfg, &state, nil)
+		close(done)
+	}()
+
+	time.Sleep(35 * time.Millisecond)
+	cancel()
+	<-done
+
+	if got := output.String(); got != "" {
+		t.Fatalf("injectHeartbeatLoop() output = %q, want no injected prompt during cooldown", got)
+	}
+}
+
 func TestRunInteractiveCommandRejectsConflictingHeartbeatFlags(t *testing.T) {
 	t.Parallel()
 

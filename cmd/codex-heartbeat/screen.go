@@ -16,14 +16,15 @@ import (
 )
 
 const (
-	screenIdlePollInterval = 5 * time.Second
-	screenIdlePollCount    = 3
-	screenIdleRecentLines  = 8
-	screenIdleQuietWindow  = 20 * time.Second
-	screenIdleOutputWindow = 30 * time.Second
-	screenIdlePromptGrace  = 45 * time.Second
-	screenIdleFallbackWait = 60 * time.Minute
-	screenSnapshotLimit    = 240
+	screenIdlePollInterval  = 5 * time.Second
+	screenIdlePollCount     = 3
+	screenIdleRecentLines   = 8
+	screenIdleQuietWindow   = 20 * time.Second
+	screenIdleOutputWindow  = 30 * time.Second
+	promptInjectionCooldown = 45 * time.Second
+	screenIdlePromptGrace   = promptInjectionCooldown
+	screenIdleFallbackWait  = 60 * time.Minute
+	screenSnapshotLimit     = 240
 )
 
 var screenElapsedPattern = regexp.MustCompile(`\((?:\d+h )?(?:\d+m )?\d+s\b`)
@@ -384,6 +385,36 @@ func (t *promptInjectionTracker) LastPromptAt() time.Time {
 	return lastPromptAt
 }
 
+func (t *promptInjectionTracker) TryMark(now time.Time, cooldown time.Duration) (time.Time, bool) {
+	if t == nil {
+		return time.Time{}, true
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	previous := t.lastPromptAt
+	if promptInjectionCoolingDown(now, previous, cooldown) {
+		return previous, false
+	}
+
+	t.lastPromptAt = now
+	return previous, true
+}
+
+func (t *promptInjectionTracker) Restore(reserved, previous time.Time) {
+	if t == nil {
+		return
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.lastPromptAt.Equal(reserved) {
+		t.lastPromptAt = previous
+	}
+}
+
 func (w inputActivityWriter) Write(p []byte) (int, error) {
 	if len(p) > 0 && w.tracker != nil {
 		w.tracker.Mark(time.Now())
@@ -662,10 +693,15 @@ func evaluateScreenIdlePoll(now time.Time, inputQuiet bool, outputQuiet bool, cu
 }
 
 func screenIdleRecentPrompt(now, lastPromptAt time.Time) bool {
-	if lastPromptAt.IsZero() {
+	return promptInjectionCoolingDown(now, lastPromptAt, screenIdlePromptGrace)
+}
+
+func promptInjectionCoolingDown(now, lastPromptAt time.Time, cooldown time.Duration) bool {
+	if cooldown <= 0 || lastPromptAt.IsZero() {
 		return false
 	}
-	return now.Sub(lastPromptAt) < screenIdlePromptGrace
+
+	return now.Sub(lastPromptAt) < cooldown
 }
 
 func screenIdleFallbackDue(now, lastPromptAt time.Time, quiet bool) bool {
@@ -818,8 +854,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 					reportAsyncError(errCh, err)
 					return
 				}
-				if err := injectPrompt(writer, resolution.Text); err == nil {
-					promptTracker.Mark(now)
+				if injected, err := injectPromptWithCooldown(writer, resolution.Text, promptTracker, now); err == nil && injected {
 					poll.Injected = true
 					poll.LastPromptAt = now.Format(time.RFC3339)
 					runtimeState.Injected = true
@@ -831,6 +866,13 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 						SessionID: state.SessionID,
 						Message:   screenIdleHeartbeatSummary(),
 					})
+				} else if err == nil {
+					poll.ShouldInject = false
+					poll.Reason = decision.reason + ":recent_prompt_cooldown"
+					runtimeState.ShouldInject = false
+					runtimeState.Reason = poll.Reason
+					runtimeState.LastPromptAt = promptTracker.LastPromptAt()
+					poll.LastPromptAt = runtimeState.LastPromptAt.Format(time.RFC3339)
 				}
 			}
 

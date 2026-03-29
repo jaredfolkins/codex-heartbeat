@@ -224,6 +224,36 @@ func TestOutputActivityTrackerQuietWindow(t *testing.T) {
 	}
 }
 
+func TestPromptInjectionTrackerCooldown(t *testing.T) {
+	t.Parallel()
+
+	tracker := newPromptInjectionTracker(time.Time{})
+	now := time.Date(2026, time.March, 25, 12, 0, 0, 0, time.UTC)
+
+	previous, ok := tracker.TryMark(now, promptInjectionCooldown)
+	if !ok {
+		t.Fatal("first prompt reservation should succeed")
+	}
+	if !previous.IsZero() {
+		t.Fatalf("first prompt reservation previous time = %s, want zero", previous)
+	}
+
+	previous, ok = tracker.TryMark(now.Add(5*time.Second), promptInjectionCooldown)
+	if ok {
+		t.Fatal("recent prompt reservation should be blocked by cooldown")
+	}
+	if !previous.Equal(now) {
+		t.Fatalf("blocked prompt reservation previous time = %s, want %s", previous, now)
+	}
+
+	if !promptInjectionCoolingDown(now.Add(5*time.Second), now, promptInjectionCooldown) {
+		t.Fatal("promptInjectionCoolingDown() should report an active cooldown")
+	}
+	if promptInjectionCoolingDown(now.Add(promptInjectionCooldown), now, promptInjectionCooldown) {
+		t.Fatal("promptInjectionCoolingDown() should clear once the cooldown elapses")
+	}
+}
+
 func TestTrackUserInputMarksActivity(t *testing.T) {
 	t.Parallel()
 

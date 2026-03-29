@@ -223,7 +223,7 @@ func runInteractiveCommand(args []string) error {
 	cmd.Env = os.Environ()
 
 	startedAt := time.Now()
-	promptTracker := newPromptInjectionTracker(startedAt)
+	promptTracker := newPromptInjectionTracker(time.Time{})
 	appendEvent(cfg.LogsDir, logEvent{
 		Timestamp: startedAt.Format(time.RFC3339),
 		Type:      "run_start",
@@ -293,7 +293,7 @@ func runInteractiveCommand(args []string) error {
 		if strings.TrimSpace(state.SessionID) == "" {
 			injectImmediately = true
 		}
-		go injectHeartbeatLoop(ctx, ptmx, prompts, artifacts, interval.Duration(), injectImmediately, cfg, &state, schedulerErrors)
+		go injectHeartbeatLoop(ctx, ptmx, prompts, artifacts, interval.Duration(), injectImmediately, promptTracker, cfg, &state, schedulerErrors)
 	}
 
 	outputDone := make(chan error, 1)
@@ -1124,11 +1124,11 @@ func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompt
 			reportAsyncError(errCh, err)
 			return
 		}
-		if err := injectPrompt(writer, resolution.Text); err == nil {
-			promptTracker.Mark(time.Now())
+		now := time.Now()
+		if injected, err := injectPromptWithCooldown(writer, resolution.Text, promptTracker, now); err == nil && injected {
 			_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("startup heartbeat injected with prompt source `%s`", resolution.Source))
 			appendEvent(cfg.LogsDir, logEvent{
-				Timestamp: time.Now().Format(time.RFC3339),
+				Timestamp: now.Format(time.RFC3339),
 				Type:      "heartbeat_injected",
 				SessionID: state.SessionID,
 				Message:   fmt.Sprintf("startup=%s", formatFlexibleDuration(delay)),
@@ -1137,7 +1137,7 @@ func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompt
 	}
 }
 
-func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, interval time.Duration, immediate bool, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, interval time.Duration, immediate bool, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
 	if interval <= 0 {
 		return
 	}
@@ -1172,10 +1172,11 @@ func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptRe
 				reportAsyncError(errCh, err)
 				return
 			}
-			if err := injectPrompt(writer, resolution.Text); err == nil {
+			now := time.Now()
+			if injected, err := injectPromptWithCooldown(writer, resolution.Text, promptTracker, now); err == nil && injected {
 				_ = appendExecutionNote(artifacts.ExecutionPath, fmt.Sprintf("timed heartbeat injected with prompt source `%s`", resolution.Source))
 				appendEvent(cfg.LogsDir, logEvent{
-					Timestamp: time.Now().Format(time.RFC3339),
+					Timestamp: now.Format(time.RFC3339),
 					Type:      "heartbeat_injected",
 					SessionID: state.SessionID,
 					Message:   formatFlexibleDuration(interval),
@@ -1203,6 +1204,20 @@ func reportAsyncError(errCh chan<- error, err error) {
 	case errCh <- err:
 	default:
 	}
+}
+
+func injectPromptWithCooldown(writer io.Writer, promptText string, promptTracker *promptInjectionTracker, now time.Time) (bool, error) {
+	previous, ok := promptTracker.TryMark(now, promptInjectionCooldown)
+	if !ok {
+		return false, nil
+	}
+
+	if err := injectPrompt(writer, promptText); err != nil {
+		promptTracker.Restore(now, previous)
+		return false, err
+	}
+
+	return true, nil
 }
 
 func injectPrompt(writer io.Writer, promptText string) error {
