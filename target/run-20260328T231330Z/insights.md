@@ -95,3 +95,4 @@
 - If phase 1 exposes session persistence, decide early whether exit prints the session ID and a direct resume command so the return path to an earlier session stays obvious without extra browsing steps.
 - If phase 1 exposes long-lived sessions, decide early whether prior conversations are searchable across sessions and whether a built-in search tool or equivalent full-text recall surface exists so old context can be recovered predictably.
 - If phase 1 spans both CLI and messaging, decide early which control commands are shared across interfaces and which remain platform-specific so operators do not have to rediscover the control surface every time they switch entry points.
+- If phase 1 exposes reset/new-session flows, decide early what configuration is surfaced at that moment so operators can confirm which model/personality/profile/tooling state the fresh session actually picked up.

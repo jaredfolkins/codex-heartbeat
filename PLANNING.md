@@ -26,6 +26,7 @@
 - Hermes's `godmode` feature is not a single prompt. It combines model-family strategy selection, launch-time system prompt injection, ephemeral prefill messages, and canary scoring to decide whether a profile "worked".
 - Hermes also exposes named personalities and project context files as first-class UX surfaces, so reusable instruction bundles are operator-visible concepts instead of only hidden transport settings.
 - Hermes pairs personality-style changes with obvious fresh-session flows (`/new` or `/reset`), so operators have a clear way to start a conversation under the newly selected bundle.
+- Hermes also surfaces session configuration on `/new`, `/reset`, and auto-reset, so operators can see which model/personality/tooling state the fresh session picked up instead of inferring it after the next turn.
 - Hermes spans long-lived conversations and cross-interface use, so the operator model also needs a clear persistence rule for whether a selected bundle is session-local, repo-default, or sticky across future sessions.
 - Hermes also documents persistent memory and user profiles, so the operator model needs a clear rule for whether prompt-profile selection interacts with saved memory or remains an isolated instruction-layer choice.
 - Hermes also exposes first-class session-title behavior: operators can set or show the current session title, resume a previously named session, and browse titled sessions instead of relying only on opaque session IDs.
@@ -69,6 +70,7 @@
 - [ ] Define profile-switch scope semantics explicitly, so operators know whether changing a named bundle affects the current conversation, the next fresh thread, or only newly created sessions.
 - [ ] If profile switching is next-session-only, add a one-step reset/new-session flow so operators can start a fresh conversation under the selected bundle without manual file edits or ambiguous restart steps.
 - [ ] If profile switching is deferred, show both the active and pending bundle in wrapper UX so operators can tell what is in effect now versus what will apply after reset/new session.
+- [ ] Define fresh-session config-surfacing semantics explicitly, so operators know what model/personality/profile/tooling state is shown when `/new`, `/reset`, or auto-reset starts a fresh session instead of inferring that configuration after the fact.
 - [ ] Add an explicit return-to-default flow so operators can clear a named bundle and get back to the repo or wrapper default without manual file edits.
 - [ ] Define profile persistence scope explicitly, so operators know whether selecting a bundle changes only the current session, the repo-local default, or future sessions started from the same workspace.
 - [ ] Define session-title semantics explicitly, so operators know whether they can name the current session, browse titled sessions, and resume prior work by title instead of only by opaque session IDs.
@@ -129,6 +131,7 @@
 - [ ] If a profile change is pending, the wrapper clearly shows both the active bundle and the queued next-session bundle.
 - [ ] A user can intentionally clear a selected bundle and confirm that the wrapper has returned to the default profile state.
 - [ ] A user can tell whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
+- [ ] A user can tell what model/personality/profile/tooling configuration a fresh session picked up when `/new`, `/reset`, or auto-reset starts a new conversation.
 - [ ] A user can tell whether sessions may be named, whether titled sessions can be listed or browsed, and whether resume may target a human-readable session title instead of only an opaque session ID.
 - [ ] A user can tell whether resuming a session shows a compact "Previous Conversation" panel or only a minimal one-liner, and can tell what recap content is shown, hidden, or truncated.
 - [ ] A user can tell whether resuming by title picks the latest session in a lineage, how lineage variants like `my project`, `my project #2`, and `my project #3` are treated, and whether compressed/resumed descendants stay grouped as one lineage.
@@ -174,6 +177,7 @@
 - [ ] Decide in the same phase whether profile switching is "apply to current session", "apply on next reset/new session", or both, and surface that rule in the operator UX.
 - [ ] If phase 1 uses next-session-only switching, pair it with a reset/new-session command or workflow so changing bundles does not require manual wrapper restarts.
 - [ ] If phase 1 uses deferred switching, expose an active-versus-pending profile state in `status`, help, or equivalent UX so operators can confirm what will happen on reset/new session.
+- [ ] In phase 1, document what configuration is surfaced on `/new`, `/reset`, and auto-reset so operators can confirm which model/personality/profile/tooling state a fresh session actually picked up.
 - [ ] If phase 1 adds profile selection, include a matching clear/default action so the operator can undo an override without editing config by hand.
 - [ ] Decide in the same phase whether bundle selection persists across future sessions or only applies as a one-session override, and surface that rule in operator UX and artifacts.
 - [ ] In phase 1, document whether sessions can be named, listed, browsed, and resumed by title so long-lived operator workflows stay understandable without raw session IDs.
