@@ -173,3 +173,20 @@
 - 2026-03-29T00:27:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:27:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:28:05Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and `cmd/codex-heartbeat/main_test.go` to establish the baseline for a parity-claim-rule cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `status.hermes_parity` now includes a safe `claim_rule` that keeps parity false until equivalent launch-time instruction control and benign evaluation coverage are both present.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new `claim_rule` field while keeping the existing `hermes_parity`, `task_list`, and `launch_settings` status coverage.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made the existing non-parity answer easier to interpret by adding an explicit safe claim rule.
+- Re-read `target/latest-context.md`, the current `hermes_parity` status surface, the Hermes README, and the Kamakura X post oEmbed fragment to establish the baseline for a Hermes-grounded parity-gap cycle.
+- Confirmed from the Hermes README that Hermes explicitly supports delegated parallel work, and recovered the X post fragment that called out Hermes plus Paperclip for multi-LLM cross-review research.
+- Updated `cmd/codex-heartbeat/main.go` so `status.hermes_parity` now includes the remaining `Hermes-style delegated cross-review workflow` gap plus a safe task-list item for benign evaluator/council reviews.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new missing-capability and task-list strings while keeping the existing `hermes_parity`, `claim_rule`, and `launch_settings` status coverage.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, canary scoring, or unsafe “godmode” behavior; it only grounded the remaining parity gap in the reviewed Hermes sources.
+- 2026-03-29T00:30:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:30:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:31:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:32:20Z screen-idle heartbeat injected with prompt source `program_md`

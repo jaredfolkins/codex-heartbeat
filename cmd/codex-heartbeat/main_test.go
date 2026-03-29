@@ -384,10 +384,12 @@ func TestStatusCommandIncludesHermesParityGap(t *testing.T) {
 		"\"launch-time base/developer instruction control\"",
 		"\"ephemeral prefill\"",
 		"\"harmless canary scoring\"",
+		"\"Hermes-style delegated cross-review workflow\"",
 		"\"task_list\": [",
 		"\"Add a stronger launch-time instruction channel than plain user-message reinjection.\"",
 		"\"Add optional ephemeral prefill for new and resumed sessions.\"",
 		"\"Add a harmless canary-scoring harness that can distinguish profile attached from profile effective.\"",
+		"\"Add a Hermes-style delegated cross-review surface for benign evaluator and council reviews.\"",
 		"\"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.\"",
 		"\"claim_rule\": \"Only claim Hermes parity after equivalent launch-time instruction control and benign evaluation coverage are both present.\"",
 	} {
