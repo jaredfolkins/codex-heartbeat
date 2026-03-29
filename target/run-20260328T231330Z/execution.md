@@ -401,6 +401,10 @@
 - Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that child agents use restricted toolsets rather than inheriting an unconstrained parent tool surface.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-toolset restriction semantics.
 - Evaluator: `rg -n "delegated-toolset restriction semantics|subset of tools|subset of the parent tool surface|restricted toolsets for child agents|which toolsets a delegated child may use" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-depth-limit planning cycle.
+- Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that delegation is depth-limited and children cannot delegate further.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-depth limits.
+- Evaluator: `rg -n "delegated-depth-limit semantics|children may delegate further|no grandchildren|recursive fan-out|delegation is intentionally capped" PLANNING.md` -> pass
 - 2026-03-29T01:39:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:39:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:40:10Z screen-idle heartbeat injected with prompt source `program_md`
@@ -411,3 +415,4 @@
 - 2026-03-29T01:43:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:43:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:44:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:47:05Z screen-idle heartbeat injected with prompt source `program_md`
