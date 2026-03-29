@@ -581,10 +581,10 @@
 - Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.3.0.md`; confirmed that `/status` reports live state and tokens and shows the effective model and provider.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style live-status semantics.
 - Evaluator: `rg -n 'live-status semantics|`/status` reports live session state and token usage|effective model and provider|status surface reports live session state, token usage, and the effective model/provider' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
-- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a plugin-lifecycle planning cycle.
-- Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.5.0.md`; confirmed Hermes exposes plugin lifecycle hooks such as `pre_llm_call`, `post_llm_call`, `on_session_start`, and `on_session_end` for CLI and messaging modes.
-- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style plugin lifecycle semantics.
-- Evaluator: `rg -n 'plugin lifecycle semantics|pre_llm_call|post_llm_call|on_session_start|on_session_end' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-progress-display planning cycle.
+- Reviewed Hermes README and release notes; confirmed Hermes's delegated subagents expose explicit progress-display behavior: CLI shows a real-time tree-view of child tool calls while messaging/gateway batches progress updates through the parent callback.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-progress-display semantics.
+- Evaluator: `rg -n 'delegated-progress-display semantics|real-time tree-view of child tool calls|batched parent progress updates|progress callback' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
 - 2026-03-29T02:33:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:33:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:34:05Z screen-idle heartbeat injected with prompt source `program_md`
@@ -619,3 +619,4 @@
 - 2026-03-29T02:54:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:55:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:56:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:58:55Z screen-idle heartbeat injected with prompt source `program_md`
