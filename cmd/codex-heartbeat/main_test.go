@@ -389,6 +389,7 @@ func TestStatusCommandIncludesHermesParityGap(t *testing.T) {
 		"\"Add optional ephemeral prefill for new and resumed sessions.\"",
 		"\"Add a harmless canary-scoring harness that can distinguish profile attached from profile effective.\"",
 		"\"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.\"",
+		"\"claim_rule\": \"Only claim Hermes parity after equivalent launch-time instruction control and benign evaluation coverage are both present.\"",
 	} {
 		if !strings.Contains(string(output), expected) {
 			t.Fatalf("status output missing %q: %s", expected, output)

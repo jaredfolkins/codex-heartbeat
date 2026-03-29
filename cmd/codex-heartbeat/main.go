@@ -62,6 +62,7 @@ type hermesParityStatus struct {
 	Equivalent bool     `json:"equivalent"`
 	Missing    []string `json:"missing"`
 	TaskList   []string `json:"task_list"`
+	ClaimRule  string   `json:"claim_rule"`
 }
 
 type promptSource struct {
@@ -464,6 +465,7 @@ func currentHermesParityStatus() hermesParityStatus {
 			"Add a harmless canary-scoring harness that can distinguish profile attached from profile effective.",
 			"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.",
 		},
+		ClaimRule: "Only claim Hermes parity after equivalent launch-time instruction control and benign evaluation coverage are both present.",
 	}
 }
 
