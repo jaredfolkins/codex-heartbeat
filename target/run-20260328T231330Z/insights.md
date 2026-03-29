@@ -2,7 +2,7 @@
 
 ## What Worked
 
-- If phase 1 expects operators to trust scheduled automations, decide early how cron jobs are authored, delivered, and monitored so unattended daily reports or backups stay auditable without a separate scheduler.
+- If phase 1 expects operators to integrate plugins or tool hooks, decide early when `pre_llm_call`, `post_llm_call`, and session lifecycle hooks fire and what they observe so integrations stay predictable between CLI and messaging modes.
 - If phase 1 expects operators to trust runtime state, decide early whether a live status surface reports session state, token usage, and effective model/provider so users do not have to infer that state from logs or prompt chrome.
 - `PLANNING.md` is still the best place to express the requested `[ ]` implementation backlog once the status/help/docs surfaces already agree.
 - A simple grep evaluator was enough to keep the planning cycle bounded while still checking that the exact reviewed links showed up in the planning artifact.
