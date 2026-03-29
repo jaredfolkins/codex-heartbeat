@@ -1,62 +1,63 @@
 # AGENTS
 
-Goal: make `codex-heartbeat` support an `autoresearch`-style autonomous loop instead of only re-injecting a generic standing prompt.
+## Purpose
 
-Status: completed in the current implementation pass on 2026-03-28, re-reviewed after the 2026-03-28 heartbeat-detector hardening pass, verified again after the 2026-03-28 layered replay/council-threshold test pass, and documented after the 2026-03-28 heartbeat triage/validation docs pass. Checklist remains complete.
+`codex-heartbeat` is a Go wrapper around Codex that runs an autoresearch-style heartbeat loop:
 
-## Prompt Model
+- the human defines the goal in `program.md`
+- the agent iterates in bounded cycles
+- durable memory lives under `target/`
 
-- [x] Replace the embedded default prompt with an experiment-loop prompt that defines:
-  - a single objective
-  - a single primary evaluator
-  - one hypothesis per cycle
-  - keep/discard/revert semantics
-  - explicit memory read/write behavior
-- [x] Change the default behavior so the 3-agent council is a fallback for blocked or stalled states, not the first action on every idle heartbeat.
-- [x] Add a first-class `program.md` convention so the human edits the research/debugging program while the agent edits the target workspace.
-- [x] Define prompt precedence clearly across `--prompt`, repo-local `program.md`, and the embedded fallback prompt.
-- [x] Add a prompt mode for "manual test first" workflows where the agent prepares the next candidate fix and validation steps, then stops before the final human gate.
+## Read These Files First
 
-## Memory And Artifacts
+- `program.md`
+  The current human-owned objective, evaluator, prompt mode, and constraints.
+- `PLANNING.md`
+  The live working plan. Keep only active tasks here.
+- `target/PLANNING_HISTORY.md`
+  Durable planning memory for completed, superseded, or restart-invalidated tasks.
+- `target/latest-context.md`
+  The compact summary that heartbeat prompt injections replay.
+- `target/results.jsonl`
+  The experiment ledger with hypothesis, command, outcome, disposition, and notes.
+- `target/run-<timestamp>/{plan,execution,results,insights}.md`
+  Per-run artifacts showing what the loop believed, did, observed, and learned.
+- `README.md`
+  User-facing contract and CLI behavior.
 
-- [x] Add a reusable run-artifact layout under `target/run-<timestamp>/`.
-- [x] Write `plan.md`, `execution.md`, `results.md`, and `insights.md` for each run.
-- [x] Ingest prior `target/*/insights.md` before proposing the next step.
-- [x] Maintain a compact experiment ledger such as `results.tsv` or `results.jsonl` with hypothesis, command, outcome, disposition, and notes.
-- [x] Persist a short "latest context" summary so repeated heartbeat injections can remind the agent of recent findings without replaying the entire transcript.
+## File Ownership
 
-## Execution Loop
+- `program.md` is human-owned unless the user explicitly asks to change the objective or evaluator contract.
+- `PLANNING.md` is agent-maintained and should stay concise and current.
+- `target/PLANNING_HISTORY.md` is agent-maintained durable memory for planning history.
+- `target/` is the bounded memory area; avoid scattering scratch notes elsewhere.
 
-- [x] Add an explicit experiment/debug loop contract:
-  1. establish baseline
-  2. pick one hypothesis
-  3. make one bounded change
-  4. run one evaluator command
-  5. record result
-  6. keep or discard
-- [x] Support evaluator commands that can be recorded and reused, for example `make manual-lab-up`.
-- [x] Detect repeated failures or dead ends and trigger the council only after a configurable threshold.
-- [x] Add optional git checkpoint support for "save point" commits after meaningful progress.
-- [x] Keep notes and artifacts tidy by default so autonomous runs do not scatter files across the workspace.
+## Working Contract
 
-## UX And Scaffolding
+- Read `program.md`, this file, `PLANNING.md`, and `target/latest-context.md` before acting.
+- Keep each cycle bounded to one hypothesis and one primary evaluator.
+- Update `target/run-<timestamp>/plan.md`, `execution.md`, `results.md`, and `insights.md`.
+- Append concise result entries to `target/results.jsonl`.
+- Move completed checklist items out of `PLANNING.md` into `target/PLANNING_HISTORY.md`.
+- When a refactor or restart invalidates an old plan, preserve that trail in `target/PLANNING_HISTORY.md` instead of deleting it silently.
 
-- [x] Add a scaffold/init command for an `autoresearch`-style workspace that creates `program.md`, a results ledger, and run-artifact templates.
-- [x] Ship example prompts for:
-  - debugging loops
-  - benchmark/experiment loops
-  - manual-validation loops
-- [x] Update the README to explain the `autoresearch` mental model:
-  - human edits the program
-  - agent runs the loop
-  - artifacts hold memory
-  - evaluator decides progress
-- [x] Document a recommended repo contract for target workspaces, including `AGENTS.md`, `PLANNING.md`, and `target/*/insights.md`.
+## Prompt Modes
 
-## Tests
+- `autoresearch`
+  Work the objective directly through the bounded experiment loop.
+- `planning`
+  Use the autoresearch loop to refine the goal, deepen the plan, and decide the next deep dive before broad implementation.
+- `manual-test-first`
+  Prepare the next candidate fix and exact validation steps, then stop before the final human gate.
 
-- [x] Add tests for prompt source precedence and fallback behavior.
-- [x] Add tests for artifact discovery and prior-insight ingestion.
-- [x] Add tests for any scaffold/init command output.
-- [x] Add tests for evaluator-command recording and result-ledger writes.
-- [x] Add tests for council-trigger thresholds so the fallback only appears when the loop is genuinely stuck.
+## Validation
+
+- If Go code changes, run focused tests first and `go test ./...` when practical.
+- If screen-idle behavior changes, run the screen and replay tests.
+- If prompt resolution, scaffolding, planning, or artifact behavior changes, run the autoresearch-focused tests.
+- If validation cannot be run, say so explicitly.
+
+## Template Sources
+
+- Source templates now live under `cmd/codex-heartbeat/templates/`.
+- Keep those Markdown templates aligned with the scaffold and prompt behavior in Go code.

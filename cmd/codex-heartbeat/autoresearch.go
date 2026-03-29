@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 const (
 	defaultProgramFilename        = "program.md"
 	planningFilename              = "PLANNING.md"
+	planningHistoryFilename       = "PLANNING_HISTORY.md"
 	targetDirName                 = "target"
 	runDirPrefix                  = "run-"
 	runTemplateDirName            = "templates"
@@ -42,6 +44,7 @@ type promptMode string
 
 const (
 	promptModeAutoresearch    promptMode = "autoresearch"
+	promptModePlanning        promptMode = "planning"
 	promptModeManualTestFirst promptMode = "manual-test-first"
 )
 
@@ -75,16 +78,18 @@ type programConfig struct {
 }
 
 type autoresearchArtifacts struct {
-	TargetDir         string
-	TemplateDir       string
-	RunID             string
-	RunDir            string
-	PlanPath          string
-	ExecutionPath     string
-	ResultsPath       string
-	InsightsPath      string
-	LatestContextPath string
-	ResultsLedgerPath string
+	Workdir             string
+	TargetDir           string
+	TemplateDir         string
+	RunID               string
+	RunDir              string
+	PlanPath            string
+	ExecutionPath       string
+	ResultsPath         string
+	InsightsPath        string
+	LatestContextPath   string
+	ResultsLedgerPath   string
+	PlanningHistoryPath string
 }
 
 type resultLedgerEntry struct {
@@ -100,6 +105,18 @@ type resultLedgerEntry struct {
 type priorInsight struct {
 	Path    string
 	Summary string
+}
+
+type scaffoldAnswers struct {
+	Objective        string
+	PrimaryEvaluator string
+	PromptMode       promptMode
+	DeepDive         string
+}
+
+type archivedPlanningTask struct {
+	Section string
+	Line    string
 }
 
 func newPromptResolver(workdir, promptPath, projectDir string, council bool) (promptResolver, error) {
@@ -136,6 +153,10 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 		}, nil
 	}
 
+	if err := archiveCompletedPlanningTasks(artifacts, time.Now()); err != nil {
+		return promptResolution{}, err
+	}
+
 	entries, err := loadResultLedgerEntries(artifacts.ResultsLedgerPath)
 	if err != nil {
 		return promptResolution{}, err
@@ -157,7 +178,7 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 
 	text := base.text
 	if base.source != promptSourceCLI {
-		text = renderPromptTemplate(defaultPrompt, buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
+		text = renderPromptTemplate(embeddedTemplate("heartbeat.md"), buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
 	} else if r.council {
 		text = strings.TrimSpace("Council mode:\n" + buildCouncilInstruction(threshold, councilTriggered, r.council) + "\n\n" + base.text)
 	}
@@ -218,7 +239,7 @@ func (r promptResolver) resolveBasePrompt() (basePromptResolution, error) {
 	program = defaultProgramConfig(programPath)
 	return basePromptResolution{
 		source:     promptSourceEmbedded,
-		sourcePath: "embedded heartbeat.md",
+		sourcePath: "embedded templates/heartbeat.md",
 		program:    program,
 	}, nil
 }
@@ -343,6 +364,8 @@ func applyProgramMetadata(cfg *programConfig, key, value string) {
 		cfg.ModelReasoningEffort = value
 	case "promptmode", "mode":
 		switch strings.ToLower(strings.TrimSpace(value)) {
+		case string(promptModePlanning):
+			cfg.PromptMode = promptModePlanning
 		case string(promptModeManualTestFirst):
 			cfg.PromptMode = promptModeManualTestFirst
 		default:
@@ -365,16 +388,18 @@ func newAutoresearchArtifacts(workdir string, startedAt time.Time) autoresearchA
 	runDir := filepath.Join(targetDir, runID)
 
 	return autoresearchArtifacts{
-		TargetDir:         targetDir,
-		TemplateDir:       filepath.Join(targetDir, runTemplateDirName),
-		RunID:             runID,
-		RunDir:            runDir,
-		PlanPath:          filepath.Join(runDir, "plan.md"),
-		ExecutionPath:     filepath.Join(runDir, "execution.md"),
-		ResultsPath:       filepath.Join(runDir, "results.md"),
-		InsightsPath:      filepath.Join(runDir, "insights.md"),
-		LatestContextPath: filepath.Join(targetDir, latestContextFilename),
-		ResultsLedgerPath: filepath.Join(targetDir, resultsLedgerFilename),
+		Workdir:             workdir,
+		TargetDir:           targetDir,
+		TemplateDir:         filepath.Join(targetDir, runTemplateDirName),
+		RunID:               runID,
+		RunDir:              runDir,
+		PlanPath:            filepath.Join(runDir, "plan.md"),
+		ExecutionPath:       filepath.Join(runDir, "execution.md"),
+		ResultsPath:         filepath.Join(runDir, "results.md"),
+		InsightsPath:        filepath.Join(runDir, "insights.md"),
+		LatestContextPath:   filepath.Join(targetDir, latestContextFilename),
+		ResultsLedgerPath:   filepath.Join(targetDir, resultsLedgerFilename),
+		PlanningHistoryPath: filepath.Join(targetDir, planningHistoryFilename),
 	}
 }
 
@@ -385,7 +410,10 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 	}
 
 	modeInstruction := "Stop only after you have run the evaluator, recorded the result, and decided keep, discard, or revert."
-	if program.PromptMode == promptModeManualTestFirst {
+	switch program.PromptMode {
+	case promptModePlanning:
+		modeInstruction = "Use the autoresearch loop to refine the goal, deepen the plan, and identify the next high-leverage deep dive. Prefer updating `PLANNING.md`, `target/PLANNING_HISTORY.md`, and the run artifacts over making broad implementation changes."
+	case promptModeManualTestFirst:
 		modeInstruction = "Prepare the next candidate fix and the exact validation steps, then stop before the final human gate. Do not take the final apply/ship step."
 	}
 
@@ -397,17 +425,19 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 	councilInstruction := buildCouncilInstruction(threshold, councilTriggered, councilRequested)
 
 	return map[string]string{
-		"OBJECTIVE":               strings.TrimSpace(program.Objective),
-		"PRIMARY_EVALUATOR":       strings.TrimSpace(program.PrimaryEvaluator),
-		"PROMPT_MODE":             string(program.PromptMode),
-		"COUNCIL_AFTER_FAILURES":  strconv.Itoa(threshold),
-		"COUNCIL_INSTRUCTION":     councilInstruction,
-		"CHECKPOINT_INSTRUCTION":  checkpointInstruction,
-		"MANUAL_GATE_INSTRUCTION": modeInstruction,
-		"LATEST_CONTEXT_PATH":     artifacts.LatestContextPath,
-		"RUN_DIR":                 artifacts.RunDir,
-		"PROGRAM_BODY":            strings.TrimSpace(program.Body),
-		"LATEST_CONTEXT":          strings.TrimSpace(latestContext),
+		"OBJECTIVE":              strings.TrimSpace(program.Objective),
+		"PRIMARY_EVALUATOR":      strings.TrimSpace(program.PrimaryEvaluator),
+		"PROMPT_MODE":            string(program.PromptMode),
+		"COUNCIL_AFTER_FAILURES": strconv.Itoa(threshold),
+		"COUNCIL_INSTRUCTION":    councilInstruction,
+		"CHECKPOINT_INSTRUCTION": checkpointInstruction,
+		"MODE_INSTRUCTION":       modeInstruction,
+		"LATEST_CONTEXT_PATH":    artifacts.LatestContextPath,
+		"RUN_DIR":                artifacts.RunDir,
+		"PLANNING_PATH":          filepath.Join(artifacts.Workdir, planningFilename),
+		"PLANNING_HISTORY_PATH":  artifacts.PlanningHistoryPath,
+		"PROGRAM_BODY":           strings.TrimSpace(program.Body),
+		"LATEST_CONTEXT":         strings.TrimSpace(latestContext),
 	}
 }
 
@@ -441,10 +471,10 @@ func ensureRunArtifacts(artifacts autoresearchArtifacts, resolution promptResolu
 		templatePath string
 		fallback     string
 	}{
-		{path: artifacts.PlanPath, templatePath: filepath.Join(artifacts.TemplateDir, "plan.md"), fallback: defaultPlanTemplate},
-		{path: artifacts.ExecutionPath, templatePath: filepath.Join(artifacts.TemplateDir, "execution.md"), fallback: defaultExecutionTemplate},
-		{path: artifacts.ResultsPath, templatePath: filepath.Join(artifacts.TemplateDir, "results.md"), fallback: defaultResultsTemplate},
-		{path: artifacts.InsightsPath, templatePath: filepath.Join(artifacts.TemplateDir, "insights.md"), fallback: defaultInsightsTemplate},
+		{path: artifacts.PlanPath, templatePath: filepath.Join(artifacts.TemplateDir, "plan.md"), fallback: embeddedTemplate("plan.md")},
+		{path: artifacts.ExecutionPath, templatePath: filepath.Join(artifacts.TemplateDir, "execution.md"), fallback: embeddedTemplate("execution.md")},
+		{path: artifacts.ResultsPath, templatePath: filepath.Join(artifacts.TemplateDir, "results.md"), fallback: embeddedTemplate("results.md")},
+		{path: artifacts.InsightsPath, templatePath: filepath.Join(artifacts.TemplateDir, "insights.md"), fallback: embeddedTemplate("insights.md")},
 	}
 
 	for _, file := range files {
@@ -829,23 +859,27 @@ func isFailureDisposition(disposition string) bool {
 }
 
 func scaffoldAutoresearchWorkspace(workdir string) error {
+	return scaffoldAutoresearchWorkspaceWithAnswers(workdir, defaultScaffoldAnswers())
+}
+
+func scaffoldAutoresearchWorkspaceWithAnswers(workdir string, answers scaffoldAnswers) error {
 	artifacts := newAutoresearchArtifacts(workdir, time.Now())
 	if err := os.MkdirAll(artifacts.TemplateDir, 0o755); err != nil {
 		return err
 	}
 
-	programPath := filepath.Join(workdir, defaultProgramFilename)
-	planningPath := filepath.Join(workdir, planningFilename)
+	answers = normalizeScaffoldAnswers(answers)
 	files := []struct {
 		path    string
 		content string
 	}{
-		{path: programPath, content: defaultProgramScaffold},
-		{path: planningPath, content: defaultPlanningScaffold},
-		{path: filepath.Join(artifacts.TemplateDir, "plan.md"), content: defaultPlanTemplate},
-		{path: filepath.Join(artifacts.TemplateDir, "execution.md"), content: defaultExecutionTemplate},
-		{path: filepath.Join(artifacts.TemplateDir, "results.md"), content: defaultResultsTemplate},
-		{path: filepath.Join(artifacts.TemplateDir, "insights.md"), content: defaultInsightsTemplate},
+		{path: filepath.Join(workdir, defaultProgramFilename), content: renderProgramScaffold(answers)},
+		{path: filepath.Join(workdir, planningFilename), content: renderPlanningScaffold(answers)},
+		{path: artifacts.PlanningHistoryPath, content: embeddedTemplate("planning_history.md")},
+		{path: filepath.Join(artifacts.TemplateDir, "plan.md"), content: embeddedTemplate("plan.md")},
+		{path: filepath.Join(artifacts.TemplateDir, "execution.md"), content: embeddedTemplate("execution.md")},
+		{path: filepath.Join(artifacts.TemplateDir, "results.md"), content: embeddedTemplate("results.md")},
+		{path: filepath.Join(artifacts.TemplateDir, "insights.md"), content: embeddedTemplate("insights.md")},
 		{path: artifacts.LatestContextPath, content: "# Latest Context\n\n- No prior runs yet.\n"},
 	}
 	for _, file := range files {
@@ -861,6 +895,10 @@ func scaffoldAutoresearchWorkspace(workdir string) error {
 }
 
 func ensureAutoresearchWorkspace(workdir string) (string, error) {
+	return ensureAutoresearchWorkspaceWithSurvey(workdir, nil, nil, false)
+}
+
+func ensureAutoresearchWorkspaceWithSurvey(workdir string, input io.Reader, output io.Writer, interactive bool) (string, error) {
 	expected := autoresearchScaffoldPaths(workdir)
 	existing := make([]string, 0, len(expected))
 	missing := make([]string, 0, len(expected))
@@ -880,6 +918,7 @@ func ensureAutoresearchWorkspace(workdir string) (string, error) {
 		return "", nil
 	}
 
+	answers := defaultScaffoldAnswers()
 	warning := ""
 	if len(existing) > 0 {
 		relMissing := make([]string, 0, len(missing))
@@ -891,9 +930,15 @@ func ensureAutoresearchWorkspace(workdir string) (string, error) {
 			relMissing = append(relMissing, rel)
 		}
 		warning = fmt.Sprintf("warning: autoresearch scaffold is partially present in %s; preserving existing files and creating missing scaffold files: %s", workdir, strings.Join(relMissing, ", "))
+	} else if interactive {
+		surveyAnswers, err := promptAutoresearchInit(input, output)
+		if err != nil {
+			return "", err
+		}
+		answers = surveyAnswers
 	}
 
-	if err := scaffoldAutoresearchWorkspace(workdir); err != nil {
+	if err := scaffoldAutoresearchWorkspaceWithAnswers(workdir, answers); err != nil {
 		return "", err
 	}
 	return warning, nil
@@ -904,6 +949,7 @@ func autoresearchScaffoldPaths(workdir string) []string {
 	return []string{
 		filepath.Join(workdir, defaultProgramFilename),
 		filepath.Join(workdir, planningFilename),
+		artifacts.PlanningHistoryPath,
 		filepath.Join(artifacts.TemplateDir, "plan.md"),
 		filepath.Join(artifacts.TemplateDir, "execution.md"),
 		filepath.Join(artifacts.TemplateDir, "results.md"),
@@ -913,128 +959,238 @@ func autoresearchScaffoldPaths(workdir string) []string {
 	}
 }
 
-const defaultProgramScaffold = `
-# Program
+func defaultScaffoldAnswers() scaffoldAnswers {
+	return scaffoldAnswers{
+		Objective:        "Replace this with one concrete goal.",
+		PrimaryEvaluator: "Replace this with one command or manual validation step.",
+		PromptMode:       promptModeAutoresearch,
+		DeepDive:         "Understand the current codepath, constraints, and evaluator before widening scope.",
+	}
+}
 
-Objective: Replace this with one concrete goal.
-Primary evaluator: Replace this with one command or manual validation step.
-Prompt mode: autoresearch
-Council after failures: 3
-Checkpoint commits: false
+func normalizeScaffoldAnswers(answers scaffoldAnswers) scaffoldAnswers {
+	defaults := defaultScaffoldAnswers()
+	if strings.TrimSpace(answers.Objective) == "" {
+		answers.Objective = defaults.Objective
+	}
+	if strings.TrimSpace(answers.PrimaryEvaluator) == "" {
+		answers.PrimaryEvaluator = defaults.PrimaryEvaluator
+	}
+	switch answers.PromptMode {
+	case promptModePlanning, promptModeManualTestFirst, promptModeAutoresearch:
+	default:
+		answers.PromptMode = defaults.PromptMode
+	}
+	if strings.TrimSpace(answers.DeepDive) == "" {
+		answers.DeepDive = defaults.DeepDive
+	}
+	return answers
+}
 
-## Constraints
+func renderProgramScaffold(answers scaffoldAnswers) string {
+	answers = normalizeScaffoldAnswers(answers)
+	return renderPromptTemplate(embeddedTemplate("program.md"), map[string]string{
+		"OBJECTIVE":         answers.Objective,
+		"PRIMARY_EVALUATOR": answers.PrimaryEvaluator,
+		"PROMPT_MODE":       string(answers.PromptMode),
+		"DEEP_DIVE":         answers.DeepDive,
+	})
+}
 
-- Keep changes bounded.
-- Prefer one hypothesis per cycle.
+func renderPlanningScaffold(answers scaffoldAnswers) string {
+	answers = normalizeScaffoldAnswers(answers)
+	historyRef := filepath.ToSlash(filepath.Join(targetDirName, planningHistoryFilename))
+	return renderPromptTemplate(embeddedTemplate("planning.md"), map[string]string{
+		"OBJECTIVE":             answers.Objective,
+		"PRIMARY_EVALUATOR":     answers.PrimaryEvaluator,
+		"DEEP_DIVE":             answers.DeepDive,
+		"PLANNING_HISTORY_PATH": historyRef,
+	})
+}
 
-## Notes
+func promptAutoresearchInit(input io.Reader, output io.Writer) (scaffoldAnswers, error) {
+	if input == nil {
+		input = os.Stdin
+	}
+	if output == nil {
+		output = os.Stderr
+	}
 
-- Add background, known failures, and guardrails here.
-`
+	defaults := defaultScaffoldAnswers()
+	reader := bufio.NewReader(input)
+	fmt.Fprintln(output, "codex-heartbeat init")
+	fmt.Fprintln(output, "Answer a few questions to seed program.md and PLANNING.md.")
 
-const defaultPlanningScaffold = `
-# Planning
+	objective, err := promptInitLine(reader, output, "Goal", defaults.Objective)
+	if err != nil {
+		return scaffoldAnswers{}, err
+	}
+	evaluator, err := promptInitLine(reader, output, "Primary evaluator", defaults.PrimaryEvaluator)
+	if err != nil {
+		return scaffoldAnswers{}, err
+	}
+	deepDive, err := promptInitLine(reader, output, "First deep dive", "Understand the current codepath, constraints, and evidence before proposing a wider plan.")
+	if err != nil {
+		return scaffoldAnswers{}, err
+	}
+	mode, err := promptInitMode(reader, output)
+	if err != nil {
+		return scaffoldAnswers{}, err
+	}
 
-## Objective
+	return scaffoldAnswers{
+		Objective:        objective,
+		PrimaryEvaluator: evaluator,
+		PromptMode:       mode,
+		DeepDive:         deepDive,
+	}, nil
+}
 
-- Keep the current objective aligned with program.md.
+func promptInitLine(reader *bufio.Reader, output io.Writer, label, fallback string) (string, error) {
+	fmt.Fprintf(output, "%s [%s]: ", label, fallback)
+	line, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return fallback, nil
+	}
+	return line, nil
+}
 
-## Evaluator
+func promptInitMode(reader *bufio.Reader, output io.Writer) (promptMode, error) {
+	fmt.Fprintln(output, "Starting mode:")
+	fmt.Fprintln(output, "  1. planning (Recommended)")
+	fmt.Fprintln(output, "  2. autoresearch")
+	fmt.Fprintln(output, "  3. manual-test-first")
+	fmt.Fprint(output, "Choose mode [1]: ")
 
-- Reuse one primary evaluator until the hypothesis changes.
+	line, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	switch strings.ToLower(strings.TrimSpace(line)) {
+	case "", "1", "planning":
+		return promptModePlanning, nil
+	case "2", "autoresearch":
+		return promptModeAutoresearch, nil
+	case "3", "manual-test-first", "manual":
+		return promptModeManualTestFirst, nil
+	default:
+		return promptModePlanning, nil
+	}
+}
 
-## Task List
+func archiveCompletedPlanningTasks(artifacts autoresearchArtifacts, archivedAt time.Time) error {
+	planningPath := filepath.Join(artifacts.Workdir, planningFilename)
+	data, err := os.ReadFile(planningPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
 
-- [ ] Restate the smallest measurable outcome for the current objective.
-- [ ] Pick one bounded hypothesis for the next cycle.
-- [ ] Name one primary evaluator before changing code.
-- [ ] Record the result as keep, discard, revert, or blocked after the evaluator runs.
+	updatedPlanning, archivedTasks := extractArchivedPlanningTasks(string(data))
+	if len(archivedTasks) == 0 {
+		return nil
+	}
 
-## Blocked / Non-Goals
+	if err := writeFileIfMissing(artifacts.PlanningHistoryPath, []byte(strings.TrimSpace(embeddedTemplate("planning_history.md"))+"\n"), 0o644); err != nil {
+		return err
+	}
 
-- [ ] List what this cycle must not attempt or claim.
-- [ ] Call out any missing capability that keeps the current parity or success claim false.
+	historyData, err := os.ReadFile(artifacts.PlanningHistoryPath)
+	if err != nil {
+		return err
+	}
+	updatedHistory := appendPlanningHistoryEntry(string(historyData), archivedTasks, archivedAt)
+	if err := writeFileAtomic(artifacts.PlanningHistoryPath, []byte(strings.TrimSpace(updatedHistory)+"\n"), 0o644); err != nil {
+		return err
+	}
+	return writeFileAtomic(planningPath, []byte(strings.TrimSpace(updatedPlanning)+"\n"), 0o644)
+}
 
-## Acceptance Criteria
+func extractArchivedPlanningTasks(content string) (string, []archivedPlanningTask) {
+	lines := strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n")
+	kept := make([]string, 0, len(lines))
+	archived := []archivedPlanningTask{}
+	currentSection := "Planning"
 
-- [ ] Define the observable result that would make this cycle a keep.
-- [ ] Define what evidence would still mean "not done yet" after the evaluator runs.
+	for _, raw := range lines {
+		trimmed := strings.TrimSpace(raw)
+		if strings.HasPrefix(trimmed, "#") {
+			currentSection = strings.TrimSpace(strings.TrimLeft(trimmed, "#"))
+			kept = append(kept, raw)
+			continue
+		}
+		if isCompletedPlanningTask(trimmed) {
+			archived = append(archived, archivedPlanningTask{
+				Section: currentSection,
+				Line:    strings.TrimSpace(trimmed),
+			})
+			continue
+		}
+		kept = append(kept, raw)
+	}
 
-## Open Questions
+	return normalizeMarkdownSpacing(kept), archived
+}
 
-- Capture blockers or questions the next loop should resolve.
-`
+func isCompletedPlanningTask(line string) bool {
+	line = strings.TrimSpace(line)
+	if !(strings.HasPrefix(line, "- [x]") || strings.HasPrefix(line, "- [X]") || strings.HasPrefix(line, "* [x]") || strings.HasPrefix(line, "* [X]")) {
+		return false
+	}
+	return len(strings.TrimSpace(line[5:])) > 0
+}
 
-const defaultPlanTemplate = `
-# Plan
+func normalizeMarkdownSpacing(lines []string) string {
+	trimmed := make([]string, 0, len(lines))
+	blankRun := 0
+	for _, raw := range lines {
+		line := strings.TrimRight(raw, " \t")
+		if strings.TrimSpace(line) == "" {
+			blankRun++
+			if blankRun > 1 {
+				continue
+			}
+			trimmed = append(trimmed, "")
+			continue
+		}
+		blankRun = 0
+		trimmed = append(trimmed, line)
+	}
+	return strings.TrimSpace(strings.Join(trimmed, "\n"))
+}
 
-- Run: ` + "`{{RUN_ID}}`" + `
-- Prompt source: ` + "`{{PROMPT_SOURCE}}`" + ` (` + "`{{PROMPT_SOURCE_PATH}}`" + `)
-- Objective: {{OBJECTIVE}}
-- Primary evaluator: ` + "`{{PRIMARY_EVALUATOR}}`" + `
-- Prompt mode: ` + "`{{PROMPT_MODE}}`" + `
-- Council policy: ` + "`{{COUNCIL_POLICY}}`" + `
-- Council after failures: {{COUNCIL_AFTER_FAILURES}}
-- Checkpoint commits: {{CHECKPOINT_COMMITS}}
+func appendPlanningHistoryEntry(existing string, archivedTasks []archivedPlanningTask, archivedAt time.Time) string {
+	existing = strings.TrimSpace(existing)
+	if existing == "" {
+		existing = strings.TrimSpace(embeddedTemplate("planning_history.md"))
+	}
+	existing = strings.Replace(existing, "- No archived planning tasks yet.", "", 1)
+	existing = strings.TrimSpace(existing)
 
-## Hypothesis
+	block := []string{
+		fmt.Sprintf("## Archived %s", archivedAt.UTC().Format(time.RFC3339)),
+	}
+	lastSection := ""
+	for _, task := range archivedTasks {
+		section := strings.TrimSpace(task.Section)
+		if section == "" {
+			section = "Planning"
+		}
+		if section != lastSection {
+			block = append(block, "", "### "+section)
+			lastSection = section
+		}
+		block = append(block, task.Line)
+	}
 
-- {{HYPOTHESIS_PLACEHOLDER}}
-
-## Steps
-
-1. Establish the current baseline.
-2. Pick one bounded hypothesis.
-3. Make one bounded change.
-4. Run the primary evaluator exactly once.
-5. Record the result and choose keep, discard, or revert.
-`
-
-const defaultExecutionTemplate = `
-# Execution
-
-## Actions
-
-- Run directory: ` + "`{{RUN_DIR}}`" + `
-- Latest context: ` + "`{{LATEST_CONTEXT_PATH}}`" + `
-- Results ledger: ` + "`{{RESULTS_LEDGER_PATH}}`" + `
-
-## Commands And Notes
-`
-
-const defaultResultsTemplate = `
-# Results
-
-- Status: pending
-- Council policy: {{COUNCIL_POLICY}}
-- Council triggered at start: {{COUNCIL_TRIGGERED}}
-- Primary evaluator: ` + "`{{PRIMARY_EVALUATOR}}`" + `
-
-## Observable Signals
-
-- Fill in the evaluator output or manual validation outcome.
-
-## Disposition
-
-- Choose one: keep, discard, revert, blocked.
-`
-
-const defaultInsightsTemplate = `
-# Insights
-
-## What Worked
-
-- 
-
-## What Failed
-
-- 
-
-## Avoid Next Time
-
-- 
-
-## Promising Next Directions
-
-- 
-`
+	if existing == "" {
+		return strings.Join(block, "\n")
+	}
+	return strings.TrimSpace(existing) + "\n\n" + strings.Join(block, "\n")
+}

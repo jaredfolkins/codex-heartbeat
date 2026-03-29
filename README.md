@@ -35,7 +35,7 @@ go build ./cmd/codex-heartbeat
 
 ## Basic usage
 
-The first `run` against a workspace now auto-scaffolds the autoresearch files when they are missing:
+The first `run` against a workspace now auto-scaffolds the autoresearch files when they are missing. If the scaffold is completely absent and the terminal is interactive, `codex-heartbeat` asks a short init questionnaire for the goal, evaluator, first deep dive, and starting prompt mode before writing the files:
 
 ```bash
 ./codex-heartbeat --workdir /path/to/workdir
@@ -45,6 +45,7 @@ That creates, when absent:
 
 - `program.md`
 - `PLANNING.md`
+- `target/PLANNING_HISTORY.md`
 - `target/results.jsonl`
 - `target/latest-context.md`
 - `target/templates/{plan,execution,results,insights}.md`
@@ -52,9 +53,10 @@ That creates, when absent:
 The normal loop is:
 
 1. The human edits `program.md`.
-2. The agent works in the target workspace.
-3. `codex-heartbeat` keeps re-injecting a bounded experiment-loop prompt and points the agent at the run artifacts under `target/`.
-4. The agent writes memory into `target/run-<timestamp>/` and `target/results.jsonl`.
+2. The agent keeps active tasks in `PLANNING.md` and archives completed or superseded plan items into `target/PLANNING_HISTORY.md`.
+3. The agent works in the target workspace.
+4. `codex-heartbeat` keeps re-injecting a bounded experiment-loop prompt and points the agent at the run artifacts under `target/`.
+5. The agent writes memory into `target/run-<timestamp>/` and `target/results.jsonl`.
 
 Minimal `program.md` example:
 
@@ -144,9 +146,12 @@ Inspect the stored session:
 
 Example autoresearch programs ship in:
 
+- `examples/program-planning.md`
 - `examples/program-debugging.md`
 - `examples/program-benchmark.md`
 - `examples/program-manual-validation.md`
+
+The source Markdown templates used by the wrapper live in `cmd/codex-heartbeat/templates/`.
 
 ## Autoresearch Model
 
@@ -157,11 +162,15 @@ The default embedded prompt is no longer a generic “keep going” reminder. It
 - choose one hypothesis per cycle
 - explicitly keep, discard, or revert
 - read memory from `target/latest-context.md`
+- keep active work in `PLANNING.md`
+- preserve completed or superseded planning items in `target/PLANNING_HISTORY.md`
 - write memory into `target/run-<timestamp>/` and `target/results.jsonl`
 
 By default the 3-agent council is still a fallback, not the default first move. The prompt tells Codex to use the council only when it is blocked or when the recent failure streak in `target/results.jsonl` reaches the configured threshold from `program.md`.
 
 When you pass `--council`, the prompt switches to a frequent-council mode: use the council during baseline framing, next-hypothesis selection, and post-evaluator interpretation. The guidance is to keep the root agent on `gpt-5.4` with `xhigh` reasoning and use `gpt-5.3-codex-spark` with `high` reasoning for the three sub-agents.
+
+`Prompt mode: planning` is a guidance mode for using the autoresearch loop to refine the goal, deepen `PLANNING.md`, and decide the next deep dive before broad implementation.
 
 `Prompt mode: manual-test-first` is a guidance mode for workflows where Codex should prepare the next candidate fix and validation steps, then stop before the final human gate.
 
@@ -180,8 +189,9 @@ This is enough to make model/profile selection reproducible in `codex-heartbeat`
 For long-running loops, a target workspace should ideally contain:
 
 - `program.md`: human-authored objective, evaluator, and constraints
-- `PLANNING.md`: optional broader notes or backlog
-- `AGENTS.md`: repo-local rules for the agent
+- `PLANNING.md`: the live active plan
+- `target/PLANNING_HISTORY.md`: durable planning memory for completed or superseded work
+- `AGENTS.md`: repo-local rules telling the agent which files to read and what each one owns
 - `target/run-<timestamp>/insights.md`: concise memory from each run
 - `target/results.jsonl`: compact experiment ledger
 - `target/latest-context.md`: bounded summary used on the next heartbeat
@@ -200,6 +210,7 @@ By default the wrapper writes:
 
 Autoresearch mode also writes bounded memory into the target workspace:
 
+- `<workdir>/target/PLANNING_HISTORY.md`
 - `<workdir>/target/results.jsonl`
 - `<workdir>/target/latest-context.md`
 - `<workdir>/target/run-<timestamp>/{plan,execution,results,insights}.md`

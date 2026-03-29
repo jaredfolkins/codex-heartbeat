@@ -20,15 +20,10 @@ import (
 	"syscall"
 	"time"
 
-	_ "embed"
-
 	"github.com/creack/pty"
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
-
-//go:embed heartbeat.md
-var defaultPrompt string
 
 const (
 	startupHeartbeatDelay = 5 * time.Second
@@ -513,7 +508,7 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, work
 		return workspaceConfig{}, promptResolver{}, workspaceState{}, fmt.Errorf("create runtime dirs: %w", err)
 	}
 
-	warning, err := ensureAutoresearchWorkspace(cfg.Workdir)
+	warning, err := ensureAutoresearchWorkspaceWithSurvey(cfg.Workdir, os.Stdin, os.Stderr, shouldUseInteractiveScaffoldSurvey())
 	if err != nil {
 		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
@@ -541,6 +536,10 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, work
 	}
 
 	return cfg, prompts, state, nil
+}
+
+func shouldUseInteractiveScaffoldSurvey() bool {
+	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stderr.Fd()))
 }
 
 func migrateLegacyProjectDir(cfg workspaceConfig) error {
@@ -749,7 +748,7 @@ func (p promptSource) Resolve() (string, error) {
 
 func (p promptSource) ResolveWithMetadata() (string, bool, error) {
 	if strings.TrimSpace(p.path) == "" {
-		prompt, err := normalizePromptText([]byte(defaultPrompt), "embedded heartbeat.md")
+		prompt, err := normalizePromptText([]byte(embeddedTemplate("heartbeat.md")), "embedded templates/heartbeat.md")
 		return prompt, false, err
 	}
 

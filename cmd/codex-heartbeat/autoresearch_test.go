@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -169,6 +170,49 @@ Prompt mode: manual-test-first
 	}
 }
 
+func TestPromptResolverPlanningMode(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	projectDir := filepath.Join(root, "runtime")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	program := `# Program
+
+Objective: build the plan before coding
+Primary evaluator: rg -n "TODO|FIXME" .
+Prompt mode: planning
+
+## Notes
+
+- Deepen the implementation plan before making broad code changes.
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 29, 1, 0, 0, 0, time.UTC))
+	resolution, err := resolver.Resolve(artifacts)
+	if err != nil {
+		t.Fatalf("Resolve() returned error: %v", err)
+	}
+
+	if !strings.Contains(resolution.Text, "refine the goal, deepen the plan") {
+		t.Fatalf("Resolve().Text missing planning-mode guidance: %q", resolution.Text)
+	}
+	if !strings.Contains(resolution.Text, "Planning history path") {
+		t.Fatalf("Resolve().Text missing planning history path: %q", resolution.Text)
+	}
+}
+
 func TestPromptResolverProgramTakesPrecedenceWhenExplicitPromptFlagIsUnset(t *testing.T) {
 	t.Parallel()
 
@@ -273,7 +317,7 @@ func TestLoadPriorInsightsNewestFirst(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(newerDir, "insights.md"), []byte("# Insights\n\n- newer insight\n"), 0o644); err != nil {
 		t.Fatalf("write newer insights: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(currentDir, "insights.md"), []byte(defaultInsightsTemplate), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(currentDir, "insights.md"), []byte(embeddedTemplate("insights.md")), 0o644); err != nil {
 		t.Fatalf("write current insights: %v", err)
 	}
 
@@ -524,6 +568,7 @@ func TestEnsureAutoresearchWorkspaceScaffoldsWorkspace(t *testing.T) {
 	paths := []string{
 		filepath.Join(workdir, defaultProgramFilename),
 		filepath.Join(workdir, planningFilename),
+		filepath.Join(workdir, targetDirName, planningHistoryFilename),
 		filepath.Join(workdir, targetDirName, runTemplateDirName, "plan.md"),
 		filepath.Join(workdir, targetDirName, runTemplateDirName, "execution.md"),
 		filepath.Join(workdir, targetDirName, runTemplateDirName, "results.md"),
@@ -535,6 +580,28 @@ func TestEnsureAutoresearchWorkspaceScaffoldsWorkspace(t *testing.T) {
 		if _, err := os.Stat(path); err != nil {
 			t.Fatalf("scaffold missing %s: %v", path, err)
 		}
+	}
+}
+
+func TestEnsureAutoresearchWorkspaceSeedsPlanningHistory(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	if _, err := ensureAutoresearchWorkspace(workdir); err != nil {
+		t.Fatalf("ensureAutoresearchWorkspace() returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workdir, targetDirName, planningHistoryFilename))
+	if err != nil {
+		t.Fatalf("read planning history scaffold: %v", err)
+	}
+
+	content := string(data)
+	if !strings.Contains(content, "# Planning History") {
+		t.Fatalf("planning history scaffold missing title: %q", content)
+	}
+	if !strings.Contains(content, "durable planning memory") {
+		t.Fatalf("planning history scaffold missing durable-memory guidance: %q", content)
 	}
 }
 
@@ -621,5 +688,91 @@ func TestEnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting(t *
 	}
 	if _, err := os.Stat(filepath.Join(workdir, planningFilename)); err != nil {
 		t.Fatalf("PLANNING.md missing after ensureAutoresearchWorkspace(): %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(workdir, targetDirName, planningHistoryFilename)); err != nil {
+		t.Fatalf("target/PLANNING_HISTORY.md missing after ensureAutoresearchWorkspace(): %v", err)
+	}
+}
+
+func TestEnsureAutoresearchWorkspaceWithSurveyUsesAnswers(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	input := strings.NewReader("Ship a planning-mode refactor\nmake test\nMap the architecture and dead ends first\n1\n")
+	var output bytes.Buffer
+
+	if warning, err := ensureAutoresearchWorkspaceWithSurvey(workdir, input, &output, true); err != nil {
+		t.Fatalf("ensureAutoresearchWorkspaceWithSurvey() returned error: %v", err)
+	} else if warning != "" {
+		t.Fatalf("ensureAutoresearchWorkspaceWithSurvey() warning = %q, want empty warning", warning)
+	}
+
+	programData, err := os.ReadFile(filepath.Join(workdir, defaultProgramFilename))
+	if err != nil {
+		t.Fatalf("read program scaffold: %v", err)
+	}
+	if !strings.Contains(string(programData), "Objective: Ship a planning-mode refactor") {
+		t.Fatalf("program scaffold missing surveyed objective: %q", string(programData))
+	}
+	if !strings.Contains(string(programData), "Prompt mode: planning") {
+		t.Fatalf("program scaffold missing planning mode: %q", string(programData))
+	}
+
+	planningData, err := os.ReadFile(filepath.Join(workdir, planningFilename))
+	if err != nil {
+		t.Fatalf("read planning scaffold: %v", err)
+	}
+	if !strings.Contains(string(planningData), "- [ ] Map the architecture and dead ends first") {
+		t.Fatalf("planning scaffold missing surveyed deep dive: %q", string(planningData))
+	}
+}
+
+func TestArchiveCompletedPlanningTasksMovesCheckedItems(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 29, 1, 5, 0, 0, time.UTC))
+	if err := os.MkdirAll(filepath.Dir(artifacts.PlanningHistoryPath), 0o755); err != nil {
+		t.Fatalf("mkdir planning history dir: %v", err)
+	}
+	planning := `# Planning
+
+## Task List
+
+- [x] Investigated the legacy retry path.
+- [ ] Implement the retry fix.
+
+## Open Questions
+
+- [x] Decide whether the stale cache path still matters.
+`
+	if err := os.WriteFile(filepath.Join(workdir, planningFilename), []byte(planning), 0o644); err != nil {
+		t.Fatalf("write planning: %v", err)
+	}
+
+	if err := archiveCompletedPlanningTasks(artifacts, time.Date(2026, time.March, 29, 1, 6, 0, 0, time.UTC)); err != nil {
+		t.Fatalf("archiveCompletedPlanningTasks() returned error: %v", err)
+	}
+
+	updatedPlanning, err := os.ReadFile(filepath.Join(workdir, planningFilename))
+	if err != nil {
+		t.Fatalf("read planning: %v", err)
+	}
+	if strings.Contains(string(updatedPlanning), "- [x] Investigated the legacy retry path.") {
+		t.Fatalf("updated planning still contains archived task: %q", string(updatedPlanning))
+	}
+	if !strings.Contains(string(updatedPlanning), "- [ ] Implement the retry fix.") {
+		t.Fatalf("updated planning lost active task: %q", string(updatedPlanning))
+	}
+
+	history, err := os.ReadFile(artifacts.PlanningHistoryPath)
+	if err != nil {
+		t.Fatalf("read planning history: %v", err)
+	}
+	if !strings.Contains(string(history), "Investigated the legacy retry path") {
+		t.Fatalf("planning history missing archived task: %q", string(history))
+	}
+	if !strings.Contains(string(history), "### Task List") {
+		t.Fatalf("planning history missing section heading: %q", string(history))
 	}
 }
