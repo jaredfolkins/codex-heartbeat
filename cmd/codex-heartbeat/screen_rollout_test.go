@@ -94,6 +94,23 @@ func TestScreenRolloutInspectorResolvesAmbiguousScreen(t *testing.T) {
 	}
 }
 
+func TestScreenRolloutInspectorOverridesIdleScreenWhenRolloutIsWorking(t *testing.T) {
+	codexHome := t.TempDir()
+	t.Setenv("CODEX_HOME", codexHome)
+
+	sessionID := "session-idle-screen-working-rollout"
+	writeScreenRolloutFixture(t, codexHome, sessionID, strings.Join([]string{
+		`{"timestamp":"2026-03-28T22:53:10.170Z","type":"session_meta","payload":{"id":"SESSION_ID","cwd":"/tmp/work","timestamp":"2026-03-28T22:53:10.170Z"}}`,
+		`{"timestamp":"2026-03-28T22:53:10.171Z","type":"event_msg","payload":{"type":"task_started"}}`,
+	}, "\n")+"\n")
+
+	inspector := newSessionRolloutInspector()
+	got, reason := inspector.Resolve(screenStateIdle, sessionID)
+	if got != screenStateWorking || reason != "rollout_task_started" {
+		t.Fatalf("Resolve() = (%v, %q), want (%v, %q)", got, reason, screenStateWorking, "rollout_task_started")
+	}
+}
+
 func writeScreenRolloutFixture(t *testing.T, codexHome, sessionID, contents string) string {
 	t.Helper()
 

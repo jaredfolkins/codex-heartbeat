@@ -35,7 +35,7 @@ func TestClassifyScreenSnapshotFixtures(t *testing.T) {
 		{name: "history background", file: "history_background_terminal.txt", want: screenStateIdle},
 		{name: "history background without prompt", file: "history_background_terminal_no_prompt.txt", want: screenStateIdle},
 		{name: "context compacted", file: "context_compacted.txt", want: screenStateIdle},
-		{name: "footer background", file: "footer_background_terminal.txt", want: screenStateIdle},
+		{name: "footer background", file: "footer_background_terminal.txt", want: screenStateWorking},
 	}
 
 	for _, tc := range tests {
@@ -85,25 +85,28 @@ func TestEvaluateScreenIdlePollSequence(t *testing.T) {
 	idlePolls := 0
 
 	steps := []struct {
-		name       string
-		advance    time.Duration
-		quiet      bool
-		state      screenState
-		wantPolls  int
-		wantInject bool
-		wantReason string
+		name        string
+		advance     time.Duration
+		quiet       bool
+		outputQuiet bool
+		state       screenState
+		wantPolls   int
+		wantInject  bool
+		wantReason  string
 	}{
-		{name: "working resets", advance: 0, quiet: true, state: screenStateWorking, wantPolls: 0, wantReason: "screen_working"},
-		{name: "idle begins", advance: screenIdlePollInterval, quiet: true, state: screenStateIdle, wantPolls: 1, wantReason: "idle_accumulating"},
-		{name: "recent input delays fire", advance: screenIdlePollInterval, quiet: false, state: screenStateIdle, wantPolls: 2, wantReason: "idle_accumulating_recent_input"},
-		{name: "ready but still recent input", advance: screenIdlePollInterval, quiet: false, state: screenStateIdle, wantPolls: 3, wantReason: "idle_ready_recent_input"},
-		{name: "quiet idle injects", advance: screenIdlePollInterval, quiet: true, state: screenStateIdle, wantInject: true, wantReason: "idle_threshold_reached"},
+		{name: "working resets", advance: 0, quiet: true, outputQuiet: true, state: screenStateWorking, wantPolls: 0, wantReason: "screen_working"},
+		{name: "idle begins", advance: screenIdlePollInterval, quiet: true, outputQuiet: true, state: screenStateIdle, wantPolls: 1, wantReason: "idle_accumulating"},
+		{name: "recent input resets", advance: screenIdlePollInterval, quiet: false, outputQuiet: true, state: screenStateIdle, wantPolls: 0, wantReason: "idle_blocked_recent_input"},
+		{name: "recent output resets", advance: screenIdlePollInterval, quiet: true, outputQuiet: false, state: screenStateIdle, wantPolls: 0, wantReason: "idle_blocked_recent_output"},
+		{name: "idle restarts", advance: screenIdlePollInterval, quiet: true, outputQuiet: true, state: screenStateIdle, wantPolls: 1, wantReason: "idle_accumulating"},
+		{name: "second quiet idle", advance: screenIdlePollInterval, quiet: true, outputQuiet: true, state: screenStateIdle, wantPolls: 2, wantReason: "idle_accumulating"},
+		{name: "third quiet idle injects", advance: screenIdlePollInterval, quiet: true, outputQuiet: true, state: screenStateIdle, wantInject: true, wantReason: "idle_threshold_reached"},
 	}
 
 	current := now
 	for _, step := range steps {
 		current = current.Add(step.advance)
-		decision := evaluateScreenIdlePoll(current, step.quiet, step.state, idlePolls, lastPromptAt)
+		decision := evaluateScreenIdlePoll(current, step.quiet, step.outputQuiet, step.state, idlePolls, lastPromptAt)
 		if decision.nextIdlePolls != step.wantPolls || decision.shouldInject != step.wantInject || decision.reason != step.wantReason {
 			t.Fatalf("%s: evaluateScreenIdlePoll() = (%d, %t, %q), want (%d, %t, %q)", step.name, decision.nextIdlePolls, decision.shouldInject, decision.reason, step.wantPolls, step.wantInject, step.wantReason)
 		}
@@ -129,9 +132,10 @@ func TestHeartbeatReplaySequence(t *testing.T) {
 	}{
 		{name: "active status row", file: "active_working.txt", quiet: true, wantState: screenStateWorking, wantPolls: 0, wantReason: "screen_working"},
 		{name: "active without interrupt hint", file: "active_no_interrupt.txt", quiet: true, wantState: screenStateWorking, wantPolls: 0, wantReason: "screen_working"},
-		{name: "footer noise does not force working", file: "footer_background_terminal.txt", quiet: true, wantState: screenStateIdle, wantPolls: 1, wantReason: "idle_accumulating"},
-		{name: "idle token usage accumulates", file: "idle_token_usage.txt", quiet: true, wantState: screenStateIdle, wantPolls: 2, wantReason: "idle_accumulating"},
-		{name: "third quiet idle injects", file: "history_background_terminal.txt", quiet: true, wantState: screenStateIdle, wantInject: true, wantReason: "idle_threshold_reached"},
+		{name: "live background footer is working", file: "footer_background_terminal.txt", quiet: true, wantState: screenStateWorking, wantPolls: 0, wantReason: "screen_working"},
+		{name: "idle token usage accumulates", file: "idle_token_usage.txt", quiet: true, wantState: screenStateIdle, wantPolls: 1, wantReason: "idle_accumulating"},
+		{name: "historical wait still looks idle", file: "history_background_terminal.txt", quiet: true, wantState: screenStateIdle, wantPolls: 2, wantReason: "idle_accumulating"},
+		{name: "third quiet idle injects", file: "context_compacted.txt", quiet: true, wantState: screenStateIdle, wantInject: true, wantReason: "idle_threshold_reached"},
 	}
 
 	for idx, step := range steps {
@@ -141,7 +145,7 @@ func TestHeartbeatReplaySequence(t *testing.T) {
 			t.Fatalf("%s: classifyScreenSnapshot(%s) = %v, want %v", step.name, step.file, state, step.wantState)
 		}
 
-		decision := evaluateScreenIdlePoll(now, step.quiet, state, idlePolls, lastPromptAt)
+		decision := evaluateScreenIdlePoll(now, step.quiet, step.quiet, state, idlePolls, lastPromptAt)
 		if decision.nextIdlePolls != step.wantPolls || decision.shouldInject != step.wantInject || decision.reason != step.wantReason {
 			t.Fatalf("%s (step %d): evaluateScreenIdlePoll() = (%d, %t, %q), want (%d, %t, %q)", step.name, idx, decision.nextIdlePolls, decision.shouldInject, decision.reason, step.wantPolls, step.wantInject, step.wantReason)
 		}

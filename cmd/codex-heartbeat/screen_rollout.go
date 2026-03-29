@@ -38,7 +38,7 @@ func newSessionRolloutInspector() *sessionRolloutInspector {
 }
 
 func (i *sessionRolloutInspector) Resolve(current screenState, sessionID string) (screenState, string) {
-	if current != screenStateAmbiguous || strings.TrimSpace(sessionID) == "" {
+	if strings.TrimSpace(sessionID) == "" {
 		return current, ""
 	}
 
@@ -51,7 +51,13 @@ func (i *sessionRolloutInspector) Resolve(current screenState, sessionID string)
 	if err != nil || rolloutState == screenStateAmbiguous {
 		return current, ""
 	}
-	return rolloutState, reason
+	if rolloutState == screenStateWorking {
+		return rolloutState, reason
+	}
+	if current == screenStateAmbiguous {
+		return rolloutState, reason
+	}
+	return current, ""
 }
 
 func (i *sessionRolloutInspector) pathForSession(sessionID string) (string, error) {

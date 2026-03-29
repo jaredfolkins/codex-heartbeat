@@ -246,8 +246,10 @@ func runInteractiveCommand(args []string) error {
 	}
 	screen := newTerminalScreen(cols, rows)
 	var inputTracker *userInputTracker
+	var outputTracker *outputActivityTracker
 	if useScreenIdleHeartbeat {
 		inputTracker = &userInputTracker{}
+		outputTracker = &outputActivityTracker{}
 	}
 
 	setTerminalTitle(runTerminalTitle(cfg))
@@ -283,7 +285,7 @@ func runInteractiveCommand(args []string) error {
 	go trackSessionID(ctx, cfg, &state, startedAt)
 	schedulerErrors := make(chan error, 1)
 	if useScreenIdleHeartbeat {
-		go injectScreenIdleLoop(ctx, ptmx, prompts, artifacts, screen, inputTracker, promptTracker, cfg, &state, schedulerErrors)
+		go injectScreenIdleLoop(ctx, ptmx, prompts, artifacts, screen, inputTracker, outputTracker, promptTracker, cfg, &state, schedulerErrors)
 		if strings.TrimSpace(state.SessionID) == "" {
 			go injectStartupPromptAfterDelay(ctx, ptmx, prompts, artifacts, startupHeartbeatDelay, promptTracker, cfg, &state, schedulerErrors)
 		}
@@ -296,7 +298,11 @@ func runInteractiveCommand(args []string) error {
 
 	outputDone := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(io.MultiWriter(os.Stdout, runLogFile, screen), ptmx)
+		outputWriters := []io.Writer{os.Stdout, runLogFile, screen}
+		if outputTracker != nil {
+			outputWriters = append(outputWriters, outputActivityWriter{tracker: outputTracker})
+		}
+		_, err := io.Copy(io.MultiWriter(outputWriters...), ptmx)
 		if isIgnorableCopyError(err) {
 			err = nil
 		}

@@ -76,8 +76,8 @@ func TestClassifyScreenSnapshotBackgroundFooterNeedsStatusRow(t *testing.T) {
 	t.Parallel()
 
 	snapshot := "  1 background terminal running \u00b7 /ps to view \u00b7 /s\n\u203a Ask Codex to do anything\n"
-	if got := classifyScreenSnapshot(snapshot); got != screenStateIdle {
-		t.Fatalf("classifyScreenSnapshot() = %v, want idle without a live status row", got)
+	if got := classifyScreenSnapshot(snapshot); got != screenStateWorking {
+		t.Fatalf("classifyScreenSnapshot() = %v, want working for a live background-terminal footer", got)
 	}
 }
 
@@ -162,7 +162,7 @@ func TestTerminalScreenRecentSnapshotKeepsLiveWorkingText(t *testing.T) {
 func TestScreenIdleHeartbeatSummary(t *testing.T) {
 	t.Parallel()
 
-	if got, want := screenIdleHeartbeatSummary(), "screen-idle=3x5s/quiet=20s/fallback=60m"; got != want {
+	if got, want := screenIdleHeartbeatSummary(), "screen-idle=3x5s/input-quiet=20s/output-quiet=30s/grace=45s/fallback=60m"; got != want {
 		t.Fatalf("screenIdleHeartbeatSummary() = %q, want %q", got, want)
 	}
 }
@@ -204,6 +204,26 @@ func TestUserInputTrackerQuietWindow(t *testing.T) {
 	}
 }
 
+func TestOutputActivityTrackerQuietWindow(t *testing.T) {
+	t.Parallel()
+
+	tracker := &outputActivityTracker{}
+	now := time.Date(2026, time.March, 25, 12, 0, 0, 0, time.UTC)
+
+	if !tracker.IsQuiet(now, screenIdleOutputWindow) {
+		t.Fatal("tracker without output should be quiet")
+	}
+
+	tracker.Mark(now)
+
+	if tracker.IsQuiet(now.Add(5*time.Second), screenIdleOutputWindow) {
+		t.Fatal("tracker with recent output should not be quiet")
+	}
+	if !tracker.IsQuiet(now.Add(screenIdleOutputWindow), screenIdleOutputWindow) {
+		t.Fatal("tracker should become quiet once the output quiet window passes")
+	}
+}
+
 func TestTrackUserInputMarksActivity(t *testing.T) {
 	t.Parallel()
 
@@ -222,6 +242,20 @@ func TestTrackUserInputMarksActivity(t *testing.T) {
 	}
 }
 
+func TestOutputActivityWriterMarksActivity(t *testing.T) {
+	t.Parallel()
+
+	tracker := &outputActivityTracker{}
+	writer := outputActivityWriter{tracker: tracker}
+
+	if _, err := writer.Write([]byte("hello")); err != nil {
+		t.Fatalf("Write(outputActivityWriter) returned error: %v", err)
+	}
+	if tracker.IsQuiet(time.Now(), time.Hour) {
+		t.Fatal("tracker should record recent output activity")
+	}
+}
+
 func TestEvaluateScreenIdlePoll(t *testing.T) {
 	t.Parallel()
 
@@ -229,23 +263,25 @@ func TestEvaluateScreenIdlePoll(t *testing.T) {
 	lastPromptAt := now.Add(-30 * time.Minute)
 
 	tests := []struct {
-		name       string
-		idlePolls  int
-		quiet      bool
-		state      screenState
-		lastPrompt time.Time
-		wantPolls  int
-		wantInject bool
-		wantReason string
+		name        string
+		idlePolls   int
+		inputQuiet  bool
+		outputQuiet bool
+		state       screenState
+		lastPrompt  time.Time
+		wantPolls   int
+		wantInject  bool
+		wantReason  string
 	}{
-		{name: "first idle poll", idlePolls: 0, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 1, wantReason: "idle_accumulating"},
-		{name: "second idle poll", idlePolls: 1, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating"},
-		{name: "third idle poll injects", idlePolls: 2, quiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantInject: true, wantReason: "idle_threshold_reached"},
-		{name: "recent input still accumulates idle evidence", idlePolls: 1, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating_recent_input"},
-		{name: "recent input holds ready idle screen", idlePolls: 2, quiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 3, wantReason: "idle_ready_recent_input"},
-		{name: "working screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateWorking, lastPrompt: lastPromptAt, wantReason: "screen_working"},
-		{name: "ambiguous screen resets idle accumulation", idlePolls: 2, quiet: true, state: screenStateAmbiguous, lastPrompt: lastPromptAt, wantReason: "screen_ambiguous"},
-		{name: "fallback injects after 60m", idlePolls: 0, quiet: true, state: screenStateWorking, lastPrompt: now.Add(-screenIdleFallbackWait), wantInject: true, wantReason: "fallback_due"},
+		{name: "recent prompt grace suppresses reinjection", idlePolls: 2, inputQuiet: true, outputQuiet: true, state: screenStateIdle, lastPrompt: now.Add(-screenIdlePromptGrace + 5*time.Second), wantReason: "recent_prompt_grace"},
+		{name: "first idle poll", idlePolls: 0, inputQuiet: true, outputQuiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 1, wantReason: "idle_accumulating"},
+		{name: "second idle poll", idlePolls: 1, inputQuiet: true, outputQuiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantPolls: 2, wantReason: "idle_accumulating"},
+		{name: "third idle poll injects", idlePolls: 2, inputQuiet: true, outputQuiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantInject: true, wantReason: "idle_threshold_reached"},
+		{name: "recent input resets idle evidence", idlePolls: 2, inputQuiet: false, outputQuiet: true, state: screenStateIdle, lastPrompt: lastPromptAt, wantReason: "idle_blocked_recent_input"},
+		{name: "recent output resets idle evidence", idlePolls: 2, inputQuiet: true, outputQuiet: false, state: screenStateIdle, lastPrompt: lastPromptAt, wantReason: "idle_blocked_recent_output"},
+		{name: "working screen resets idle accumulation", idlePolls: 2, inputQuiet: true, outputQuiet: true, state: screenStateWorking, lastPrompt: lastPromptAt, wantReason: "screen_working"},
+		{name: "ambiguous screen resets idle accumulation", idlePolls: 2, inputQuiet: true, outputQuiet: true, state: screenStateAmbiguous, lastPrompt: lastPromptAt, wantReason: "screen_ambiguous"},
+		{name: "fallback injects after 60m", idlePolls: 0, inputQuiet: true, outputQuiet: true, state: screenStateWorking, lastPrompt: now.Add(-screenIdleFallbackWait), wantInject: true, wantReason: "fallback_due"},
 	}
 
 	for _, tc := range tests {
@@ -253,7 +289,7 @@ func TestEvaluateScreenIdlePoll(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			decision := evaluateScreenIdlePoll(now, tc.quiet, tc.state, tc.idlePolls, tc.lastPrompt)
+			decision := evaluateScreenIdlePoll(now, tc.inputQuiet, tc.outputQuiet, tc.state, tc.idlePolls, tc.lastPrompt)
 			if decision.nextIdlePolls != tc.wantPolls || decision.shouldInject != tc.wantInject || decision.reason != tc.wantReason {
 				t.Fatalf("evaluateScreenIdlePoll() = (%d, %t, %q), want (%d, %t, %q)", decision.nextIdlePolls, decision.shouldInject, decision.reason, tc.wantPolls, tc.wantInject, tc.wantReason)
 			}
@@ -276,6 +312,8 @@ func TestPersistScreenDiagnostics(t *testing.T) {
 		SessionID:     "session-123",
 		Scheduler:     screenIdleHeartbeatSummary(),
 		ScreenState:   "idle",
+		InputQuiet:    true,
+		OutputQuiet:   true,
 		Quiet:         true,
 		IdlePolls:     2,
 		Reason:        "idle_accumulating",
@@ -288,6 +326,8 @@ func TestPersistScreenDiagnostics(t *testing.T) {
 		SessionID:    "session-123",
 		Scheduler:    screenIdleHeartbeatSummary(),
 		ScreenState:  "idle",
+		InputQuiet:   true,
+		OutputQuiet:  true,
 		Quiet:        true,
 		IdlePolls:    2,
 		Reason:       "idle_accumulating",

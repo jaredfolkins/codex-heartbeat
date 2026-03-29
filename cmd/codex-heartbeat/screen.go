@@ -20,6 +20,8 @@ const (
 	screenIdlePollCount    = 3
 	screenIdleRecentLines  = 8
 	screenIdleQuietWindow  = 20 * time.Second
+	screenIdleOutputWindow = 30 * time.Second
+	screenIdlePromptGrace  = 45 * time.Second
 	screenIdleFallbackWait = 60 * time.Minute
 	screenSnapshotLimit    = 240
 )
@@ -67,6 +69,11 @@ type userInputTracker struct {
 	lastInputAt time.Time
 }
 
+type outputActivityTracker struct {
+	mu           sync.RWMutex
+	lastOutputAt time.Time
+}
+
 type promptInjectionTracker struct {
 	mu           sync.RWMutex
 	lastPromptAt time.Time
@@ -74,6 +81,10 @@ type promptInjectionTracker struct {
 
 type inputActivityWriter struct {
 	tracker *userInputTracker
+}
+
+type outputActivityWriter struct {
+	tracker *outputActivityTracker
 }
 
 type screenPollDecision struct {
@@ -87,6 +98,8 @@ type screenRuntimeState struct {
 	SessionID     string    `json:"session_id,omitempty"`
 	Scheduler     string    `json:"scheduler"`
 	ScreenState   string    `json:"screen_state"`
+	InputQuiet    bool      `json:"input_quiet"`
+	OutputQuiet   bool      `json:"output_quiet"`
 	Quiet         bool      `json:"quiet"`
 	IdlePolls     int       `json:"idle_polls"`
 	Reason        string    `json:"reason"`
@@ -102,6 +115,8 @@ type screenPollRecord struct {
 	SessionID    string `json:"session_id,omitempty"`
 	Scheduler    string `json:"scheduler"`
 	ScreenState  string `json:"screen_state"`
+	InputQuiet   bool   `json:"input_quiet"`
+	OutputQuiet  bool   `json:"output_quiet"`
 	Quiet        bool   `json:"quiet"`
 	IdlePolls    int    `json:"idle_polls"`
 	Reason       string `json:"reason"`
@@ -318,6 +333,32 @@ func (t *userInputTracker) IsQuiet(now time.Time, window time.Duration) bool {
 	return now.Sub(lastInputAt) >= window
 }
 
+func (t *outputActivityTracker) Mark(at time.Time) {
+	if t == nil {
+		return
+	}
+
+	t.mu.Lock()
+	t.lastOutputAt = at
+	t.mu.Unlock()
+}
+
+func (t *outputActivityTracker) IsQuiet(now time.Time, window time.Duration) bool {
+	if t == nil || window <= 0 {
+		return true
+	}
+
+	t.mu.RLock()
+	lastOutputAt := t.lastOutputAt
+	t.mu.RUnlock()
+
+	if lastOutputAt.IsZero() {
+		return true
+	}
+
+	return now.Sub(lastOutputAt) >= window
+}
+
 func newPromptInjectionTracker(initial time.Time) *promptInjectionTracker {
 	return &promptInjectionTracker{lastPromptAt: initial}
 }
@@ -344,6 +385,13 @@ func (t *promptInjectionTracker) LastPromptAt() time.Time {
 }
 
 func (w inputActivityWriter) Write(p []byte) (int, error) {
+	if len(p) > 0 && w.tracker != nil {
+		w.tracker.Mark(time.Now())
+	}
+	return len(p), nil
+}
+
+func (w outputActivityWriter) Write(p []byte) (int, error) {
 	if len(p) > 0 && w.tracker != nil {
 		w.tracker.Mark(time.Now())
 	}
@@ -412,7 +460,9 @@ func classifyScreenSnapshot(snapshot string) screenState {
 			case hasHeader && hasInterrupt:
 				activeLineScore = 3
 			case hasLiveBackground && (hasElapsed || hasHeader || hasInterrupt):
-				activeLineScore = 2
+				activeLineScore = 3
+			case hasLiveBackground:
+				activeLineScore = 3
 			}
 		}
 		activeScore += activeLineScore * weight
@@ -556,7 +606,14 @@ func normalizeScreenSnapshot(snapshot string) string {
 	return strings.Join(strings.Fields(cleaned), " ")
 }
 
-func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState, idlePolls int, lastPromptAt time.Time) screenPollDecision {
+func evaluateScreenIdlePoll(now time.Time, inputQuiet bool, outputQuiet bool, currentState screenState, idlePolls int, lastPromptAt time.Time) screenPollDecision {
+	quiet := inputQuiet && outputQuiet
+	if screenIdleRecentPrompt(now, lastPromptAt) {
+		return screenPollDecision{
+			nextIdlePolls: 0,
+			reason:        "recent_prompt_grace",
+		}
+	}
 	if screenIdleFallbackDue(now, lastPromptAt, quiet) {
 		return screenPollDecision{
 			nextIdlePolls: 0,
@@ -576,23 +633,24 @@ func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState,
 			reason:        "screen_ambiguous",
 		}
 	default:
+		if !outputQuiet {
+			return screenPollDecision{
+				nextIdlePolls: 0,
+				reason:        "idle_blocked_recent_output",
+			}
+		}
+		if !inputQuiet {
+			return screenPollDecision{
+				nextIdlePolls: 0,
+				reason:        "idle_blocked_recent_input",
+			}
+		}
+
 		nextIdlePolls := min(idlePolls+1, screenIdlePollCount)
 		if nextIdlePolls < screenIdlePollCount {
-			if !quiet {
-				return screenPollDecision{
-					nextIdlePolls: nextIdlePolls,
-					reason:        "idle_accumulating_recent_input",
-				}
-			}
 			return screenPollDecision{
 				nextIdlePolls: nextIdlePolls,
 				reason:        "idle_accumulating",
-			}
-		}
-		if !quiet {
-			return screenPollDecision{
-				nextIdlePolls: nextIdlePolls,
-				reason:        "idle_ready_recent_input",
 			}
 		}
 		return screenPollDecision{
@@ -601,6 +659,13 @@ func evaluateScreenIdlePoll(now time.Time, quiet bool, currentState screenState,
 			reason:        "idle_threshold_reached",
 		}
 	}
+}
+
+func screenIdleRecentPrompt(now, lastPromptAt time.Time) bool {
+	if lastPromptAt.IsZero() {
+		return false
+	}
+	return now.Sub(lastPromptAt) < screenIdlePromptGrace
 }
 
 func screenIdleFallbackDue(now, lastPromptAt time.Time, quiet bool) bool {
@@ -658,7 +723,7 @@ func persistScreenDiagnostics(cfg workspaceConfig, state screenRuntimeState, pol
 	_ = appendScreenPoll(cfg.LogsDir, poll)
 }
 
-func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, screen *terminalScreen, inputTracker *userInputTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
+func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptResolver, artifacts autoresearchArtifacts, screen *terminalScreen, inputTracker *userInputTracker, outputTracker *outputActivityTracker, promptTracker *promptInjectionTracker, cfg workspaceConfig, state *workspaceState, errCh chan<- error) {
 	if screen == nil {
 		return
 	}
@@ -671,6 +736,8 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 		SessionID:     state.SessionID,
 		Scheduler:     screenIdleHeartbeatSummary(),
 		ScreenState:   screenStateLabel(screenStateAmbiguous),
+		InputQuiet:    true,
+		OutputQuiet:   true,
 		Quiet:         true,
 		IdlePolls:     0,
 		Reason:        "starting",
@@ -681,6 +748,8 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 		SessionID:   state.SessionID,
 		Scheduler:   screenIdleHeartbeatSummary(),
 		ScreenState: screenStateLabel(screenStateAmbiguous),
+		InputQuiet:  true,
+		OutputQuiet: true,
 		Quiet:       true,
 		IdlePolls:   0,
 		Reason:      "starting",
@@ -693,14 +762,16 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 			return
 		case <-ticker.C:
 			now := time.Now()
-			quiet := inputTracker.IsQuiet(now, screenIdleQuietWindow)
+			inputQuiet := inputTracker.IsQuiet(now, screenIdleQuietWindow)
+			outputQuiet := outputTracker.IsQuiet(now, screenIdleOutputWindow)
+			quiet := inputQuiet && outputQuiet
 			lastPromptAt := promptTracker.LastPromptAt()
 			snapshot := screen.RecentSnapshot(screenIdleRecentLines)
 			currentState := classifyScreenSnapshot(snapshot)
 			tiebreakReason := ""
 			currentState, tiebreakReason = rolloutInspector.Resolve(currentState, state.SessionID)
 
-			decision := evaluateScreenIdlePoll(now, quiet, currentState, idlePolls, lastPromptAt)
+			decision := evaluateScreenIdlePoll(now, inputQuiet, outputQuiet, currentState, idlePolls, lastPromptAt)
 			if paused, pauseReason, err := heartbeatPauseState(artifacts); err != nil {
 				reportAsyncError(errCh, err)
 				return
@@ -717,6 +788,8 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 				SessionID:    state.SessionID,
 				Scheduler:    screenIdleHeartbeatSummary(),
 				ScreenState:  screenStateLabel(currentState),
+				InputQuiet:   inputQuiet,
+				OutputQuiet:  outputQuiet,
 				Quiet:        quiet,
 				IdlePolls:    idlePolls,
 				Reason:       decision.reason,
@@ -728,6 +801,8 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 				SessionID:     state.SessionID,
 				Scheduler:     screenIdleHeartbeatSummary(),
 				ScreenState:   screenStateLabel(currentState),
+				InputQuiet:    inputQuiet,
+				OutputQuiet:   outputQuiet,
 				Quiet:         quiet,
 				IdlePolls:     idlePolls,
 				Reason:        decision.reason,
@@ -766,7 +841,15 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 
 func screenIdleHeartbeatSummary() string {
 	fallback := fmt.Sprintf("%dm", int(screenIdleFallbackWait/time.Minute))
-	return fmt.Sprintf("screen-idle=%dx%s/quiet=%s/fallback=%s", screenIdlePollCount, formatFlexibleDuration(screenIdlePollInterval), formatFlexibleDuration(screenIdleQuietWindow), fallback)
+	return fmt.Sprintf(
+		"screen-idle=%dx%s/input-quiet=%s/output-quiet=%s/grace=%s/fallback=%s",
+		screenIdlePollCount,
+		formatFlexibleDuration(screenIdlePollInterval),
+		formatFlexibleDuration(screenIdleQuietWindow),
+		formatFlexibleDuration(screenIdleOutputWindow),
+		formatFlexibleDuration(screenIdlePromptGrace),
+		fallback,
+	)
 }
 
 func (s *terminalScreen) flushUTF8Buffer() {
