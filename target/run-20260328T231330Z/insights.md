@@ -11,6 +11,7 @@
 - If switching only applies to future sessions, the backlog also needs an obvious reset/new-session path; otherwise the UX remains underspecified even after the scope rule is written down.
 - If switching is deferred, the backlog also needs an active-versus-pending state model; otherwise operators still cannot tell what profile is live before they reset the session.
 - Named bundles also need a persistence rule; without it, operators still cannot tell whether a selection is a temporary override or the new default for later sessions.
+- Named bundles also need a clear undo path; otherwise the plan describes how to apply overrides more clearly than how to remove them.
 
 ## What Failed
 
@@ -32,3 +33,4 @@
 - If phase 1 lands on next-session-only switching, design the exact reset/new-session command flow early so profile switching does not feel half-finished.
 - If phase 1 lands on deferred switching, decide exactly where active and pending bundle state should appear so status/help UX stays unambiguous.
 - If phase 1 allows persisted bundle selection, decide where that default lives and how a one-session override differs in status/help/artifacts.
+- If phase 1 adds selection, make sure clear/default semantics appear in the same UX surfaces so operators do not need to edit files just to undo an override.

@@ -257,6 +257,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
 - Evaluator: `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about session-local versus persisted bundle selection.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
+- Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
+- Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about how operators undo profile overrides.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -296,3 +300,7 @@
 - 2026-03-29T01:09:05Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:09:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:09:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:10:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:10:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:11:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:11:15Z screen-idle heartbeat injected with prompt source `program_md`

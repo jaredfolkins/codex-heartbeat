@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style profile-persistence scope for named bundles.
-- Primary evaluator: `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style return-to-default flow for named bundles.
+- Primary evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style profile-persistence-scope items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving one-session overrides versus persisted defaults ambiguous.
+- If `PLANNING.md` explicitly includes Hermes-style return-to-default flow items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving named-bundle overrides easy to apply but awkward to undo.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style profile-persistence-scope items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style return-to-default flow items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
