@@ -29,6 +29,7 @@
 - Hermes also surfaces session configuration on `/new`, `/reset`, and auto-reset, so operators can see which model/personality/tooling state the fresh session picked up instead of inferring it after the next turn.
 - Hermes also exposes a `/statusbar` toggle for a persistent config bar showing model and provider info in the prompt, so active session configuration stays visible without requiring a separate status command.
 - Hermes also exposes a `/status` runtime surface: it reports live session state and token usage and shows the effective model and provider instead of leaving runtime state implicit.
+- Hermes also exposes built-in scheduled automations: a cron scheduler runs natural-language jobs with delivery to any platform, so operators can set up unattended daily reports, nightly backups, and weekly audits without leaving the chat.
 - Hermes also exposes a first-class model-selection surface: model/provider switching uses an explicit command workflow, provider-aware routing, custom endpoint support, and provider-specific model discovery such as curated lists or live `/models` probes instead of hidden config edits.
 - Hermes also exposes `/queue`, letting operators queue prompts without interrupting the current run, and queued messages are processed after the active run completes instead of forcing an immediate redirect.
 - Hermes also exposes explicit clear-session behavior: `/new`, `/reset`, and `/clear` start genuinely fresh sessions, and `/clear` resets compressor summary and turn counter instead of only wiping the visible transcript.
@@ -79,6 +80,7 @@
 - [ ] Define persistent config-bar semantics explicitly, so operators know whether active model/provider/profile state is shown continuously in the prompt or status row, what fields appear there, and whether that surface can be toggled on or off.
 - [ ] Define live-status semantics explicitly, so operators know whether a status surface reports live session state, token usage, and the effective model/provider instead of relying on hidden runtime state.
 - [ ] Define model-selection surface semantics explicitly, so operators know where model/provider changes happen, whether custom endpoints are verified or normalized, and whether provider-specific model discovery comes from curated lists, live `/models` probes, or both.
+- [ ] Define scheduled automation semantics explicitly, so operators know how Hermes's cron scheduler accepts natural-language jobs, what delivery targets exist, and whether a plan can run across platforms automatically versus requiring manual confirmation.
 - [ ] Define queued-follow-up semantics explicitly, so operators know whether follow-up prompts may be queued without interrupting current work, how queued input is acknowledged, and when queued messages are processed after the active run completes.
 - [ ] Define clear-session semantics explicitly, so operators know whether `/clear` starts a genuinely fresh session, what state it resets beyond the visible transcript, and how it differs from `/new` or `/reset`.
 - [ ] Add an explicit return-to-default flow so operators can clear a named bundle and get back to the repo or wrapper default without manual file edits.
@@ -145,6 +147,7 @@
 - [ ] A user can tell whether a persistent config/status bar exists, what active configuration fields it shows, and whether that always-visible surface may be toggled at runtime.
 - [ ] A user can tell whether a status surface reports live session state, token usage, and the effective model/provider while work is in progress or after a turn completes.
 - [ ] A user can tell where model/provider changes happen, whether custom endpoints are verified or normalized, and whether provider-specific model discovery uses curated defaults, live `/models` probes, or both before changing providers.
+- [ ] A user can tell how to schedule a cron-style automation using natural language, which delivery targets (CLI, messaging, email, etc.) are supported, and how retries, notifications, and visibility are configured so unattended jobs stay predictable.
 - [ ] A user can tell whether follow-up prompts may be queued without interruption, how queued input is surfaced while work is still running, and when those queued messages are processed after the active run finishes.
 - [ ] A user can tell whether `/clear` starts a genuinely fresh session, what session state it resets beyond visible transcript, and how that differs from `/new` or `/reset`.
 - [ ] A user can tell whether sessions may be named, whether titled sessions can be listed or browsed, and whether resume may target a human-readable session title instead of only an opaque session ID.
@@ -196,6 +199,7 @@
 - [ ] In phase 1, document whether a persistent config/status bar exists, what fields it shows, and whether a `/statusbar`-style toggle or equivalent control can change that always-visible surface.
 - [ ] In phase 1, document whether a status surface reports live session state, token usage, and the effective model/provider so runtime state stays inspectable without digging through logs or source.
 - [ ] In phase 1, document where model/provider changes happen, whether custom endpoints are verified or normalized, and whether provider-specific model discovery uses curated lists, live `/models` probes, or both so model selection stays inspectable instead of hidden in config edits.
+- [ ] In phase 1, document how cron-style automations are authored, scheduled, and delivered to CLI or messaging platforms so operators can trust unattended runs and inspect their results without separate schedulers.
 - [ ] In phase 1, document whether prompts may be queued without interruption, how queued follow-up input is acknowledged, and when queued messages are processed after the active run completes.
 - [ ] In phase 1, document whether `/clear` starts a genuinely fresh session, what state it resets beyond visible transcript, and how it differs from `/new` or `/reset`.
 - [ ] If phase 1 adds profile selection, include a matching clear/default action so the operator can undo an override without editing config by hand.

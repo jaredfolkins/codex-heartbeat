@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style model-selection surface semantics.
-- Primary evaluator: `rg -n 'model-selection surface semantics|provider-specific model discovery|live `/models` probes|custom endpoints are verified or normalized|where model/provider changes happen' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style scheduled automation semantics.
+- Primary evaluator: `rg -n 'cron scheduler semantics|scheduled automations|delivery to any platform|natural language cron job' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style model-selection surface items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving model/provider switching and discovery implicit.
+- If `PLANNING.md` explicitly includes Hermes-style scheduled automation items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving cron scheduler semantics implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style model-selection surface items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style scheduled automation items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

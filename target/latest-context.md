@@ -7,6 +7,7 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n 'cron scheduler semantics|scheduled automations|delivery to any platform|natural language cron job' PLANNING.md`: pass | Added Hermes-style scheduled automation items to `PLANNING.md` so the safe backlog now covers cron scheduler semantics instead of leaving them implicit.
 - `keep` via `rg -n 'model-selection surface semantics|provider-specific model discovery|live `/models` probes|custom endpoints are verified or normalized|where model/provider changes happen' PLANNING.md`: pass | Added Hermes-style model-selection surface items to `PLANNING.md` so the safe backlog now covers model/provider switching and discovery instead of leaving them implicit.
 - `keep` via `rg -n 'live-status semantics|`/status` reports live session state and token usage|effective model and provider|status surface reports live session state, token usage, and the effective model/provider' PLANNING.md`: pass | Added Hermes-style live-status items to `PLANNING.md` so the safe backlog now covers runtime status visibility instead of leaving it implicit.
 - `keep` via `rg -n 'clear-session semantics|`/new`, `/reset`, and `/clear` start genuinely fresh sessions|`/clear` resets compressor summary and turn counter|whether `/clear` starts a genuinely fresh session|document whether `/clear` starts a genuinely fresh session' PLANNING.md`: pass | Added Hermes-style clear-session items to `PLANNING.md` so the safe backlog now covers `/clear` lifecycle behavior instead of leaving it implicit.
