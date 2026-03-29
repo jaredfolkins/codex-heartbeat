@@ -29,6 +29,7 @@
 - Hermes also surfaces session configuration on `/new`, `/reset`, and auto-reset, so operators can see which model/personality/tooling state the fresh session picked up instead of inferring it after the next turn.
 - Hermes also exposes a `/statusbar` toggle for a persistent config bar showing model and provider info in the prompt, so active session configuration stays visible without requiring a separate status command.
 - Hermes also exposes `/queue`, letting operators queue prompts without interrupting the current run, and queued messages are processed after the active run completes instead of forcing an immediate redirect.
+- Hermes also exposes explicit clear-session behavior: `/new`, `/reset`, and `/clear` start genuinely fresh sessions, and `/clear` resets compressor summary and turn counter instead of only wiping the visible transcript.
 - Hermes spans long-lived conversations and cross-interface use, so the operator model also needs a clear persistence rule for whether a selected bundle is session-local, repo-default, or sticky across future sessions.
 - Hermes also documents persistent memory and user profiles, so the operator model needs a clear rule for whether prompt-profile selection interacts with saved memory or remains an isolated instruction-layer choice.
 - Hermes also exposes first-class session-title behavior: operators can set or show the current session title, resume a previously named session, and browse titled sessions instead of relying only on opaque session IDs.
@@ -75,6 +76,7 @@
 - [ ] Define fresh-session config-surfacing semantics explicitly, so operators know what model/personality/profile/tooling state is shown when `/new`, `/reset`, or auto-reset starts a fresh session instead of inferring that configuration after the fact.
 - [ ] Define persistent config-bar semantics explicitly, so operators know whether active model/provider/profile state is shown continuously in the prompt or status row, what fields appear there, and whether that surface can be toggled on or off.
 - [ ] Define queued-follow-up semantics explicitly, so operators know whether follow-up prompts may be queued without interrupting current work, how queued input is acknowledged, and when queued messages are processed after the active run completes.
+- [ ] Define clear-session semantics explicitly, so operators know whether `/clear` starts a genuinely fresh session, what state it resets beyond the visible transcript, and how it differs from `/new` or `/reset`.
 - [ ] Add an explicit return-to-default flow so operators can clear a named bundle and get back to the repo or wrapper default without manual file edits.
 - [ ] Define profile persistence scope explicitly, so operators know whether selecting a bundle changes only the current session, the repo-local default, or future sessions started from the same workspace.
 - [ ] Define session-title semantics explicitly, so operators know whether they can name the current session, browse titled sessions, and resume prior work by title instead of only by opaque session IDs.
@@ -138,6 +140,7 @@
 - [ ] A user can tell what model/personality/profile/tooling configuration a fresh session picked up when `/new`, `/reset`, or auto-reset starts a new conversation.
 - [ ] A user can tell whether a persistent config/status bar exists, what active configuration fields it shows, and whether that always-visible surface may be toggled at runtime.
 - [ ] A user can tell whether follow-up prompts may be queued without interruption, how queued input is surfaced while work is still running, and when those queued messages are processed after the active run finishes.
+- [ ] A user can tell whether `/clear` starts a genuinely fresh session, what session state it resets beyond visible transcript, and how that differs from `/new` or `/reset`.
 - [ ] A user can tell whether sessions may be named, whether titled sessions can be listed or browsed, and whether resume may target a human-readable session title instead of only an opaque session ID.
 - [ ] A user can tell whether resuming a session shows a compact "Previous Conversation" panel or only a minimal one-liner, and can tell what recap content is shown, hidden, or truncated.
 - [ ] A user can tell whether resuming by title picks the latest session in a lineage, how lineage variants like `my project`, `my project #2`, and `my project #3` are treated, and whether compressed/resumed descendants stay grouped as one lineage.
@@ -186,6 +189,7 @@
 - [ ] In phase 1, document what configuration is surfaced on `/new`, `/reset`, and auto-reset so operators can confirm which model/personality/profile/tooling state a fresh session actually picked up.
 - [ ] In phase 1, document whether a persistent config/status bar exists, what fields it shows, and whether a `/statusbar`-style toggle or equivalent control can change that always-visible surface.
 - [ ] In phase 1, document whether prompts may be queued without interruption, how queued follow-up input is acknowledged, and when queued messages are processed after the active run completes.
+- [ ] In phase 1, document whether `/clear` starts a genuinely fresh session, what state it resets beyond visible transcript, and how it differs from `/new` or `/reset`.
 - [ ] If phase 1 adds profile selection, include a matching clear/default action so the operator can undo an override without editing config by hand.
 - [ ] Decide in the same phase whether bundle selection persists across future sessions or only applies as a one-session override, and surface that rule in operator UX and artifacts.
 - [ ] In phase 1, document whether sessions can be named, listed, browsed, and resumed by title so long-lived operator workflows stay understandable without raw session IDs.
