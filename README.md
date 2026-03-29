@@ -137,6 +137,11 @@ Inspect the stored session:
 ./codex-heartbeat status --workdir /path/to/workdir
 ```
 
+`status` now reports the current session state plus two autoresearch-specific summaries when available:
+
+- `launch_settings`: the resolved `program.md` profile, model, and reasoning effort.
+- `hermes_parity`: whether the current wrapper surface is equivalent to Hermes Agent and, when it is not, the concrete missing capabilities.
+
 Example autoresearch programs ship in:
 
 - `examples/program-debugging.md`

@@ -2,15 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Primary evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|not equivalent to Hermes Agent's" README.md`
 
 ## Observable Signals
 
-- `codex-heartbeat status` now includes a `hermes_parity` object with `equivalent=false` and the concrete missing capabilities.
-- The existing `launch_settings` status object remains in place, so the operator command now shows both the active program-driven configuration and the current parity gap.
-- The existing artifact evidence remains in place: `latest-context.md` and the pending run-start ledger note still record the launch summary.
-- The actual child Codex launch behavior stayed stable: the wrapper still emits `--profile`, `--model`, and `--config model_reasoning_effort="high"` once those values are present in `program.md`.
-- The focused evaluator passed for `hermes_parity`, `launch_settings`, latest-context evidence, run-start ledger evidence, metadata parsing, absent wrapper flags, and fake-child launch arg forwarding.
+- The README `status` example now calls out both `launch_settings` and `hermes_parity`, so operators can discover those fields from the documented workflow.
+- The launch-profile section still states that the wrapper is not equivalent to Hermes Agent's `godmode` design.
+- The focused evaluator passed and found the status example, the two new status fields, and the existing non-equivalence note in one place.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, and benign canary scoring.
 
 ## Disposition

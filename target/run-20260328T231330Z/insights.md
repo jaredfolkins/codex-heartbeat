@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- Putting the Hermes parity gap into `status` made the current “no” answer explicit from the main operator command instead of forcing a doc/artifact cross-reference.
-- Reusing a small structured `hermes_parity` object kept the change narrow and easy to test.
-- Focused tests made it easy to verify the new parity surface alongside the existing launch-setting and artifact evidence in one evaluator pass.
+- After adding `launch_settings` and `hermes_parity` to `status`, a short README update was enough to make the new operator path discoverable.
+- A text-structure evaluator was sufficient for this cycle because the runtime behavior had already been covered by the earlier focused tests.
+- Keeping the docs change isolated avoided reopening the implementation just to align the user-facing workflow.
 
 ## What Failed
 
@@ -12,11 +12,11 @@
 
 ## Avoid Next Time
 
-- Do not rely on prose alone for parity answers when the operator-facing command can return a structured status block.
-- Do not claim Hermes parity from better status visibility alone.
+- Do not add operator-facing surfaces without documenting where to find them in the normal workflow.
+- Do not treat documentation alignment as optional once the status surface becomes the primary explanation path.
 
 ## Promising Next Directions
 
 - Prototype a non-destructive SDK/app-server-backed mode that can set `base_instructions`, `developer_instructions`, model, and reasoning effort for new and resumed Codex threads.
 - Add a harmless prompt-adherence harness for `gpt-5.3-codex-spark` with `high` reasoning so profile effectiveness can be measured without trying to bypass safeguards.
-- If the status surface grows further, consider grouping prompt-profile and parity fields under a single structured feature-status section.
+- If the status surface keeps growing, consider a short dedicated README subsection that shows an example JSON payload and how to interpret it.
