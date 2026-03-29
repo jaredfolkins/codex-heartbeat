@@ -59,10 +59,11 @@ type statusOutput struct {
 }
 
 type hermesParityStatus struct {
-	Equivalent bool     `json:"equivalent"`
-	Missing    []string `json:"missing"`
-	TaskList   []string `json:"task_list"`
-	ClaimRule  string   `json:"claim_rule"`
+	Equivalent  bool     `json:"equivalent"`
+	Missing     []string `json:"missing"`
+	TaskList    []string `json:"task_list"`
+	ClaimRule   string   `json:"claim_rule"`
+	ReviewBasis []string `json:"review_basis"`
 }
 
 type promptSource struct {
@@ -468,6 +469,10 @@ func currentHermesParityStatus() hermesParityStatus {
 			"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.",
 		},
 		ClaimRule: "Only claim Hermes parity after equivalent launch-time instruction control and benign evaluation coverage are both present.",
+		ReviewBasis: []string{
+			"https://github.com/nousresearch/hermes-agent",
+			"https://x.com/KamakuraCrypto/status/2037294903814738261?s=20",
+		},
 	}
 }
 

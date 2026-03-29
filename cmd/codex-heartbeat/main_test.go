@@ -392,6 +392,9 @@ func TestStatusCommandIncludesHermesParityGap(t *testing.T) {
 		"\"Add a Hermes-style delegated cross-review surface for benign evaluator and council reviews.\"",
 		"\"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.\"",
 		"\"claim_rule\": \"Only claim Hermes parity after equivalent launch-time instruction control and benign evaluation coverage are both present.\"",
+		"\"review_basis\": [",
+		"\"https://github.com/nousresearch/hermes-agent\"",
+		"\"https://x.com/KamakuraCrypto/status/2037294903814738261?s=20\"",
 	} {
 		if !strings.Contains(string(output), expected) {
 			t.Fatalf("status output missing %q: %s", expected, output)

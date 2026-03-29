@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- Root CLI help is a good follow-up surface once README and raw `status` JSON already agree.
-- Reusing the focused root-help/status test kept the cycle bounded while still rechecking the parity and launch-setting surfaces together.
-- Once `claim_rule` and the Hermes-style review gap existed in `status` and README, mirroring them in root help completed the operator-discoverability loop.
+- A small `status` payload change was enough to make the parity answer more auditable without changing runtime behavior.
+- Reusing the focused status test kept the cycle bounded while still rechecking both the parity surface and the launch-settings surface together.
+- A `review_basis` field is a clean way to connect local parity wording back to the actual reviewed sources.
 
 ## What Failed
 
@@ -12,8 +12,8 @@
 
 ## Avoid Next Time
 
-- Do not update help text in a way that drifts from the actual `status` JSON surface.
-- Do not claim Hermes parity from clearer help text alone.
+- Do not add source-grounding fields that are not actually reflected in the reviewed materials.
+- Do not claim Hermes parity from more traceable status output alone.
 
 ## Promising Next Directions
 

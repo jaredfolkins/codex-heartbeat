@@ -201,7 +201,14 @@
 - Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
 - This cycle did not change runtime behavior; it only aligned the built-in CLI help with the fuller safe parity explanation already present in `status` and README.
+- Re-read `target/latest-context.md`, the current `hermes_parity` status surface, and the reviewed-source notes to establish the baseline for a source-grounding cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `status.hermes_parity` now includes a `review_basis` field listing the reviewed Hermes repo and X post.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new `review_basis` strings while keeping the existing `hermes_parity`, `launch_settings`, `task_list`, and `claim_rule` status coverage.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle did not change runtime behavior; it only made the status parity answer more explicitly traceable to the reviewed sources.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:39:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:41:35Z screen-idle heartbeat injected with prompt source `program_md`
