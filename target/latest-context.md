@@ -7,11 +7,11 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|not equivalent to Hermes Agent's" README.md`: pass | Documented that `hermes_parity` includes a safe `task_list`, so the README now matches the current parity-gap status surface.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Added a safe `task_list` to `status.hermes_parity` so the current non-parity answer includes concrete next steps, not just missing capabilities.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceSeedsPlanningGuardrails|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1`: pass | Seeded the default `PLANNING.md` scaffold with generic blocked/non-goals and acceptance-criteria checklists so fresh autoresearch workspaces start with safer planning guardrails.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1`: pass | Seeded the default `PLANNING.md` scaffold with a reusable checkbox task list so fresh autoresearch workspaces start with actionable `[ ]` planning items.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added a root-help line for `launch_settings` and `hermes_parity` while keeping the status JSON surfaces and child launch args unchanged.
-- `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|not equivalent to Hermes Agent's" README.md`: pass | Documented the new `status` fields so operators can discover `launch_settings` and `hermes_parity` alongside the existing non-equivalence note.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

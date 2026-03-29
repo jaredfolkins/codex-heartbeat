@@ -154,3 +154,11 @@
 - 2026-03-29T00:20:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:20:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:20:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:21:40Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and the README section around `status` to establish the baseline for a docs-alignment cycle.
+- Updated `README.md` so the `status` documentation now says `hermes_parity` includes the concrete missing capabilities plus a safe `task_list` of next steps.
+- Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|not equivalent to Hermes Agent's" README.md` -> pass
+- This cycle did not change runtime behavior; it only aligned the operator docs with the new `hermes_parity.task_list` status surface.
+- 2026-03-29T00:22:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:23:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:23:25Z screen-idle heartbeat injected with prompt source `program_md`

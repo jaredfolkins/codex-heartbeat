@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- A small `status` payload change was enough to turn the parity answer into a concrete safe task list without changing runtime behavior.
-- Reusing the existing focused status tests kept the cycle bounded while still validating both the parity surface and the launch-settings surface together.
-- Exposing next steps directly in `status` is a better operator fit than forcing users to infer them from a raw `missing` array alone.
+- Once `status` exposed the right field, a one-line README change was enough to make the new safe task list discoverable from the documented operator workflow.
+- A focused `rg` evaluator is a good fit for docs-alignment cycles because it verifies the exact user-facing strings without widening into runtime checks.
+- Keeping README in sync right after the `status` surface change prevents the docs from lagging behind the operator-visible JSON.
 
 ## What Failed
 
@@ -12,11 +12,11 @@
 
 ## Avoid Next Time
 
-- Do not assume a raw capability gap list is enough when the objective is “what should we do next?” rather than only “what is missing?”
-- Do not claim Hermes parity from better task-list visibility or operator guidance alone.
+- Do not stop at status JSON changes when the README still describes the older surface.
+- Do not claim Hermes parity from better docs or task-list visibility alone.
 
 ## Promising Next Directions
 
-- Consider whether README should show an example `hermes_parity.task_list` payload now that `status` exposes it directly.
+- Consider whether README should show an example `hermes_parity.task_list` payload now that the docs mention it explicitly.
 - Prototype a non-destructive SDK/app-server-backed mode that can set `base_instructions`, `developer_instructions`, model, and reasoning effort for new and resumed Codex threads.
 - Add a harmless prompt-adherence harness for `gpt-5.3-codex-spark` with `high` reasoning so profile effectiveness can be measured without trying to bypass safeguards.
