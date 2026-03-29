@@ -2,13 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `rg -n "\\.cursorrules|context-file compatibility semantics|existing repo guidance files|existing repo instruction files|compatibility files like" PLANNING.md`
+- Primary evaluator: `rg -n "background sessions as a first-class|background/delegated-session inheritance semantics|inherits the active profile/model/reasoning settings|history is isolated from the parent session|background/delegated task inherits" PLANNING.md`
 
 ## Observable Signals
 
-- `PLANNING.md` now explicitly covers Hermes-style compatibility with adjacent repo instruction-file conventions.
+- `PLANNING.md` now explicitly covers Hermes-style background-session inheritance and isolation.
 - The focused evaluator passed for the updated planning backlog.
-- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of treating `AGENTS.md` as the only repo-guidance format worth considering.
+- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of treating delegated review tasks as detached from the active profile/model settings.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a Hermes-style delegated cross-review workflow.
 
 ## Disposition

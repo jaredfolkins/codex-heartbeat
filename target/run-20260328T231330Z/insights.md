@@ -18,6 +18,7 @@
 - Repo context also needs an explicit discovery rule; otherwise a safe implementation may assume one repo-local file where Hermes actually models a hierarchy of `AGENTS.md` files.
 - Hierarchical repo context also needs explicit merge-order and source-label rules; otherwise discovering multiple files still leaves operators guessing how those instructions were assembled.
 - Repo context also needs a compatibility rule for adjacent instruction-file conventions; otherwise the plan can model Hermes's hierarchy but still miss existing repo guidance that lives outside `AGENTS.md`.
+- Delegated/background review also needs explicit inheritance and isolation rules; otherwise a parallel-workflow design can exist on paper while leaving it unclear which active settings carry over to spawned tasks.
 
 ## What Failed
 
@@ -46,3 +47,4 @@
 - If phase 1 wants Hermes-like repo context, decide early whether the wrapper supports one repo-local file or hierarchical `AGENTS.md` discovery so monorepo behavior does not stay implicit.
 - If phase 1 supports hierarchical repo context, decide where merge order and relative path headers show up so operators can debug the assembled prompt instead of only the discovered files.
 - If phase 1 wants Hermes-like repo context, decide early whether files like `.cursorrules` are ignored or imported so existing repositories do not lose guidance silently during migration.
+- If phase 1 exposes background/delegated tasks, decide early whether they inherit the active profile/model/reasoning settings and where isolation from the parent history is surfaced in status/help/artifacts.
