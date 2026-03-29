@@ -2,13 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`
+- Primary evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|review_basis|delegated cross-review|not equivalent to Hermes Agent's" README.md`
 
 ## Observable Signals
 
-- `codex-heartbeat status` now exposes a `review_basis` list inside `hermes_parity` that points at the reviewed Hermes repo and X post.
-- The focused evaluator passed for the enriched `hermes_parity` block and the existing `launch_settings` status surface.
-- The current non-parity answer is now more obviously grounded in the reviewed sources instead of only in local parity wording.
+- The README parity section now says that `hermes_parity` includes a `review_basis` list pointing at the reviewed Hermes sources.
+- The focused evaluator passed for the updated README status and parity wording.
+- Operators can now discover the source-grounded parity explanation from README as well as raw `status` JSON.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a Hermes-style delegated cross-review workflow.
 
 ## Disposition

@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- A small `status` payload change was enough to make the parity answer more auditable without changing runtime behavior.
-- Reusing the focused status test kept the cycle bounded while still rechecking both the parity surface and the launch-settings surface together.
-- A `review_basis` field is a clean way to connect local parity wording back to the actual reviewed sources.
+- README is a good follow-up surface once the status payload already carries the right source-grounding data.
+- A single grep-based evaluator was enough to keep the docs cycle bounded while still checking the key parity terms together.
+- Once `review_basis` existed in `status`, mirroring it in README completed the main operator-visible parity explanation path.
 
 ## What Failed
 
@@ -12,8 +12,8 @@
 
 ## Avoid Next Time
 
-- Do not add source-grounding fields that are not actually reflected in the reviewed materials.
-- Do not claim Hermes parity from more traceable status output alone.
+- Do not update docs in a way that drifts from the actual `status` JSON surface.
+- Do not claim Hermes parity from more complete parity docs alone.
 
 ## Promising Next Directions
 

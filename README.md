@@ -140,7 +140,7 @@ Inspect the stored session:
 `status` now reports the current session state plus two autoresearch-specific summaries when available:
 
 - `launch_settings`: the resolved `program.md` profile, model, and reasoning effort.
-- `hermes_parity`: whether the current wrapper surface is equivalent to Hermes Agent and, when it is not, the concrete missing capabilities plus a safe `task_list` of next steps and a `claim_rule` for when parity must remain false.
+- `hermes_parity`: whether the current wrapper surface is equivalent to Hermes Agent and, when it is not, the concrete missing capabilities plus a safe `task_list` of next steps, a `claim_rule` for when parity must remain false, and a `review_basis` list pointing at the reviewed Hermes sources.
 
 Example autoresearch programs ship in:
 

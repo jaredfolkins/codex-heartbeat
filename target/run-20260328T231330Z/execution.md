@@ -207,8 +207,13 @@
 - Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
 - This cycle did not change runtime behavior; it only made the status parity answer more explicitly traceable to the reviewed sources.
+- Re-read `target/latest-context.md`, the current `status.hermes_parity` surface, and the README parity section to establish the baseline for a docs-alignment cycle.
+- Updated `README.md` so the documented `hermes_parity` status surface now includes `review_basis` alongside `task_list` and `claim_rule`.
+- Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|review_basis|delegated cross-review|not equivalent to Hermes Agent's" README.md` -> pass
+- This cycle did not change runtime behavior; it only aligned the operator docs with the current safe parity surface more completely.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:39:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:41:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:43:55Z screen-idle heartbeat injected with prompt source `program_md`
