@@ -7,12 +7,12 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "discoverable profile-selection|current selection from the wrapper's own UX|selected profile discoverable|list and switch named bundles" PLANNING.md`: pass | Added Hermes-style profile discoverability/switching UX items to `PLANNING.md` so the safe backlog now covers listing and confirming named bundles, not just defining them.
 - `keep` via `rg -n "personalities|context files|operator-visible|personality-style bundle|phase-1 UX close to Hermes" PLANNING.md`: pass | Added Hermes-style personality/context-file UX items to `PLANNING.md` so the safe implementation backlog now covers named, operator-visible instruction bundles rather than only hidden prompt-plumbing fields.
 - `keep` via `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded|Phase 1 Recommendation" PLANNING.md`: pass | Added a phase-1 `review_basis` traceability item so the planning backlog now carries source-grounded parity evidence through the near-term implementation track too.
 - `keep` via `rg -n "^### Review Basis|2037294903814738261|github.com/nousresearch/hermes-agent|cross-review|launch-time instruction control" PLANNING.md`: pass | Added a `Review Basis` section to `PLANNING.md` so the source-grounded task list now points directly at the two reviewed links instead of only summarizing them indirectly.
 - `keep` via `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded" PLANNING.md`: pass | Added source-traceability items to the `[ ]` backlog so the planning artifact now covers how parity claims stay auditable against the reviewed Hermes materials.
 - `keep` via `rg -n "delegated cross-review|Hermes Parity Gap|Phase 1 Recommendation|Task List" PLANNING.md`: pass | Added Hermes-style delegated cross-review items to the source-grounded `[ ]` backlog so the planning artifact matches the reviewed multi-LLM research workflow more directly.
-- `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Extended root CLI help so operators can discover `review_basis` alongside `launch_settings`, `hermes_parity`, `task_list`, `claim_rule`, and the Hermes-style review gap.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

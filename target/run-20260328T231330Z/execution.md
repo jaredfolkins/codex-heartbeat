@@ -237,6 +237,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style personality/context-file UX for named, operator-visible instruction bundles.
 - Evaluator: `rg -n "personalities|context files|operator-visible|personality-style bundle|phase-1 UX close to Hermes" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog better match Hermes's operator-visible instruction-bundle model.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes README operator-flow notes to establish the baseline for a profile-discoverability planning cycle.
+- Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover listing, switching, and confirming the active named profile from wrapper UX instead of only defining bundles in config.
+- Evaluator: `rg -n "discoverable profile-selection|current selection from the wrapper's own UX|selected profile discoverable|list and switch named bundles" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog better match Hermes's operator-facing profile workflow.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -258,3 +262,7 @@
 - 2026-03-29T00:59:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:59:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:59:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:00:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:01:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:01:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:01:45Z screen-idle heartbeat injected with prompt source `program_md`

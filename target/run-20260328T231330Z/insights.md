@@ -6,6 +6,7 @@
 - A simple grep evaluator was enough to keep the planning cycle bounded while still checking that the exact reviewed links showed up in the planning artifact.
 - The two reviewed links belong in the planning artifact itself, not only in run memory or implicit source notes.
 - Hermes's operator-visible personality/context-file UX is worth tracking explicitly in the backlog; otherwise the plan over-focuses on hidden prompt plumbing and under-specifies the user-facing profile model.
+- Hermes-style named bundles also need a discoverability/switching story; a backlog that only defines profiles in files still misses an operator-facing part of the reviewed workflow.
 
 ## What Failed
 
@@ -22,3 +23,4 @@
 - Decide whether the existing fallback council needs a more Hermes-like first-class delegated review surface for benign evaluator comparisons.
 - Add a harmless prompt-adherence harness for `gpt-5.3-codex-spark` with `high` reasoning so profile effectiveness can be measured without trying to bypass safeguards.
 - Decide whether the first safe profile implementation should surface named bundles via `program.md`, a repo-local profile file, or both so it better matches Hermes's personality/context-file UX.
+- Decide whether phase 1 should expose profile listing/switching through `status`, help, or an interactive command so the active bundle is obvious at runtime.
