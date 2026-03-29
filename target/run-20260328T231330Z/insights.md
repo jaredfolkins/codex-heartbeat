@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- After adding `launch_settings` and `hermes_parity` to `status`, a short README update was enough to make the new operator path discoverable.
-- A text-structure evaluator was sufficient for this cycle because the runtime behavior had already been covered by the earlier focused tests.
-- Keeping the docs change isolated avoided reopening the implementation just to align the user-facing workflow.
+- Once `status` exposed the right fields, a one-line root-help update was enough to make the feature discoverable from the CLI itself.
+- Reusing the existing focused evaluator bundle kept the cycle bounded while still checking the new help text against the live status surfaces.
+- Aligning CLI help after README kept the user-facing explanation path consistent across both entry points.
 
 ## What Failed
 
@@ -12,8 +12,8 @@
 
 ## Avoid Next Time
 
-- Do not add operator-facing surfaces without documenting where to find them in the normal workflow.
-- Do not treat documentation alignment as optional once the status surface becomes the primary explanation path.
+- Do not stop at README updates when built-in CLI help is also part of the normal operator workflow.
+- Do not claim Hermes parity from better help text or discoverability alone.
 
 ## Promising Next Directions
 

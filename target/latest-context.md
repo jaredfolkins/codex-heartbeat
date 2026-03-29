@@ -1,18 +1,17 @@
 # Latest Context
 
-- Objective: Document the new `status` surfaces so operators can discover `launch_settings` and `hermes_parity` without inspecting source or raw JSON by guesswork.
-- Primary evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|not equivalent to Hermes Agent's" README.md`
+- Objective: Review these two links and create a task list [ ] on implementing a feature to make GODMODE work. https://x.com/KamakuraCrypto/status/2037294903814738261?s=20 https://github.com/nousresearch/hermes-agent
+- Primary evaluator: `does our function appear to be the same as hermes-agent?`
 - Prompt mode: `autoresearch`
 - Council policy: `fallback`
 - Recent failure streak: 0 / 3
-- Launch settings: `profile=safe-research, model=gpt-5.3-codex-spark, model_reasoning_effort=high`
 
 ## Recent Ledger
+- `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added a root-help line for `launch_settings` and `hermes_parity` while keeping the status JSON surfaces and child launch args unchanged.
 - `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|not equivalent to Hermes Agent's" README.md`: pass | Documented the new `status` fields so operators can discover `launch_settings` and `hermes_parity` alongside the existing non-equivalence note.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added `hermes_parity` to `codex-heartbeat status` while keeping `launch_settings`, artifact evidence, and child launch args unchanged; the parity answer is still no.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added `launch_settings` to `codex-heartbeat status` while keeping the artifact evidence and child launch args unchanged; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added launch-setting evidence to `latest-context` and the run-start ledger note while keeping the child Codex CLI args unchanged; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
-- `keep` via `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Moved launch selection into `program.md` metadata, removed the top-level wrapper flags, kept the child Codex CLI args the same, and updated tests plus README; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

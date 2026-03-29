@@ -695,6 +695,21 @@ func TestStatusSubcommandHelpReturnsZero(t *testing.T) {
 	}
 }
 
+func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
+	var output bytes.Buffer
+	printRootUsage(&output)
+
+	for _, expected := range []string{
+		"codex-heartbeat status --workdir DIR",
+		"`launch_settings`",
+		"`hermes_parity`",
+	} {
+		if !strings.Contains(output.String(), expected) {
+			t.Fatalf("printRootUsage() missing %q: %s", expected, output.String())
+		}
+	}
+}
+
 func TestRootFlagsDefaultToRun(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")

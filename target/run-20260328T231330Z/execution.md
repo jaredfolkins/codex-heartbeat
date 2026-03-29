@@ -106,6 +106,12 @@
 - Updated `README.md` so the `status` example now tells operators that the command exposes `launch_settings` and `hermes_parity`, alongside the existing launch-profile and non-equivalence documentation.
 - Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|not equivalent to Hermes Agent's" README.md` -> pass
 - This cycle did not change runtime behavior; it only aligned the operator docs with the existing `status` surfaces.
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and the root-help tests to establish the baseline for a CLI-help cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `printRootUsage()` now tells operators that `status` reports `launch_settings` and `hermes_parity`.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new root-help line while keeping the existing `status` parity and launch-setting tests.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
+- This cycle did not change runtime behavior; it only aligned the built-in CLI help with the existing `status` surfaces.
 - 2026-03-28T23:59:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:00:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:01:00Z screen-idle heartbeat injected with prompt source `program_md`
@@ -115,3 +121,5 @@
 - 2026-03-29T00:02:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:02:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:02:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:06:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:10:00Z screen-idle heartbeat injected with prompt source `program_md`
