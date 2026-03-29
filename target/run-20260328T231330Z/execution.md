@@ -229,6 +229,10 @@
 - Updated `PLANNING.md` so the `Phase 1 Recommendation` section now carries a `review_basis` traceability item alongside the existing wrapper-path and observability guidance.
 - Evaluator: `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded|Phase 1 Recommendation" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only kept the near-term implementation track aligned with the source-grounded parity evidence.
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a planning-basis cycle.
+- Updated `PLANNING.md` so it now includes a `Review Basis` section with the reviewed X post and Hermes repo plus concise notes on what each source contributes to the backlog.
+- Evaluator: `rg -n "^### Review Basis|2037294903814738261|github.com/nousresearch/hermes-agent|cross-review|launch-time instruction control" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog visibly anchored to the exact reviewed links.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -242,3 +246,7 @@
 - 2026-03-29T00:49:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:50:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:52:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:54:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:55:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:55:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:55:50Z screen-idle heartbeat injected with prompt source `program_md`

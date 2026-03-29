@@ -14,6 +14,13 @@
 
 ## GODMODE-Style Prompt Profile Feasibility
 
+### Review Basis
+
+- X post: `https://x.com/KamakuraCrypto/status/2037294903814738261?s=20`
+  It frames the target workflow as a multi-LLM research / cross-review pattern rather than a single static prompt.
+- Hermes repo: `https://github.com/nousresearch/hermes-agent`
+  It shows that Hermes combines stronger launch-time instruction control, ephemeral prefill, canary-style evaluation, and delegated parallel review surfaces.
+
 ### Source Review Notes
 
 - Hermes's `godmode` feature is not a single prompt. It combines model-family strategy selection, launch-time system prompt injection, ephemeral prefill messages, and canary scoring to decide whether a profile "worked".

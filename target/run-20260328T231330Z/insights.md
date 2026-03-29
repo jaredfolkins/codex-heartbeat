@@ -3,8 +3,8 @@
 ## What Worked
 
 - `PLANNING.md` is still the best place to express the requested `[ ]` implementation backlog once the status/help/docs surfaces already agree.
-- A simple grep evaluator was enough to keep the planning cycle bounded while still checking that the `Phase 1 Recommendation` section carried the new traceability task.
-- Source-grounding details such as `review_basis` belong in the near-term plan too, not only in broad backlog or status/docs surfaces.
+- A simple grep evaluator was enough to keep the planning cycle bounded while still checking that the exact reviewed links showed up in the planning artifact.
+- The two reviewed links belong in the planning artifact itself, not only in run memory or implicit source notes.
 
 ## What Failed
 
