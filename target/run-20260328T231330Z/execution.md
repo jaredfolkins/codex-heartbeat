@@ -257,6 +257,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
 - Evaluator: `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about session-local versus persisted bundle selection.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes CLI/context-file docs to establish the baseline for an instruction-layer-precedence planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover which instruction layer wins when global persona settings, named bundles, and repo-local context files overlap.
+- Evaluator: `rg -n "instruction-layer precedence|global persona settings|repo-local context files|which instruction layer wins|overlapping instructions are explainable" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about the hierarchy between global identity and repo-local context.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -322,3 +326,7 @@
 - 2026-03-29T01:15:05Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:15:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:16:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:17:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:19:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:19:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:20:05Z screen-idle heartbeat injected with prompt source `program_md`

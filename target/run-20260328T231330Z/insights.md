@@ -14,6 +14,7 @@
 - Named bundles also need a clear undo path; otherwise the plan describes how to apply overrides more clearly than how to remove them.
 - Named bundles also need change history; otherwise status may show the current state but not how or when it got there.
 - Named bundles also need an explicit memory interaction rule; otherwise it stays unclear whether selecting a bundle changes only prompt instructions or also saved context.
+- Named bundles also need an explicit precedence rule against global persona settings and repo-local context files; otherwise overlapping instructions remain ambiguous even when all three layers are visible.
 
 ## What Failed
 
@@ -38,3 +39,4 @@
 - If phase 1 adds selection, make sure clear/default semantics appear in the same UX surfaces so operators do not need to edit files just to undo an override.
 - If phase 1 adds selection and persistence, decide whether recent bundle changes belong in `status`, `target/` artifacts, or both so operators can debug state transitions later.
 - If phase 1 keeps bundle selection separate from memory, state that plainly in status/help/artifacts; if it does not, define the exact interaction before implementation starts.
+- If phase 1 keeps separate global-persona and repo-context layers, define the precedence rule early so overlapping instructions are explainable before implementation hardens around the wrong assumption.
