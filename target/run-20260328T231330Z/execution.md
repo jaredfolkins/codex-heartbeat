@@ -225,6 +225,10 @@
 - Updated `PLANNING.md` so the backlog now includes source-traceability work items around `review_basis` in the main task list, acceptance criteria, and Hermes parity-gap checklist.
 - Evaluator: `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only tightened how the planning backlog expresses source-grounded parity evidence.
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a phase-1 planning cycle.
+- Updated `PLANNING.md` so the `Phase 1 Recommendation` section now carries a `review_basis` traceability item alongside the existing wrapper-path and observability guidance.
+- Evaluator: `rg -n "review_basis|source-traceability|traceable to reviewed source material|source-grounded|Phase 1 Recommendation" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only kept the near-term implementation track aligned with the source-grounded parity evidence.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -237,3 +241,4 @@
 - 2026-03-29T00:49:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:49:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:50:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:52:30Z screen-idle heartbeat injected with prompt source `program_md`
