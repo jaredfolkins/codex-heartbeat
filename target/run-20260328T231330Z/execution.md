@@ -144,3 +144,13 @@
 - 2026-03-29T00:14:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:14:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:16:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:18:35Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and `cmd/codex-heartbeat/main_test.go` to establish the baseline for a parity-task-list cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `status.hermes_parity` now includes a safe `task_list` with concrete next steps: stronger launch-time instruction control, optional ephemeral prefill, a harmless canary-scoring harness, and keeping parity false until both control and benign evaluation are covered.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new `task_list` field while keeping the existing `hermes_parity` and `launch_settings` status coverage.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made the existing non-parity answer carry a concrete safe task list.
+- 2026-03-29T00:20:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:20:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:20:45Z screen-idle heartbeat injected with prompt source `program_md`

@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- A small scaffold change was enough to add safer default planning guardrails without changing runtime behavior.
-- Focused scaffold tests are a good place to lock in planning ergonomics because they avoid coupling these changes to live session behavior.
-- Mirroring the live workspace's blocked/non-goals and acceptance-criteria shape in the default scaffold makes future autoresearch workspaces safer to steer from the first run.
+- A small `status` payload change was enough to turn the parity answer into a concrete safe task list without changing runtime behavior.
+- Reusing the existing focused status tests kept the cycle bounded while still validating both the parity surface and the launch-settings surface together.
+- Exposing next steps directly in `status` is a better operator fit than forcing users to infer them from a raw `missing` array alone.
 
 ## What Failed
 
@@ -12,11 +12,11 @@
 
 ## Avoid Next Time
 
-- Do not assume the default scaffold is “good enough” just because the current repo has a richer hand-edited planning file.
-- Do not claim Hermes parity from better planning guardrails or checklist scaffolding alone.
+- Do not assume a raw capability gap list is enough when the objective is “what should we do next?” rather than only “what is missing?”
+- Do not claim Hermes parity from better task-list visibility or operator guidance alone.
 
 ## Promising Next Directions
 
-- Consider whether the default scaffold should also seed a short parity-gap or transport-boundary note without becoming too domain-specific.
+- Consider whether README should show an example `hermes_parity.task_list` payload now that `status` exposes it directly.
 - Prototype a non-destructive SDK/app-server-backed mode that can set `base_instructions`, `developer_instructions`, model, and reasoning effort for new and resumed Codex threads.
 - Add a harmless prompt-adherence harness for `gpt-5.3-codex-spark` with `high` reasoning so profile effectiveness can be measured without trying to bypass safeguards.

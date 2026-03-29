@@ -61,6 +61,7 @@ type statusOutput struct {
 type hermesParityStatus struct {
 	Equivalent bool     `json:"equivalent"`
 	Missing    []string `json:"missing"`
+	TaskList   []string `json:"task_list"`
 }
 
 type promptSource struct {
@@ -456,6 +457,12 @@ func currentHermesParityStatus() hermesParityStatus {
 			"launch-time base/developer instruction control",
 			"ephemeral prefill",
 			"harmless canary scoring",
+		},
+		TaskList: []string{
+			"Add a stronger launch-time instruction channel than plain user-message reinjection.",
+			"Add optional ephemeral prefill for new and resumed sessions.",
+			"Add a harmless canary-scoring harness that can distinguish profile attached from profile effective.",
+			"Keep the parity claim false until equivalent launch-time control and benign evaluation are both covered.",
 		},
 	}
 }
