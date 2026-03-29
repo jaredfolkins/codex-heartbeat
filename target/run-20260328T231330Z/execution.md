@@ -261,6 +261,10 @@
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about how operators undo profile overrides.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a profile-history planning cycle.
+- Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover recording profile-change events and exposing a timestamped audit trail for recent bundle changes.
+- Evaluator: `rg -n "profile-change history|timestamped record of recent profile changes|record profile-change events|selected, cleared, deferred, or promoted" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about how operators audit bundle changes over time.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -304,3 +308,7 @@
 - 2026-03-29T01:10:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:11:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:11:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:11:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:12:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:12:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:13:10Z screen-idle heartbeat injected with prompt source `program_md`

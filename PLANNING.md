@@ -41,6 +41,7 @@
 - [ ] If profile switching is deferred, show both the active and pending bundle in wrapper UX so operators can tell what is in effect now versus what will apply after reset/new session.
 - [ ] Add an explicit return-to-default flow so operators can clear a named bundle and get back to the repo or wrapper default without manual file edits.
 - [ ] Define profile persistence scope explicitly, so operators know whether selecting a bundle changes only the current session, the repo-local default, or future sessions started from the same workspace.
+- [ ] Record profile-change history in operator-visible artifacts or status so it is clear when a bundle was selected, cleared, deferred, or promoted to the default.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -68,6 +69,7 @@
 - [ ] If a profile change is pending, the wrapper clearly shows both the active bundle and the queued next-session bundle.
 - [ ] A user can intentionally clear a selected bundle and confirm that the wrapper has returned to the default profile state.
 - [ ] A user can tell whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
+- [ ] A user can inspect a timestamped record of recent profile changes so active and pending bundle state is auditable instead of purely ephemeral.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -84,6 +86,7 @@
 - [ ] If phase 1 uses deferred switching, expose an active-versus-pending profile state in `status`, help, or equivalent UX so operators can confirm what will happen on reset/new session.
 - [ ] If phase 1 adds profile selection, include a matching clear/default action so the operator can undo an override without editing config by hand.
 - [ ] Decide in the same phase whether bundle selection persists across future sessions or only applies as a one-session override, and surface that rule in operator UX and artifacts.
+- [ ] If phase 1 adds profile selection, record profile-change events in `target/` artifacts or `status` so deferred and persisted changes remain explainable after the fact.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.
