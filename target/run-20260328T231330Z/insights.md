@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- A small `status` payload change was enough to make the current non-equivalence answer better match the reviewed Hermes references without changing runtime behavior.
-- Reusing the focused status tests kept the cycle bounded while still validating both the parity surface and the launch-settings surface together.
-- The Hermes README plus the X post fragment were enough to justify naming delegated cross-review as a first-class parity gap instead of leaving it implicit.
+- README is a good home for parity-surface clarifications when the runtime behavior is already correct and the next problem is operator discoverability.
+- A single grep-based evaluator was enough to keep the docs cycle bounded while still checking the key parity terms together.
+- Once `claim_rule` and delegated cross-review existed in `status`, mirroring them in the README made the Hermes comparison easier to scan.
 
 ## What Failed
 
@@ -12,12 +12,11 @@
 
 ## Avoid Next Time
 
-- Do not rely only on local shorthand when the user supplied upstream references that clarify which capabilities Hermes is actually known for.
-- Do not claim Hermes parity from a more complete task list alone.
+- Do not update docs in a way that drifts from the actual `status` JSON surface.
+- Do not claim Hermes parity from clearer documentation alone.
 
 ## Promising Next Directions
 
-- Consider whether README should mention the delegated cross-review gap now that `status` exposes it directly.
 - Prototype a non-destructive SDK/app-server-backed mode that can set `base_instructions`, `developer_instructions`, model, and reasoning effort for new and resumed Codex threads.
 - Decide whether the existing fallback council needs a more Hermes-like first-class delegated review surface for benign evaluator comparisons.
 - Add a harmless prompt-adherence harness for `gpt-5.3-codex-spark` with `high` reasoning so profile effectiveness can be measured without trying to bypass safeguards.

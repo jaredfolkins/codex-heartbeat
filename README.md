@@ -140,7 +140,7 @@ Inspect the stored session:
 `status` now reports the current session state plus two autoresearch-specific summaries when available:
 
 - `launch_settings`: the resolved `program.md` profile, model, and reasoning effort.
-- `hermes_parity`: whether the current wrapper surface is equivalent to Hermes Agent and, when it is not, the concrete missing capabilities plus a safe `task_list` of next steps.
+- `hermes_parity`: whether the current wrapper surface is equivalent to Hermes Agent and, when it is not, the concrete missing capabilities plus a safe `task_list` of next steps and a `claim_rule` for when parity must remain false.
 
 Example autoresearch programs ship in:
 
@@ -173,7 +173,7 @@ When you pass `--council`, the prompt switches to a frequent-council mode: use t
 - `Model: NAME` forwards an explicit model choice.
 - `Model reasoning effort: LEVEL` forwards `--config model_reasoning_effort="LEVEL"` to the child Codex CLI.
 
-This is enough to make model/profile selection reproducible in `codex-heartbeat`, but it is still not equivalent to Hermes Agent's `godmode` design. The wrapper does not yet control stronger launch-time instruction channels such as `base_instructions`, `developer_instructions`, ephemeral prefill, or a benign canary-scoring harness.
+This is enough to make model/profile selection reproducible in `codex-heartbeat`, but it is still not equivalent to Hermes Agent's `godmode` design. The wrapper does not yet control stronger launch-time instruction channels such as `base_instructions`, `developer_instructions`, ephemeral prefill, a benign canary-scoring harness, or a Hermes-style delegated cross-review workflow for research loops.
 
 ## Recommended Workspace Contract
 

@@ -190,3 +190,11 @@
 - 2026-03-29T00:30:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:31:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:32:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:37:00Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, the current `status.hermes_parity` surface, and the README `status` / launch-profile sections to establish the baseline for a docs-alignment cycle.
+- Updated `README.md` so the documented `hermes_parity` status surface now includes `claim_rule`, and the launch-profile non-parity note now explicitly includes the Hermes-style delegated cross-review workflow gap.
+- Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|delegated cross-review|not equivalent to Hermes Agent's" README.md` -> pass
+- This cycle did not change runtime behavior; it only aligned the operator docs with the current safe parity surface and the Hermes-grounded review gap.
+- 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
