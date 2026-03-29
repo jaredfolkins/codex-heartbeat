@@ -261,6 +261,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover which instruction layer wins when global persona settings, named bundles, and repo-local context files overlap.
 - Evaluator: `rg -n "instruction-layer precedence|global persona settings|repo-local context files|which instruction layer wins|overlapping instructions are explainable" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about the hierarchy between global identity and repo-local context.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes hierarchical-context notes to establish the baseline for a repo-context-discovery planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether project instructions come from one repo-local file or a hierarchical set of `AGENTS.md` files.
+- Evaluator: `rg -n "hierarchical project-context input|repo-context discovery semantics|one repo-local file or a hierarchical set|which files were loaded|single-file contract or hierarchical" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about monorepo-style context discovery.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -330,3 +334,7 @@
 - 2026-03-29T01:19:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:19:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:20:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:21:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:22:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:23:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:23:30Z screen-idle heartbeat injected with prompt source `program_md`

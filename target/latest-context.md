@@ -7,12 +7,12 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "hierarchical project-context input|repo-context discovery semantics|one repo-local file or a hierarchical set|which files were loaded|single-file contract or hierarchical" PLANNING.md`: pass | Added Hermes-style hierarchical repo-context discovery items to `PLANNING.md` so the safe backlog now covers whether project instructions come from one file or a hierarchy of `AGENTS.md` files.
 - `keep` via `rg -n "instruction-layer precedence|global persona settings|repo-local context files|which instruction layer wins|overlapping instructions are explainable" PLANNING.md`: pass | Added Hermes-style identity-versus-context precedence items to `PLANNING.md` so the safe backlog now covers which instruction layer wins when global persona settings, named bundles, and repo-local context overlap.
 - `keep` via `rg -n "persistent memory|user-profile state|isolated from persistent memory|affects saved context|prompt-profile selection interacts" PLANNING.md`: pass | Added Hermes-style profile-versus-memory items to `PLANNING.md` so the safe backlog now covers whether named bundles interact with persistent memory or remain isolated prompt-layer choices.
 - `keep` via `rg -n "profile-change history|timestamped record of recent profile changes|record profile-change events|selected, cleared, deferred, or promoted" PLANNING.md`: pass | Added Hermes-style profile-change-history items to `PLANNING.md` so the safe backlog now covers how bundle selection changes remain auditable over time.
 - `keep` via `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md`: pass | Added Hermes-style clear/default flow items to `PLANNING.md` so the safe backlog now covers how operators undo a named-bundle override and return to the default profile state.
 - `keep` via `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md`: pass | Added Hermes-style profile-persistence-scope items to `PLANNING.md` so the safe backlog now covers whether a named bundle is a one-session override or a persisted workspace default.
-- `keep` via `rg -n "active and pending bundle|queued next-session bundle|active-versus-pending profile state|what is in effect now versus what will apply" PLANNING.md`: pass | Added Hermes-style active-versus-pending profile-state items to `PLANNING.md` so the safe backlog now covers how deferred bundle changes stay visible before reset/new session.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

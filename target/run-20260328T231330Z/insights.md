@@ -15,6 +15,7 @@
 - Named bundles also need change history; otherwise status may show the current state but not how or when it got there.
 - Named bundles also need an explicit memory interaction rule; otherwise it stays unclear whether selecting a bundle changes only prompt instructions or also saved context.
 - Named bundles also need an explicit precedence rule against global persona settings and repo-local context files; otherwise overlapping instructions remain ambiguous even when all three layers are visible.
+- Repo context also needs an explicit discovery rule; otherwise a safe implementation may assume one repo-local file where Hermes actually models a hierarchy of `AGENTS.md` files.
 
 ## What Failed
 
@@ -40,3 +41,4 @@
 - If phase 1 adds selection and persistence, decide whether recent bundle changes belong in `status`, `target/` artifacts, or both so operators can debug state transitions later.
 - If phase 1 keeps bundle selection separate from memory, state that plainly in status/help/artifacts; if it does not, define the exact interaction before implementation starts.
 - If phase 1 keeps separate global-persona and repo-context layers, define the precedence rule early so overlapping instructions are explainable before implementation hardens around the wrong assumption.
+- If phase 1 wants Hermes-like repo context, decide early whether the wrapper supports one repo-local file or hierarchical `AGENTS.md` discovery so monorepo behavior does not stay implicit.
