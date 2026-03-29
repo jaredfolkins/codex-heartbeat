@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style interrupt-and-redirect semantics.
-- Primary evaluator: `rg -n "interrupt-and-redirect semantics|command termination, queued-tool cancellation|kills running terminal commands|cancels queued tool calls|stop-without-follow-up" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated interrupt propagation semantics.
+- Primary evaluator: `rg -n "delegated-interrupt-propagation semantics|parent also interrupts all active child agents|interrupting the parent interrupts all active children|delegated work running independently|parent interruption propagates to all active children" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style interrupt-and-redirect items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving in-flight interruption behavior implicit.
+- If `PLANNING.md` explicitly includes Hermes-style delegated interrupt propagation items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving parent-child interruption behavior implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style interrupt-and-redirect items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style delegated interrupt propagation items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

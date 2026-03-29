@@ -457,4 +457,13 @@
 - Reviewed Hermes interruption docs in `tmp/hermes-agent-src/website/docs/user-guide/messaging/index.md` and `tmp/hermes-agent-src/README.md`; confirmed interrupt-and-redirect behavior includes killing active terminal commands, cancelling queued tool calls, combining interruption messages, and stopping without queuing a redirect prompt.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style interrupt-and-redirect semantics.
 - Evaluator: `rg -n "interrupt-and-redirect semantics|command termination, queued-tool cancellation|kills running terminal commands|cancels queued tool calls|stop-without-follow-up" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-interrupt-propagation planning cycle.
+- Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that interrupting the parent interrupts all active children instead of leaving delegated child work detached from the parent's control flow.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated interrupt propagation.
+- Evaluator: `rg -n "delegated-interrupt-propagation semantics|parent also interrupts all active child agents|interrupting the parent interrupts all active children|delegated work running independently|parent interruption propagates to all active children" PLANNING.md` -> pass
 - 2026-03-29T02:00:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:02:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:02:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:03:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:03:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:04:10Z screen-idle heartbeat injected with prompt source `program_md`
