@@ -327,6 +327,40 @@ func TestEvaluateScreenIdlePoll(t *testing.T) {
 	}
 }
 
+func TestApplyScreenPauseDecision(t *testing.T) {
+	t.Parallel()
+
+	idleDecision := screenPollDecision{
+		nextIdlePolls: 2,
+		shouldInject:  false,
+		reason:        "idle_accumulating",
+	}
+
+	paused := applyScreenPauseDecision(idleDecision, true, "pause_lock_present", false)
+	if !paused.previouslyPaused {
+		t.Fatal("applyScreenPauseDecision() should remember that the loop was paused")
+	}
+	if paused.decision.nextIdlePolls != 0 || paused.decision.shouldInject || paused.decision.reason != "pause_lock_present" {
+		t.Fatalf("applyScreenPauseDecision(paused) = %+v", paused)
+	}
+
+	cleared := applyScreenPauseDecision(idleDecision, false, "", true)
+	if cleared.previouslyPaused {
+		t.Fatal("applyScreenPauseDecision() should clear the paused marker after scheduling the restart nudge")
+	}
+	if cleared.decision.nextIdlePolls != 0 || !cleared.decision.shouldInject || cleared.decision.reason != "pause_cleared_startup_nudge" {
+		t.Fatalf("applyScreenPauseDecision(cleared) = %+v", cleared)
+	}
+
+	steady := applyScreenPauseDecision(idleDecision, false, "", false)
+	if steady.previouslyPaused {
+		t.Fatal("applyScreenPauseDecision() should leave the paused marker clear when nothing changed")
+	}
+	if steady.decision != idleDecision {
+		t.Fatalf("applyScreenPauseDecision(steady) = %+v, want %+v", steady.decision, idleDecision)
+	}
+}
+
 func TestPersistScreenDiagnostics(t *testing.T) {
 	t.Parallel()
 

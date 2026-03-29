@@ -94,6 +94,11 @@ type screenPollDecision struct {
 	reason        string
 }
 
+type screenPauseDecision struct {
+	decision         screenPollDecision
+	previouslyPaused bool
+}
+
 type screenRuntimeState struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 	SessionID     string    `json:"session_id,omitempty"`
@@ -696,6 +701,30 @@ func screenIdleRecentPrompt(now, lastPromptAt time.Time) bool {
 	return promptInjectionCoolingDown(now, lastPromptAt, screenIdlePromptGrace)
 }
 
+func applyScreenPauseDecision(decision screenPollDecision, paused bool, pauseReason string, previouslyPaused bool) screenPauseDecision {
+	if paused {
+		return screenPauseDecision{
+			decision: screenPollDecision{
+				nextIdlePolls: 0,
+				shouldInject:  false,
+				reason:        pauseReason,
+			},
+			previouslyPaused: true,
+		}
+	}
+
+	if previouslyPaused {
+		decision.nextIdlePolls = 0
+		decision.shouldInject = true
+		decision.reason = "pause_cleared_startup_nudge"
+	}
+
+	return screenPauseDecision{
+		decision:         decision,
+		previouslyPaused: false,
+	}
+}
+
 func promptInjectionCoolingDown(now, lastPromptAt time.Time, cooldown time.Duration) bool {
 	if cooldown <= 0 || lastPromptAt.IsZero() {
 		return false
@@ -792,6 +821,7 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 	})
 
 	idlePolls := 0
+	previouslyPaused := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -811,10 +841,12 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 			if paused, pauseReason, err := heartbeatPauseState(artifacts); err != nil {
 				reportAsyncError(errCh, err)
 				return
-			} else if paused {
-				decision.shouldInject = false
-				decision.reason = pauseReason
-			} else if tiebreakReason != "" {
+			} else {
+				pauseApplied := applyScreenPauseDecision(decision, paused, pauseReason, previouslyPaused)
+				decision = pauseApplied.decision
+				previouslyPaused = pauseApplied.previouslyPaused
+			}
+			if tiebreakReason != "" {
 				decision.reason = decision.reason + ":" + tiebreakReason
 			}
 			idlePolls = decision.nextIdlePolls

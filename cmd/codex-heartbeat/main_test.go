@@ -117,6 +117,40 @@ func TestInteractiveLaunchBehaviorResume(t *testing.T) {
 	}
 }
 
+func TestShouldStartLaunchHeartbeatNewSession(t *testing.T) {
+	t.Parallel()
+
+	if !shouldStartLaunchHeartbeat("", false) {
+		t.Fatal("shouldStartLaunchHeartbeat() should schedule a startup nudge for a new session")
+	}
+}
+
+func TestShouldStartLaunchHeartbeatResume(t *testing.T) {
+	t.Parallel()
+
+	if !shouldStartLaunchHeartbeat("session-123", true) {
+		t.Fatal("shouldStartLaunchHeartbeat() should schedule a startup nudge for a resumed session")
+	}
+	if shouldStartLaunchHeartbeat("session-123", false) {
+		t.Fatal("shouldStartLaunchHeartbeat() should require an explicit resume/immediate signal for existing sessions")
+	}
+}
+
+func TestNextTimedHeartbeatDelay(t *testing.T) {
+	t.Parallel()
+
+	interval := 15 * time.Minute
+	if got := nextTimedHeartbeatDelay(interval, false, false); got != interval {
+		t.Fatalf("nextTimedHeartbeatDelay(normal) = %s, want %s", got, interval)
+	}
+	if got := nextTimedHeartbeatDelay(interval, true, false); got != startupHeartbeatDelay {
+		t.Fatalf("nextTimedHeartbeatDelay(resume) = %s, want %s", got, startupHeartbeatDelay)
+	}
+	if got := nextTimedHeartbeatDelay(interval, false, true); got != startupHeartbeatDelay {
+		t.Fatalf("nextTimedHeartbeatDelay(paused) = %s, want %s", got, startupHeartbeatDelay)
+	}
+}
+
 func TestUseScreenIdleSchedulerDefaultsWhenIntervalUnset(t *testing.T) {
 	t.Parallel()
 

@@ -286,7 +286,7 @@ func runInteractiveCommand(args []string) error {
 	schedulerErrors := make(chan error, 1)
 	if useScreenIdleHeartbeat {
 		go injectScreenIdleLoop(ctx, ptmx, prompts, artifacts, screen, inputTracker, outputTracker, promptTracker, cfg, &state, schedulerErrors)
-		if strings.TrimSpace(state.SessionID) == "" {
+		if shouldStartLaunchHeartbeat(state.SessionID, injectImmediately) {
 			go injectStartupPromptAfterDelay(ctx, ptmx, prompts, artifacts, startupHeartbeatDelay, promptTracker, cfg, &state, schedulerErrors)
 		}
 	} else if interval.IsSet() {
@@ -825,6 +825,17 @@ func interactiveLaunchBehavior(sessionID string) (sendPromptOnLaunch bool, injec
 	return false, hasSession
 }
 
+func shouldStartLaunchHeartbeat(sessionID string, injectImmediately bool) bool {
+	return strings.TrimSpace(sessionID) == "" || injectImmediately
+}
+
+func nextTimedHeartbeatDelay(interval time.Duration, immediate bool, paused bool) time.Duration {
+	if immediate || paused {
+		return startupHeartbeatDelay
+	}
+	return interval
+}
+
 func resolveNoAltScreen(flagNoAltScreen, flagAltScreen bool) (bool, error) {
 	if flagNoAltScreen && flagAltScreen {
 		return false, fmt.Errorf("--no-alt-screen and --alt-screen cannot be used together")
@@ -1142,9 +1153,12 @@ func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptRe
 		return
 	}
 
-	nextDelay := interval
-	if immediate {
-		nextDelay = startupHeartbeatDelay
+	nextDelay := nextTimedHeartbeatDelay(interval, immediate, false)
+	if paused, _, err := heartbeatPauseState(artifacts); err != nil {
+		reportAsyncError(errCh, err)
+		return
+	} else if paused {
+		nextDelay = nextTimedHeartbeatDelay(interval, immediate, true)
 	}
 
 	timer := time.NewTimer(nextDelay)
@@ -1163,7 +1177,7 @@ func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptRe
 			}
 			if paused {
 				first = false
-				timer.Reset(interval)
+				timer.Reset(nextTimedHeartbeatDelay(interval, false, true))
 				continue
 			}
 
