@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style tool-activity display semantics.
-- Primary evaluator: `rg -n "tool-activity display semantics|tool progress is off, new-only, all, or verbose|tool activity is hidden, new-only, all, or verbose|operator-visible toggle like /verbose|display is `off`, `new`, `all`, or `verbose`" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style global identity-file semantics.
+- Primary evaluator: `rg -n "global-identity file semantics|SOUL.md lives only in HERMES_HOME|occupies identity slot `#1`|per-user identity file exists outside repo context|fallback identity applies when that file is absent or empty" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style tool-activity display items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving tool-progress visibility implicit.
+- If `PLANNING.md` explicitly includes Hermes-style global identity-file items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving the per-user identity layer implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style tool-activity display items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style global identity-file items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

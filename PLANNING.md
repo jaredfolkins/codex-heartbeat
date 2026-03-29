@@ -29,6 +29,7 @@
 - Hermes spans long-lived conversations and cross-interface use, so the operator model also needs a clear persistence rule for whether a selected bundle is session-local, repo-default, or sticky across future sessions.
 - Hermes also documents persistent memory and user profiles, so the operator model needs a clear rule for whether prompt-profile selection interacts with saved memory or remains an isolated instruction-layer choice.
 - Hermes also separates global identity/personality concerns from project context files, so the operator model needs an explicit precedence rule for which layer wins when a named bundle, global persona, and repo-local context all provide overlapping instructions.
+- Hermes also exposes a distinct global identity file contract: `SOUL.md` lives only in `HERMES_HOME`, occupies identity slot `#1`, stays separate from project context discovery, and falls back to a built-in default identity when absent or empty.
 - Hermes treats `AGENTS.md` as a hierarchical project-context input, combining multiple files across a monorepo instead of assuming a single repo-root instruction file.
 - Hermes's hierarchical project context is also ordered and labeled: discovered files are concatenated with relative path headers, so operators can tell where each repo-local instruction block came from.
 - Hermes also recognizes adjacent instruction-file conventions like `.cursorrules`, so the operator model needs a compatibility rule for whether existing repo guidance files are ignored, imported, or merged alongside `AGENTS.md`.
@@ -65,6 +66,7 @@
 - [ ] Record profile-change history in operator-visible artifacts or status so it is clear when a bundle was selected, cleared, deferred, or promoted to the default.
 - [ ] Define how prompt-profile selection interacts with persistent memory or user-profile state, so operators know whether choosing a bundle changes only instructions or also affects saved context.
 - [ ] Define instruction-layer precedence explicitly, so operators know whether global persona/profile settings or repo-local context files win when they overlap.
+- [ ] Define global-identity file semantics explicitly, so operators know whether a per-user identity file exists outside repo context, where it is loaded from, and what fallback identity applies when that file is absent or empty.
 - [ ] Define repo-context discovery semantics explicitly, so operators know whether project instructions come from one repo-local file or a hierarchical set of `AGENTS.md` files.
 - [ ] Define repo-context merge semantics explicitly, so operators know the order in which hierarchical `AGENTS.md` files are combined and how each instruction block is labeled or traced back to its source path.
 - [ ] Define context-file compatibility semantics explicitly, so operators know whether existing repo guidance files like `.cursorrules` are ignored, imported, or merged alongside `AGENTS.md`.
@@ -114,6 +116,7 @@
 - [ ] A user can inspect a timestamped record of recent profile changes so active and pending bundle state is auditable instead of purely ephemeral.
 - [ ] A user can tell whether a selected bundle affects persistent memory/user-profile context or only the prompt stack for the current workspace/session.
 - [ ] A user can tell which instruction layer wins when global persona settings, a named bundle, and repo-local context files overlap.
+- [ ] A user can tell whether a global identity file exists outside repo context, whether it loads only from a global home path, whether it occupies a dedicated top-level identity slot, and what fallback applies when it is missing or empty.
 - [ ] A user can tell whether repo context comes from one file or a hierarchical set of `AGENTS.md` files and can explain which files were loaded.
 - [ ] A user can tell the order in which hierarchical repo-context files were merged and can trace each injected block back to a relative path header or equivalent source label.
 - [ ] A user can tell whether existing repo instruction files like `.cursorrules` participate in the assembled context and how they were mapped into the wrapper's repo-context model.
@@ -152,6 +155,7 @@
 - [ ] If phase 1 adds profile selection, record profile-change events in `target/` artifacts or `status` so deferred and persisted changes remain explainable after the fact.
 - [ ] In phase 1, either keep profile selection isolated from persistent memory/user-profile state or document the exact interaction explicitly in status/help/artifacts.
 - [ ] In phase 1, document a simple precedence rule across global persona settings, named bundles, and repo-local context files so overlapping instructions are explainable before any richer transport work starts.
+- [ ] In phase 1, document whether a global identity file exists outside repo context, whether it loads only from a home-directory path, whether it occupies a dedicated identity slot, and what built-in fallback applies when it is missing or empty.
 - [ ] In phase 1, document whether repo context uses a single-file contract or hierarchical `AGENTS.md` discovery so monorepo behavior is predictable before transport work starts.
 - [ ] In phase 1, if repo context is hierarchical, document the merge order and expose source labels or relative path headers so injected instructions remain explainable in monorepos.
 - [ ] In phase 1, document whether compatibility files like `.cursorrules` are supported and, if so, how they map into the repo-context assembly and observability surfaces.

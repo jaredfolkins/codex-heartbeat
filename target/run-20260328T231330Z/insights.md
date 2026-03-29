@@ -34,6 +34,7 @@
 - Delegated child-agent review also needs an explicit interrupt-propagation rule; otherwise operators still cannot tell whether stopping the parent also stops active children or leaves detached delegated work behind.
 - Delegated child-agent review also needs an explicit progress-display rule; otherwise operators still cannot tell whether child work appears as live per-task tool activity, batched parent progress, or some other progress surface.
 - Operator-visible tool use also needs an explicit display policy; otherwise operators still cannot tell whether tool activity is hidden, new-only, all, or verbose, or whether that surface can be toggled at runtime.
+- Prompt-profile parity also needs an explicit global-identity rule; otherwise operators still cannot tell whether a durable per-user identity file exists outside repo context, where it loads from, or what fallback identity applies when it is missing.
 
 ## What Failed
 
@@ -78,3 +79,4 @@
 - If phase 1 exposes delegated child-agent review, decide early whether parent interruption propagates to active children and surface that cancellation boundary so delegated control flow stays predictable.
 - If phase 1 exposes delegated child-agent review, decide early whether progress appears as real-time CLI tree-view activity, batched parent progress updates, or another declared surface so delegated progress stays predictable across interfaces.
 - If phase 1 surfaces tool activity, decide early whether visibility is `off`, `new`, `all`, or `verbose`, and whether a runtime toggle like `/verbose` exists so tool-output UX stays predictable across interfaces.
+- If phase 1 wants Hermes-like personality behavior, decide early whether a global identity file exists outside repo context, whether it loads only from a home path, and what fallback identity applies so persona layering stays predictable.

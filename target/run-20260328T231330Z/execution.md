@@ -469,6 +469,10 @@
 - Reviewed Hermes messaging docs in `tmp/hermes-agent-src/website/docs/user-guide/messaging/index.md`; confirmed that tool activity display is configurable as `off`, `new`, `all`, or `verbose`, with an optional `/verbose` toggle in messaging.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style tool-activity display semantics.
 - Evaluator: `rg -n "tool-activity display semantics|tool progress is off, new-only, all, or verbose|tool activity is hidden, new-only, all, or verbose|operator-visible toggle like /verbose|display is \`off\`, \`new\`, \`all\`, or \`verbose\`" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a global-identity-file planning cycle.
+- Reviewed Hermes context-file and personality docs in `tmp/hermes-agent-src/website/docs/user-guide/features/context-files.md` and `tmp/hermes-agent-src/website/docs/user-guide/features/personality.md`; confirmed that `SOUL.md` lives only in `HERMES_HOME`, occupies identity slot `#1`, stays outside repo-context discovery, and falls back to a built-in default identity when absent or empty.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style global identity-file semantics.
+- Evaluator: `rg -n "global-identity file semantics|SOUL.md lives only in HERMES_HOME|occupies identity slot \`#1\`|per-user identity file exists outside repo context|fallback identity applies when that file is absent or empty" PLANNING.md` -> pass
 - 2026-03-29T02:00:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:45Z screen-idle heartbeat injected with prompt source `program_md`
@@ -483,3 +487,8 @@
 - 2026-03-29T02:07:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:07:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:08:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:08:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:08:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:09:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:09:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:09:55Z screen-idle heartbeat injected with prompt source `program_md`
