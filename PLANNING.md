@@ -34,6 +34,7 @@
 - Hermes also recognizes adjacent instruction-file conventions like `.cursorrules`, so the operator model needs a compatibility rule for whether existing repo guidance files are ignored, imported, or merged alongside `AGENTS.md`.
 - Hermes also exposes background sessions as a first-class operator workflow: parallel tasks get isolated conversation history while inheriting the current session's model and reasoning-style settings.
 - Hermes also supports launch-time skill and toolset loading, so the operator model needs a rule for whether a named bundle can preload extra tools/skills in addition to prompt instructions.
+- Hermes's background-session behavior inherits more than just model choice: the child session also carries provider, toolsets, reasoning settings, and fallback-model configuration from the parent session.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -56,6 +57,7 @@
 - [ ] Define context-file compatibility semantics explicitly, so operators know whether existing repo guidance files like `.cursorrules` are ignored, imported, or merged alongside `AGENTS.md`.
 - [ ] Define background/delegated-session inheritance semantics explicitly, so operators know whether parallel review tasks inherit the active profile/model/reasoning settings while keeping isolated conversation history.
 - [ ] Define bundle-to-tooling semantics explicitly, so operators know whether selecting a named bundle also preloads toolsets or skills in addition to prompt/context instructions.
+- [ ] Define delegated-session configuration inheritance explicitly, so operators know whether provider, toolsets, reasoning settings, and fallback model carry into background review tasks alongside the active profile.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -91,6 +93,7 @@
 - [ ] A user can tell whether existing repo instruction files like `.cursorrules` participate in the assembled context and how they were mapped into the wrapper's repo-context model.
 - [ ] A user can tell whether a spawned background/delegated task inherits the active profile/model/reasoning settings and whether its conversation history is isolated from the parent session.
 - [ ] A user can tell whether a selected named bundle also loads extra toolsets or skills and can inspect that tooling surface from wrapper UX or artifacts.
+- [ ] A user can tell whether a background/delegated task also inherits provider, toolsets, and fallback-model settings from the parent session instead of only model/reasoning.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -115,6 +118,7 @@
 - [ ] In phase 1, document whether compatibility files like `.cursorrules` are supported and, if so, how they map into the repo-context assembly and observability surfaces.
 - [ ] In phase 1, if background/delegated sessions are exposed, document whether they inherit the active profile/model/reasoning settings and whether their histories remain isolated from the parent session.
 - [ ] In phase 1, document whether named bundles may preload toolsets or skills and, if so, surface that loaded tooling set in status/help/artifacts.
+- [ ] In phase 1, if delegated/background sessions are exposed, document whether provider, toolsets, and fallback model inherit from the parent session and show that inherited execution config in status/help/artifacts.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.

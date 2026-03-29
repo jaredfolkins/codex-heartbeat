@@ -281,6 +281,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether named bundles may preload toolsets or skills in addition to prompt/context instructions.
 - Evaluator: `rg -n "launch-time skill and toolset loading|bundle-to-tooling semantics|preloads toolsets or skills|selected named bundle also loads extra toolsets or skills|named bundles may preload toolsets or skills" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about whether named bundles also carry tooling surfaces.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes background-session configuration notes to establish the baseline for a delegated-session-config-inheritance planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether background/delegated tasks inherit provider, toolsets, reasoning settings, and fallback-model configuration from the parent session.
+- Evaluator: `rg -n "background-session behavior inherits more than just model choice|delegated-session configuration inheritance explicitly|inherits provider, toolsets, and fallback-model settings|provider, toolsets, and fallback model inherit|background/delegated task also inherits provider" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about full execution-config inheritance for delegated/background tasks.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -370,3 +374,7 @@
 - 2026-03-29T01:30:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:30:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:31:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:31:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:32:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:32:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:32:55Z screen-idle heartbeat injected with prompt source `program_md`
