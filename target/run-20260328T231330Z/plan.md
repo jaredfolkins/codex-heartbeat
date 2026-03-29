@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style fresh-session config-surfacing semantics.
-- Primary evaluator: `rg -n 'fresh-session config-surfacing semantics|surfaces session configuration on `/new`, `/reset`, and auto-reset|what model/personality/profile/tooling state is shown when `/new`, `/reset`, or auto-reset starts a fresh session|what configuration is surfaced on `/new`, `/reset`, and auto-reset' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style persistent config-bar semantics.
+- Primary evaluator: `rg -n 'persistent config-bar semantics|`/statusbar` toggle for a persistent config bar showing model and provider info in the prompt|whether a persistent config/status bar exists|whether a `/statusbar`-style toggle or equivalent control can change that always-visible surface' /Users/jf/src/jf/codex-heartbeat/PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style fresh-session config-surfacing items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving reset/new-session configuration visibility implicit.
+- If `PLANNING.md` explicitly includes Hermes-style persistent config-bar items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving always-visible active-configuration surfacing implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style fresh-session config-surfacing items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style persistent config-bar items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

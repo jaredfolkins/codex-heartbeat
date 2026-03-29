@@ -565,6 +565,10 @@
 - Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.5.0.md`; confirmed that Hermes surfaces session configuration on `/new`, `/reset`, and auto-reset rather than making operators infer the new session's config later.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style fresh-session config-surfacing semantics.
 - Evaluator: `rg -n 'fresh-session config-surfacing semantics|surfaces session configuration on `/new`, `/reset`, and auto-reset|what model/personality/profile/tooling state is shown when `/new`, `/reset`, or auto-reset starts a fresh session|what configuration is surfaced on `/new`, `/reset`, and auto-reset' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a persistent-config-bar planning cycle.
+- Reviewed Hermes release notes in `tmp/hermes-agent-src/RELEASE_v0.4.0.md`; confirmed that Hermes exposes `/statusbar` to toggle a persistent config bar showing active model and provider info in the prompt.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style persistent config-bar semantics.
+- Evaluator: `rg -n 'persistent config-bar semantics|`/statusbar` toggle for a persistent config bar showing model and provider info in the prompt|whether a persistent config/status bar exists|whether a `/statusbar`-style toggle or equivalent control can change that always-visible surface' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
 - 2026-03-29T02:33:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:33:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:34:05Z screen-idle heartbeat injected with prompt source `program_md`
@@ -576,3 +580,8 @@
 - 2026-03-29T02:37:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:37:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:38:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:38:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:39:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:40:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:40:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:40:45Z screen-idle heartbeat injected with prompt source `program_md`
