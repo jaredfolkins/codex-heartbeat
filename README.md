@@ -35,7 +35,7 @@ go build ./cmd/codex-heartbeat
 
 ## Basic usage
 
-The first `run` against a workspace now auto-scaffolds the autoresearch files when they are missing. If the scaffold is completely absent and the terminal is interactive, `codex-heartbeat` asks a short init questionnaire for the goal, evaluator, first deep dive, and starting prompt mode before writing the files:
+The first `run` against a workspace now auto-scaffolds the autoresearch files when they are missing. If the scaffold is completely absent and the terminal is interactive, `codex-heartbeat` asks a short init questionnaire for the goal, evaluator, first deep dive, and starting prompt mode before writing the files. This is currently a conversational questionnaire, not a full-screen TUI:
 
 ```bash
 ./codex-heartbeat --workdir /path/to/workdir
@@ -78,11 +78,10 @@ Checkpoint commits: true
 
 Prompt precedence is:
 
-1. `--prompt`
-2. repo-local `program.md`
-3. the embedded fallback prompt template
+1. repo-local `program.md`
+2. the embedded fallback prompt template
 
-`--prompt` is a full override. When it is present, codex-heartbeat re-reads that file on every emission, refreshes the cached copy on success, and falls back to the cached copy if the file later disappears. When `--prompt` is absent, codex-heartbeat re-reads `program.md` on every emission and renders the embedded autoresearch loop template around it. If neither exists, it renders the embedded fallback template by itself.
+`codex-heartbeat` now follows the repo-local workflow directly. It re-reads `program.md` on every emission and renders the embedded autoresearch loop template around it. If `program.md` is missing or unusable, it falls back to the embedded template defaults.
 
 Open the interactive Codex UI with transcript logging and the default screen-aware heartbeat mode:
 
@@ -96,12 +95,6 @@ Keep the wrapper banner and Codex output in normal scrollback:
 
 ```bash
 ./codex-heartbeat --workdir /path/to/workdir --no-alt-screen
-```
-
-Use an explicit prompt override instead of `program.md`:
-
-```bash
-./codex-heartbeat --workdir /path/to/workdir --prompt /path/to/workdir/heartbeat.md --interval 15m
 ```
 
 Use the council repeatedly during autoresearch instead of only as a stuck-state fallback:
@@ -153,6 +146,8 @@ Example autoresearch programs ship in:
 - `examples/program-manual-validation.md`
 
 The source Markdown templates used by the wrapper live in `cmd/codex-heartbeat/templates/`.
+
+`codex-heartbeat --help` prints the detailed guide with examples and ideas. Add `--brevity` after `--help` when you want the compact help instead, for example `codex-heartbeat --help --brevity` or `codex-heartbeat run --help --brevity`.
 
 ## Autoresearch Model
 
@@ -208,7 +203,6 @@ By default the wrapper writes:
 - `~/.codex-heartbeat/projects/<workspace-key>/state.json`
 - `~/.codex-heartbeat/projects/<workspace-key>/screen-state.json`
 - `~/.codex-heartbeat/projects/<workspace-key>/heartbeat.lock`
-- `~/.codex-heartbeat/projects/<workspace-key>/prompts/<hash>.txt`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-screen.jsonl`
 - `~/.codex-heartbeat/projects/<workspace-key>/logs/YYYY-MM-DD-run.log`
@@ -258,10 +252,9 @@ The session id is discovered after startup by scanning `$CODEX_HOME/sessions` or
 - `--interval` and `--end-in` accept short and long units for minutes, hours, and days such as `30m`, `2h`, `1d`, `15 minutes`, `2 hours`, and `1 day`.
 - The screen-aware scheduler watches Codex's status line for active indicators such as `Working (3m 02s • esc to interrupt)`, deliberately waits on ambiguous screens, keeps tracking idle screen state even while the recent-input guard is active, and only injects once local input has been quiet for 20 seconds. See `Heartbeat Detection: Triage And Validation` above for the artifact-driven troubleshooting flow.
 - The latest screen classifier snapshot is written to `screen-state.json`, and every screen poll is appended to `YYYY-MM-DD-screen.jsonl` so you can audit why the wrapper thought Codex was working, idle, ambiguous, or blocked by recent input.
-- Prompt emissions now resolve prompt sources in this order: `--prompt`, then repo-local `program.md`, then the embedded fallback template.
-- Explicit `--prompt` files are re-read on every send. Successful reads refresh the workspace cache, and missing prompt files fall back to that cached copy; if neither exists, the run fails.
+- Prompt emissions now resolve prompt sources in this order: repo-local `program.md`, then the embedded fallback template.
 - `program.md` is also re-read on every send so the human can change the research/debugging program while the agent works in the target workspace.
 - The default prompt writes bounded memory into `target/` and treats the 3-agent council as a fallback after repeated failed cycles, not as the default first action on every heartbeat. `--council` opts into a more collaborative version of the loop where the council is used at multiple decision points.
-- If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the prompt file and then persists the discovered session id afterward.
+- If no tracked session id exists yet, `run` starts a brand-new interactive Codex session using the `program.md`-driven prompt and then persists the discovered session id afterward.
 - Child exit codes are preserved for the wrapped interactive `run`.
 - `run` now uses a PTY and terminal raw mode so you can keep using the Codex UI while codex-heartbeat logs the transcript and injects prompts when the scheduler decides it is time.

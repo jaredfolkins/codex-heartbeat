@@ -10,49 +10,11 @@ import (
 	"time"
 )
 
-func TestPromptResolverPrefersExplicitPromptOverProgram(t *testing.T) {
-	t.Parallel()
-
-	root := t.TempDir()
-	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
-	if err := os.MkdirAll(workdir, 0o755); err != nil {
-		t.Fatalf("mkdir workdir: %v", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte("# Program\n\nObjective: from program\nPrimary evaluator: go test ./...\n"), 0o644); err != nil {
-		t.Fatalf("write program: %v", err)
-	}
-	promptPath := filepath.Join(root, "override.md")
-	if err := os.WriteFile(promptPath, []byte("explicit override\n"), 0o644); err != nil {
-		t.Fatalf("write explicit prompt: %v", err)
-	}
-
-	resolver, err := newPromptResolver(workdir, promptPath, projectDir, false)
-	if err != nil {
-		t.Fatalf("newPromptResolver() returned error: %v", err)
-	}
-
-	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 28, 20, 0, 0, 0, time.UTC))
-	resolution, err := resolver.Resolve(artifacts)
-	if err != nil {
-		t.Fatalf("Resolve() returned error: %v", err)
-	}
-
-	if resolution.Source != promptSourceCLI {
-		t.Fatalf("Resolve().Source = %q, want %q", resolution.Source, promptSourceCLI)
-	}
-	if resolution.Text != "explicit override" {
-		t.Fatalf("Resolve().Text = %q, want explicit override", resolution.Text)
-	}
-}
-
 func TestPromptResolverUsesProgramPromptByDefault(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -73,7 +35,7 @@ Checkpoint commits: true
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	resolver, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -109,12 +71,11 @@ func TestPromptResolverFallsBackToEmbeddedTemplate(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	resolver, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -138,7 +99,6 @@ func TestPromptResolverManualTestFirstMode(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -157,7 +117,7 @@ Prompt mode: manual-test-first
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	resolver, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -178,7 +138,6 @@ func TestPromptResolverPlanningMode(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -197,7 +156,7 @@ Prompt mode: planning
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	resolver, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -213,58 +172,6 @@ Prompt mode: planning
 	}
 	if !strings.Contains(resolution.Text, "Planning history path") {
 		t.Fatalf("Resolve().Text missing planning history path: %q", resolution.Text)
-	}
-}
-
-func TestPromptResolverProgramTakesPrecedenceWhenExplicitPromptFlagIsUnset(t *testing.T) {
-	t.Parallel()
-
-	root := t.TempDir()
-	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
-	if err := os.MkdirAll(workdir, 0o755); err != nil {
-		t.Fatalf("mkdir workdir: %v", err)
-	}
-
-	program := `# Program
-
-Objective: use the human program
-Primary evaluator: go test ./...
-`
-	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
-		t.Fatalf("write program: %v", err)
-	}
-
-	explicitPromptPath := filepath.Join(root, "explicit.md")
-	if err := os.WriteFile(explicitPromptPath, []byte("stale explicit prompt\n"), 0o644); err != nil {
-		t.Fatalf("write explicit prompt: %v", err)
-	}
-	explicitPrompt, err := newPromptSource(explicitPromptPath, projectDir)
-	if err != nil {
-		t.Fatalf("newPromptSource() returned error: %v", err)
-	}
-	if _, err := explicitPrompt.Resolve(); err != nil {
-		t.Fatalf("Resolve() returned error: %v", err)
-	}
-	if err := os.Remove(explicitPromptPath); err != nil {
-		t.Fatalf("remove explicit prompt: %v", err)
-	}
-
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
-	if err != nil {
-		t.Fatalf("newPromptResolver() returned error: %v", err)
-	}
-	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 28, 20, 4, 0, 0, time.UTC))
-	resolution, err := resolver.Resolve(artifacts)
-	if err != nil {
-		t.Fatalf("Resolve() returned error: %v", err)
-	}
-
-	if resolution.Source != promptSourceProgram {
-		t.Fatalf("Resolve().Source = %q, want %q", resolution.Source, promptSourceProgram)
-	}
-	if strings.Contains(resolution.Text, "stale explicit prompt") {
-		t.Fatalf("Resolve().Text incorrectly reused cached explicit prompt: %q", resolution.Text)
 	}
 }
 
@@ -345,7 +252,6 @@ func TestRecordRunStartWritesEvaluatorToResultsLedger(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -362,7 +268,7 @@ Model reasoning effort: high
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, true)
+	resolver, err := newPromptResolver(workdir, true)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -407,7 +313,6 @@ func TestPromptResolverWritesLaunchSettingsToLatestContext(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -424,7 +329,7 @@ Model reasoning effort: high
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, false)
+	resolver, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -447,7 +352,6 @@ func TestPromptResolverCouncilFlagUsesFrequentCouncilPolicy(t *testing.T) {
 
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
-	projectDir := filepath.Join(root, "runtime")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
@@ -461,7 +365,7 @@ Primary evaluator: go test ./...
 		t.Fatalf("write program: %v", err)
 	}
 
-	resolver, err := newPromptResolver(workdir, "", projectDir, true)
+	resolver, err := newPromptResolver(workdir, true)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}

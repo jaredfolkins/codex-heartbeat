@@ -157,7 +157,7 @@ func TestRegisterRunFlagsOmitsSkipGitRepoCheck(t *testing.T) {
 	if fs.Lookup("skip-git-repo-check") != nil {
 		t.Fatal("registerRunFlags() unexpectedly exposed --skip-git-repo-check")
 	}
-	for _, flagName := range []string{"profile", "model", "model-reasoning-effort"} {
+	for _, flagName := range []string{"profile", "model", "model-reasoning-effort", "prompt"} {
 		if fs.Lookup(flagName) != nil {
 			t.Fatalf("registerRunFlags() unexpectedly exposed --%s", flagName)
 		}
@@ -402,17 +402,20 @@ func TestStatusCommandIncludesHermesParityGap(t *testing.T) {
 	}
 }
 
-func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
+func TestRunInteractiveCommandNewIntervalLaunchUsesProgramFlow(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
 
-	promptText := "heartbeat prompt"
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte(promptText+"\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+	program := `# Program
+
+Objective: interval launch objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
 
 	binDir := filepath.Join(root, "bin")
@@ -429,7 +432,7 @@ func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("TERM_PROGRAM", "")
 
-	if err := runInteractiveCommand([]string{"--workdir", workdir, "--prompt", promptPath, "--interval", "15m"}); err != nil {
+	if err := runInteractiveCommand([]string{"--workdir", workdir, "--interval", "15m"}); err != nil {
 		t.Fatalf("runInteractiveCommand() returned error: %v", err)
 	}
 
@@ -441,22 +444,25 @@ func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] == promptText {
-		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
+	if strings.Contains(strings.Join(args, " "), "--prompt") {
+		t.Fatalf("launch args unexpectedly included removed prompt flag: %v", args)
 	}
 }
 
-func TestRunInteractiveCommandScreenIdleLaunchIncludesPrompt(t *testing.T) {
+func TestRunInteractiveCommandScreenIdleLaunchUsesProgramFlow(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
 
-	promptText := "heartbeat prompt"
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte(promptText+"\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+	program := `# Program
+
+Objective: screen idle launch objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
 
 	binDir := filepath.Join(root, "bin")
@@ -473,7 +479,7 @@ func TestRunInteractiveCommandScreenIdleLaunchIncludesPrompt(t *testing.T) {
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("TERM_PROGRAM", "")
 
-	if err := runInteractiveCommand([]string{"--workdir", workdir, "--prompt", promptPath, "--screen-idle-heartbeat"}); err != nil {
+	if err := runInteractiveCommand([]string{"--workdir", workdir, "--screen-idle-heartbeat"}); err != nil {
 		t.Fatalf("runInteractiveCommand() returned error: %v", err)
 	}
 
@@ -485,22 +491,25 @@ func TestRunInteractiveCommandScreenIdleLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] == promptText {
-		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
+	if strings.Contains(strings.Join(args, " "), "--prompt") {
+		t.Fatalf("launch args unexpectedly included removed prompt flag: %v", args)
 	}
 }
 
-func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
+func TestRunInteractiveCommandDefaultLaunchUsesProgramFlow(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
 
-	promptText := "heartbeat prompt"
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte(promptText+"\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+	program := `# Program
+
+Objective: default launch objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
 
 	binDir := filepath.Join(root, "bin")
@@ -517,7 +526,7 @@ func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("TERM_PROGRAM", "")
 
-	if err := runInteractiveCommand([]string{"--workdir", workdir, "--prompt", promptPath}); err != nil {
+	if err := runInteractiveCommand([]string{"--workdir", workdir}); err != nil {
 		t.Fatalf("runInteractiveCommand() returned error: %v", err)
 	}
 
@@ -529,8 +538,8 @@ func TestRunInteractiveCommandDefaultLaunchIncludesPrompt(t *testing.T) {
 	if len(args) == 0 {
 		t.Fatal("fake codex did not receive any args")
 	}
-	if args[len(args)-1] == promptText {
-		t.Fatalf("launch args unexpectedly included prompt %q; full args: %v", promptText, args)
+	if strings.Contains(strings.Join(args, " "), "--prompt") {
+		t.Fatalf("launch args unexpectedly included removed prompt flag: %v", args)
 	}
 }
 
@@ -603,11 +612,15 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	}
 	state := workspaceState{SessionID: "session-123"}
 	promptTracker := newPromptInjectionTracker(time.Time{})
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+	program := `# Program
+
+Objective: hello objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
-	prompts, err := newPromptResolver(workdir, promptPath, projectDir, false)
+	prompts, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -619,7 +632,7 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	injectStartupPromptAfterDelay(ctx, &output, prompts, artifacts, 10*time.Millisecond, promptTracker, cfg, &state, nil)
 
 	got := output.String()
-	if !strings.Contains(got, "hello") {
+	if !strings.Contains(got, "hello objective") {
 		t.Fatalf("injectStartupPromptAfterDelay() output = %q, want injected prompt text", got)
 	}
 	if promptTracker.LastPromptAt().IsZero() {
@@ -643,11 +656,15 @@ func TestInjectStartupPromptAfterDelaySkipsWhenPaused(t *testing.T) {
 	}
 	state := workspaceState{SessionID: "session-123"}
 	promptTracker := newPromptInjectionTracker(time.Time{})
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+	program := `# Program
+
+Objective: hello objective
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
-	prompts, err := newPromptResolver(workdir, promptPath, projectDir, false)
+	prompts, err := newPromptResolver(workdir, false)
 	if err != nil {
 		t.Fatalf("newPromptResolver() returned error: %v", err)
 	}
@@ -666,55 +683,6 @@ func TestInjectStartupPromptAfterDelaySkipsWhenPaused(t *testing.T) {
 	}
 	if !promptTracker.LastPromptAt().IsZero() {
 		t.Fatal("injectStartupPromptAfterDelay() should not update the prompt tracker while paused")
-	}
-}
-
-func TestPromptSourceResolveCachesExplicitPrompt(t *testing.T) {
-	t.Parallel()
-
-	projectDir := t.TempDir()
-	promptPath := filepath.Join(projectDir, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte("first prompt\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
-	}
-
-	prompts, err := newPromptSource(promptPath, projectDir)
-	if err != nil {
-		t.Fatalf("newPromptSource() returned error: %v", err)
-	}
-
-	if got, err := prompts.Resolve(); err != nil || got != "first prompt" {
-		t.Fatalf("Resolve() = (%q, %v), want first prompt", got, err)
-	}
-
-	if err := os.WriteFile(promptPath, []byte("second prompt\n"), 0o644); err != nil {
-		t.Fatalf("overwrite prompt file: %v", err)
-	}
-	if got, err := prompts.Resolve(); err != nil || got != "second prompt" {
-		t.Fatalf("Resolve() after overwrite = (%q, %v), want second prompt", got, err)
-	}
-
-	if err := os.Remove(promptPath); err != nil {
-		t.Fatalf("remove prompt file: %v", err)
-	}
-	if got, err := prompts.Resolve(); err != nil || got != "second prompt" {
-		t.Fatalf("Resolve() with missing prompt file = (%q, %v), want cached second prompt", got, err)
-	}
-}
-
-func TestPromptSourceResolveFailsWithoutPromptCache(t *testing.T) {
-	t.Parallel()
-
-	projectDir := t.TempDir()
-	promptPath := filepath.Join(projectDir, "missing.md")
-
-	prompts, err := newPromptSource(promptPath, projectDir)
-	if err != nil {
-		t.Fatalf("newPromptSource() returned error: %v", err)
-	}
-
-	if _, err := prompts.Resolve(); err == nil {
-		t.Fatal("Resolve() unexpectedly succeeded without a prompt file or cache")
 	}
 }
 
@@ -750,7 +718,7 @@ func TestStatusSubcommandHelpReturnsZero(t *testing.T) {
 
 func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
 	var output bytes.Buffer
-	printRootUsage(&output)
+	printRootUsage(&output, false)
 
 	for _, expected := range []string{
 		"codex-heartbeat status --workdir DIR",
@@ -767,16 +735,76 @@ func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
 	}
 }
 
+func TestRootUsageBrevityMentionsDetailedGuide(t *testing.T) {
+	var output bytes.Buffer
+	printRootUsage(&output, true)
+
+	if !strings.Contains(output.String(), "Drop `--brevity` to see the detailed guide, examples, and ideas.") {
+		t.Fatalf("printRootUsage(brevity) missing detailed-guide note: %s", output.String())
+	}
+	if strings.Contains(output.String(), "Ideas:") {
+		t.Fatalf("printRootUsage(brevity) unexpectedly included verbose ideas section: %s", output.String())
+	}
+}
+
+func TestRunUsageDefaultIncludesFlagNotesAndIdeas(t *testing.T) {
+	var output bytes.Buffer
+	printRunUsage(&output, false)
+
+	for _, expected := range []string{
+		"Flags:",
+		"--safe",
+		"Detailed examples:",
+		"short init questionnaire",
+		"Ideas:",
+	} {
+		if !strings.Contains(output.String(), expected) {
+			t.Fatalf("printRunUsage() missing %q: %s", expected, output.String())
+		}
+	}
+}
+
+func TestRunUsageBrevityStaysCompact(t *testing.T) {
+	var output bytes.Buffer
+	printRunUsage(&output, true)
+
+	if !strings.Contains(output.String(), "Drop `--brevity` for flag notes, longer examples, and workflow ideas.") {
+		t.Fatalf("printRunUsage(brevity) missing compact-help note: %s", output.String())
+	}
+	if strings.Contains(output.String(), "Flags:") {
+		t.Fatalf("printRunUsage(brevity) unexpectedly included verbose flag notes: %s", output.String())
+	}
+}
+
+func TestStatusUsageDefaultIncludesOutputNotes(t *testing.T) {
+	var output bytes.Buffer
+	printStatusUsage(&output, false)
+
+	for _, expected := range []string{
+		"Output notes:",
+		"`session_id`",
+		"`launch_settings`",
+		"`hermes_parity`",
+	} {
+		if !strings.Contains(output.String(), expected) {
+			t.Fatalf("printStatusUsage() missing %q: %s", expected, output.String())
+		}
+	}
+}
+
 func TestRootFlagsDefaultToRun(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
 		t.Fatalf("mkdir workdir: %v", err)
 	}
+	program := `# Program
 
-	promptPath := filepath.Join(root, "heartbeat.md")
-	if err := os.WriteFile(promptPath, []byte("heartbeat prompt\n"), 0o644); err != nil {
-		t.Fatalf("write prompt file: %v", err)
+Objective: root flags use run
+Primary evaluator: go test ./...
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
 	}
 
 	binDir := filepath.Join(root, "bin")
@@ -792,7 +820,7 @@ func TestRootFlagsDefaultToRun(t *testing.T) {
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("TERM_PROGRAM", "")
 
-	if got := run([]string{"--workdir", workdir, "--prompt", promptPath, "--interval", "15m"}); got != 0 {
+	if got := run([]string{"--workdir", workdir, "--interval", "15m"}); got != 0 {
 		t.Fatalf("run(default flags form) = %d, want 0", got)
 	}
 }

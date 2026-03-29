@@ -36,7 +36,6 @@ const (
 )
 
 const (
-	promptSourceCLI      = "cli_prompt"
 	promptSourceProgram  = "program_md"
 	promptSourceEmbedded = "embedded"
 )
@@ -50,16 +49,14 @@ const (
 )
 
 type promptResolver struct {
-	workdir  string
-	explicit promptSource
-	council  bool
+	workdir string
+	council bool
 }
 
 type promptResolution struct {
 	Text             string
 	Source           string
 	SourcePath       string
-	UsedCache        bool
 	Program          programConfig
 	CouncilRequested bool
 	CouncilTriggered bool
@@ -121,15 +118,10 @@ type archivedPlanningTask struct {
 	Line    string
 }
 
-func newPromptResolver(workdir, promptPath, projectDir string, council bool) (promptResolver, error) {
-	explicit, err := newPromptSource(promptPath, projectDir)
-	if err != nil {
-		return promptResolver{}, err
-	}
+func newPromptResolver(workdir string, council bool) (promptResolver, error) {
 	return promptResolver{
-		workdir:  workdir,
-		explicit: explicit,
-		council:  council,
+		workdir: workdir,
+		council: council,
 	}, nil
 }
 
@@ -149,7 +141,6 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 			Text:             base.text,
 			Source:           base.source,
 			SourcePath:       base.sourcePath,
-			UsedCache:        base.usedCache,
 			Program:          base.program,
 			CouncilRequested: r.council,
 		}, nil
@@ -178,18 +169,12 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 		return promptResolution{}, err
 	}
 
-	text := base.text
-	if base.source != promptSourceCLI {
-		text = renderPromptTemplate(embeddedTemplate("heartbeat.md"), buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
-	} else if r.council {
-		text = strings.TrimSpace("Council mode:\n" + buildCouncilInstruction(threshold, councilTriggered, r.council) + "\n\n" + base.text)
-	}
+	text := renderPromptTemplate(embeddedTemplate("heartbeat.md"), buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
 
 	resolution := promptResolution{
 		Text:             text,
 		Source:           base.source,
 		SourcePath:       base.sourcePath,
-		UsedCache:        base.usedCache,
 		Program:          base.program,
 		CouncilRequested: r.council,
 		CouncilTriggered: councilTriggered,
@@ -206,29 +191,15 @@ type basePromptResolution struct {
 	text       string
 	source     string
 	sourcePath string
-	usedCache  bool
 	program    programConfig
 }
 
 func (r promptResolver) resolveBasePrompt() (basePromptResolution, error) {
-	if strings.TrimSpace(r.explicit.path) != "" {
-		text, usedCache, err := r.explicit.ResolveWithMetadata()
-		if err != nil {
-			return basePromptResolution{}, err
-		}
-		return basePromptResolution{
-			text:       text,
-			source:     promptSourceCLI,
-			sourcePath: r.explicit.path,
-			usedCache:  usedCache,
-			program:    defaultProgramConfig(""),
-		}, nil
-	}
-
 	programPath := filepath.Join(r.workdir, defaultProgramFilename)
 	program, err := loadProgramConfig(programPath)
 	if err == nil {
 		return basePromptResolution{
+			text:       program.Body,
 			source:     promptSourceProgram,
 			sourcePath: programPath,
 			program:    program,
@@ -240,6 +211,7 @@ func (r promptResolver) resolveBasePrompt() (basePromptResolution, error) {
 
 	program = defaultProgramConfig(programPath)
 	return basePromptResolution{
+		text:       program.Body,
 		source:     promptSourceEmbedded,
 		sourcePath: "embedded templates/heartbeat.md",
 		program:    program,
@@ -790,9 +762,6 @@ func recordRunStart(artifacts autoresearchArtifacts, resolution promptResolution
 	note := fmt.Sprintf("started via `%s`; prompt source=`%s`; mode=`%s`; council_policy=`%s`; council_triggered=%t", commandName, resolution.Source, resolution.Program.PromptMode, councilPolicyLabel(resolution.CouncilRequested), resolution.CouncilTriggered)
 	if launchSummary := newLaunchOverrides(resolution.Program).Summary(); launchSummary != "" {
 		note += "; launch_settings=`" + launchSummary + "`"
-	}
-	if resolution.UsedCache {
-		note += "; prompt cache fallback used"
 	}
 	if err := appendExecutionNote(artifacts.ExecutionPath, note); err != nil {
 		return err

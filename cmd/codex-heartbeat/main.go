@@ -35,10 +35,9 @@ const (
 var errWorkspaceLocked = errors.New("workspace is already locked")
 
 type sharedOptions struct {
-	workdir    string
-	promptPath string
-	council    bool
-	safe       bool
+	workdir string
+	council bool
+	safe    bool
 }
 
 type launchOverrides struct {
@@ -59,11 +58,6 @@ type hermesParityStatus struct {
 	TaskList    []string `json:"task_list"`
 	ClaimRule   string   `json:"claim_rule"`
 	ReviewBasis []string `json:"review_basis"`
-}
-
-type promptSource struct {
-	path      string
-	cachePath string
 }
 
 type workspaceConfig struct {
@@ -101,7 +95,7 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		printRootUsage(os.Stderr)
+		printRootUsage(os.Stderr, true)
 		return 2
 	}
 
@@ -112,7 +106,7 @@ func run(args []string) int {
 	case "status":
 		err = runStatusCommand(args[1:])
 	case "-h", "--help", "help":
-		printRootUsage(os.Stdout)
+		printRootUsage(os.Stdout, helpBrevityRequested(args[1:]))
 		return 0
 	default:
 		if strings.HasPrefix(args[0], "-") {
@@ -120,7 +114,7 @@ func run(args []string) int {
 			break
 		}
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", args[0])
-		printRootUsage(os.Stderr)
+		printRootUsage(os.Stderr, true)
 		return 2
 	}
 
@@ -142,6 +136,7 @@ func runInteractiveCommand(args []string) error {
 	var noAltScreen bool
 	var altScreen bool
 	var screenIdleHeartbeat bool
+	var brevityHelp bool
 
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
@@ -151,9 +146,9 @@ func runInteractiveCommand(args []string) error {
 	fs.BoolVar(&noAltScreen, "no-alt-screen", false, "Run Codex inline so the wrapper banner stays visible in scrollback")
 	fs.BoolVar(&altScreen, "alt-screen", false, "Force Codex to use the alternate screen")
 	fs.BoolVar(&screenIdleHeartbeat, "screen-idle-heartbeat", false, "Explicitly select the default screen-aware heartbeat mode (15s idle detection, 20s input quiet gate, and 60m fallback)")
+	fs.BoolVar(&brevityHelp, "brevity", false, "Print the compact help instead of the detailed guide")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: codex-heartbeat run --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
-		fs.PrintDefaults()
+		printRunUsage(fs.Output(), brevityHelp)
 	}
 
 	help, err := parseFlagSet(fs, args)
@@ -289,7 +284,7 @@ func runInteractiveCommand(args []string) error {
 	schedulerErrors := make(chan error, 1)
 	if useScreenIdleHeartbeat {
 		go injectScreenIdleLoop(ctx, ptmx, prompts, artifacts, screen, inputTracker, promptTracker, cfg, &state, schedulerErrors)
-		if strings.TrimSpace(state.SessionID) == "" || strings.TrimSpace(opts.promptPath) != "" {
+		if strings.TrimSpace(state.SessionID) == "" {
 			go injectStartupPromptAfterDelay(ctx, ptmx, prompts, artifacts, startupHeartbeatDelay, promptTracker, cfg, &state, schedulerErrors)
 		}
 	} else if interval.IsSet() {
@@ -386,12 +381,13 @@ func runInteractiveCommand(args []string) error {
 
 func runStatusCommand(args []string) error {
 	var opts sharedOptions
+	var brevityHelp bool
 	flagSet := flag.NewFlagSet("status", flag.ContinueOnError)
 	flagSet.SetOutput(os.Stderr)
 	registerStatusFlags(flagSet, &opts)
+	flagSet.BoolVar(&brevityHelp, "brevity", false, "Print the compact help instead of the detailed guide")
 	flagSet.Usage = func() {
-		fmt.Fprintln(flagSet.Output(), "Usage: codex-heartbeat status --workdir DIR")
-		flagSet.PrintDefaults()
+		printStatusUsage(flagSet.Output(), brevityHelp)
 	}
 
 	help, err := parseFlagSet(flagSet, args)
@@ -473,7 +469,6 @@ func currentHermesParityStatus() hermesParityStatus {
 
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
 	fs.StringVar(&opts.workdir, "workdir", "", "Workspace directory to manage")
-	fs.StringVar(&opts.promptPath, "prompt", "", "Optional heartbeat prompt file; reloaded on each emission and cached per workspace")
 	fs.BoolVar(&opts.council, "council", false, "Use the council repeatedly during autoresearch instead of only as a fallback")
 	fs.BoolVar(&opts.safe, "safe", false, "Do not pass --dangerously-bypass-approvals-and-sandbox to child Codex runs")
 }
@@ -490,6 +485,15 @@ func parseFlagSet(fs *flag.FlagSet, args []string) (helpRequested bool, err erro
 		return false, err
 	}
 	return false, nil
+}
+
+func helpBrevityRequested(args []string) bool {
+	for _, arg := range args {
+		if strings.TrimSpace(arg) == "--brevity" {
+			return true
+		}
+	}
+	return false
 }
 
 func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, workspaceState, error) {
@@ -516,7 +520,7 @@ func prepareWorkspace(opts sharedOptions) (workspaceConfig, promptResolver, work
 		fmt.Fprintln(os.Stderr, warning)
 	}
 
-	prompts, err := newPromptResolver(cfg.Workdir, opts.promptPath, cfg.ProjectDir, opts.council)
+	prompts, err := newPromptResolver(cfg.Workdir, opts.council)
 	if err != nil {
 		return workspaceConfig{}, promptResolver{}, workspaceState{}, err
 	}
@@ -721,96 +725,6 @@ func (l *workspaceLock) Close() {
 	}
 	_ = unix.Flock(int(l.file.Fd()), unix.LOCK_UN)
 	_ = l.file.Close()
-}
-
-func newPromptSource(path, projectDir string) (promptSource, error) {
-	path = strings.TrimSpace(path)
-	if path == "" {
-		return promptSource{}, nil
-	}
-
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return promptSource{}, fmt.Errorf("resolve prompt path: %w", err)
-	}
-
-	sum := sha256.Sum256([]byte(absPath))
-	return promptSource{
-		path:      absPath,
-		cachePath: filepath.Join(projectDir, "prompts", hex.EncodeToString(sum[:6])+".txt"),
-	}, nil
-}
-
-func (p promptSource) Resolve() (string, error) {
-	prompt, _, err := p.ResolveWithMetadata()
-	return prompt, err
-}
-
-func (p promptSource) ResolveWithMetadata() (string, bool, error) {
-	if strings.TrimSpace(p.path) == "" {
-		prompt, err := normalizePromptText([]byte(embeddedTemplate("heartbeat.md")), "embedded templates/heartbeat.md")
-		return prompt, false, err
-	}
-
-	data, err := os.ReadFile(p.path)
-	if err == nil {
-		prompt, err := normalizePromptText(data, p.path)
-		if err != nil {
-			return "", false, err
-		}
-		if err := p.saveCache(prompt); err != nil {
-			return "", false, err
-		}
-		return prompt, false, nil
-	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		return "", false, fmt.Errorf("read prompt file %q: %w", p.path, err)
-	}
-
-	prompt, cacheErr := p.loadCache()
-	if cacheErr == nil {
-		return prompt, true, nil
-	}
-	if errors.Is(cacheErr, fs.ErrNotExist) {
-		return "", false, fmt.Errorf("prompt file %q was not found and no cached prompt is available", p.path)
-	}
-	return "", false, cacheErr
-}
-
-func (p promptSource) saveCache(prompt string) error {
-	if strings.TrimSpace(p.cachePath) == "" {
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(p.cachePath), 0o755); err != nil {
-		return fmt.Errorf("create prompt cache dir: %w", err)
-	}
-	if err := os.WriteFile(p.cachePath, []byte(prompt+"\n"), 0o644); err != nil {
-		return fmt.Errorf("write prompt cache: %w", err)
-	}
-	return nil
-}
-
-func (p promptSource) loadCache() (string, error) {
-	data, err := os.ReadFile(p.cachePath)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return "", err
-		}
-		return "", fmt.Errorf("read cached prompt for %q: %w", p.path, err)
-	}
-	prompt, err := normalizePromptText(data, p.cachePath)
-	if err != nil {
-		return "", fmt.Errorf("read cached prompt for %q: %w", p.path, err)
-	}
-	return prompt, nil
-}
-
-func normalizePromptText(data []byte, source string) (string, error) {
-	prompt := strings.TrimSpace(string(data))
-	if prompt == "" {
-		return "", fmt.Errorf("prompt file %q is empty", source)
-	}
-	return prompt, nil
 }
 
 func loadState(path string) (workspaceState, error) {
@@ -1323,18 +1237,111 @@ func appendEvent(logsDir string, event logEvent) {
 	_ = enc.Encode(event)
 }
 
-func printRootUsage(w io.Writer) {
+func printRootUsage(w io.Writer, brevity bool) {
 	fmt.Fprintln(w, "codex-heartbeat wraps the Codex CLI and can inject heartbeat prompts based on screen state or a timer.")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Usage:")
-	fmt.Fprintln(w, "  codex-heartbeat --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
-	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--prompt FILE] [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
+	fmt.Fprintln(w, "  codex-heartbeat --workdir DIR [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir DIR [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day]")
 	fmt.Fprintln(w, "  codex-heartbeat status --workdir DIR")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "Bare flags default to the interactive `run` command.")
+	if brevity {
+		fmt.Fprintln(w, "Drop `--brevity` to see the detailed guide, examples, and ideas.")
+		fmt.Fprintln(w, "The `status` command reports session state plus resolved `launch_settings` and `hermes_parity` details.")
+		fmt.Fprintln(w, "The --interval and --end-in flags accept minute, hour, and day units in short or long form.")
+		fmt.Fprintln(w, "Examples: 30m, 2h, 1d, 15 minutes, 2 hours, 1 day")
+		return
+	}
+
+	fmt.Fprintln(w, "Help:")
+	fmt.Fprintln(w, "  Use `--help --brevity` when you only want the compact version.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "How it works:")
+	fmt.Fprintln(w, "  1. The human edits `program.md`.")
+	fmt.Fprintln(w, "  2. The agent keeps active tasks in `PLANNING.md` and archives completed work to `target/PLANNING_HISTORY.md`.")
+	fmt.Fprintln(w, "  3. Heartbeats re-inject the experiment loop prompt, using `program.md` as the source of truth and the embedded template as fallback.")
+	fmt.Fprintln(w, "  4. When the objective is complete, the loop pauses itself with `agent-paused.lock`.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Examples:")
+	fmt.Fprintln(w, "  codex-heartbeat --workdir /repo")
+	fmt.Fprintln(w, "    Start the default screen-aware loop for `/repo`.")
+	fmt.Fprintln(w, "  codex-heartbeat --workdir /repo --interval 15m")
+	fmt.Fprintln(w, "    Use a fixed heartbeat every 15 minutes instead of the screen-aware scheduler.")
+	fmt.Fprintln(w, "  codex-heartbeat --workdir /repo --council")
+	fmt.Fprintln(w, "    Switch the loop from fallback-council mode to frequent-council mode.")
+	fmt.Fprintln(w, "  codex-heartbeat status --workdir /repo")
+	fmt.Fprintln(w, "    Inspect the stored session, launch settings, and Hermes-parity gap.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Ideas:")
+	fmt.Fprintln(w, "  - Use `Prompt mode: planning` to deepen the plan before broad implementation.")
+	fmt.Fprintln(w, "  - Keep `program.md` human-owned and let the agent mutate `PLANNING.md` and `target/` artifacts.")
+	fmt.Fprintln(w, "  - Remove `agent-paused.lock` when you want a completed loop to start injecting again.")
+	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "The `status` command reports session state plus resolved `launch_settings` and `hermes_parity` details, including the safe parity `task_list`, `claim_rule`, `review_basis`, and Hermes-style review gap.")
 	fmt.Fprintln(w, "The --interval and --end-in flags accept minute, hour, and day units in short or long form.")
 	fmt.Fprintln(w, "Examples: 30m, 2h, 1d, 15 minutes, 2 hours, 1 day")
+}
+
+func printRunUsage(w io.Writer, brevity bool) {
+	fmt.Fprintln(w, "Usage: codex-heartbeat run --workdir DIR [--council] [--interval 15m] [--screen-idle-heartbeat] [--end-in 1 day] [--no-alt-screen]")
+	if brevity {
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "Compact example:")
+		fmt.Fprintln(w, "  codex-heartbeat run --workdir /repo")
+		fmt.Fprintln(w, "Drop `--brevity` for flag notes, longer examples, and workflow ideas.")
+		return
+	}
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Flags:")
+	fmt.Fprintln(w, "  --workdir DIR")
+	fmt.Fprintln(w, "    Workspace root that contains `program.md`, `PLANNING.md`, and `target/`.")
+	fmt.Fprintln(w, "  --interval DUR")
+	fmt.Fprintln(w, "    Fixed heartbeat cadence. Without it, the default screen-aware scheduler is used.")
+	fmt.Fprintln(w, "  --screen-idle-heartbeat")
+	fmt.Fprintln(w, "    Explicitly select the screen-aware scheduler with idle detection and a long fallback heartbeat.")
+	fmt.Fprintln(w, "  --end-in DUR")
+	fmt.Fprintln(w, "    Stop the wrapper after a bounded wall-clock window.")
+	fmt.Fprintln(w, "  --council")
+	fmt.Fprintln(w, "    Switch from fallback-only council behavior to frequent council use.")
+	fmt.Fprintln(w, "  --safe")
+	fmt.Fprintln(w, "    Do not pass `--dangerously-bypass-approvals-and-sandbox` to the child Codex run.")
+	fmt.Fprintln(w, "  --no-alt-screen / --alt-screen")
+	fmt.Fprintln(w, "    Control whether Codex uses the alternate screen.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Detailed examples:")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir /repo")
+	fmt.Fprintln(w, "    Default screen-aware loop. Uses `program.md`, `PLANNING.md`, and `target/` artifacts.")
+	fmt.Fprintln(w, "    On a brand-new workspace, this also scaffolds the autoresearch files and asks the short init questionnaire if the terminal is interactive.")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir /repo --interval 30m")
+	fmt.Fprintln(w, "    Timer-based loop with a fixed 30 minute cadence.")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir /repo --council")
+	fmt.Fprintln(w, "    Frequent-council mode for more collaborative planning and interpretation.")
+	fmt.Fprintln(w, "  codex-heartbeat run --workdir /repo --no-alt-screen")
+	fmt.Fprintln(w, "    Keep wrapper output in normal scrollback instead of the alternate screen.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Ideas:")
+	fmt.Fprintln(w, "  - Use `Prompt mode: planning` while the objective and deep dive are still changing.")
+	fmt.Fprintln(w, "  - Use `Prompt mode: manual-test-first` when the human wants to gate the final apply/ship step.")
+	fmt.Fprintln(w, "  - Leave `program.md` stable and let the loop accumulate memory in `target/`.")
+}
+
+func printStatusUsage(w io.Writer, brevity bool) {
+	fmt.Fprintln(w, "Usage: codex-heartbeat status --workdir DIR")
+	if brevity {
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "Drop `--brevity` for output notes and a longer example.")
+		return
+	}
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Output notes:")
+	fmt.Fprintln(w, "  - `session_id` tells you which Codex thread is being resumed.")
+	fmt.Fprintln(w, "  - `launch_settings` mirrors the reproducible profile/model metadata from `program.md` when present.")
+	fmt.Fprintln(w, "  - `hermes_parity` shows the current gap list, safe task list, claim rule, and review basis.")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "Detailed examples:")
+	fmt.Fprintln(w, "  codex-heartbeat status --workdir /repo")
+	fmt.Fprintln(w, "    Show the saved session id, launch settings, and the current Hermes-parity gap.")
 }
 
 func exitCodeFromError(err error) int {
