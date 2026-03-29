@@ -950,6 +950,16 @@ const defaultPlanningScaffold = `
 - [ ] Name one primary evaluator before changing code.
 - [ ] Record the result as keep, discard, revert, or blocked after the evaluator runs.
 
+## Blocked / Non-Goals
+
+- [ ] List what this cycle must not attempt or claim.
+- [ ] Call out any missing capability that keeps the current parity or success claim false.
+
+## Acceptance Criteria
+
+- [ ] Define the observable result that would make this cycle a keep.
+- [ ] Define what evidence would still mean "not done yet" after the evaluator runs.
+
 ## Open Questions
 
 - Capture blockers or questions the next loop should resolve.

@@ -563,6 +563,34 @@ func TestEnsureAutoresearchWorkspaceSeedsPlanningTaskList(t *testing.T) {
 	}
 }
 
+func TestEnsureAutoresearchWorkspaceSeedsPlanningGuardrails(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	if _, err := ensureAutoresearchWorkspace(workdir); err != nil {
+		t.Fatalf("ensureAutoresearchWorkspace() returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workdir, planningFilename))
+	if err != nil {
+		t.Fatalf("read planning scaffold: %v", err)
+	}
+
+	content := string(data)
+	if !strings.Contains(content, "## Blocked / Non-Goals") {
+		t.Fatalf("planning scaffold missing blocked/non-goals section: %q", content)
+	}
+	if !strings.Contains(content, "## Acceptance Criteria") {
+		t.Fatalf("planning scaffold missing acceptance criteria section: %q", content)
+	}
+	if !strings.Contains(content, "- [ ] Call out any missing capability that keeps the current parity or success claim false.") {
+		t.Fatalf("planning scaffold missing parity-guardrail checkbox: %q", content)
+	}
+	if !strings.Contains(content, "- [ ] Define the observable result that would make this cycle a keep.") {
+		t.Fatalf("planning scaffold missing acceptance checkbox: %q", content)
+	}
+}
+
 func TestEnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting(t *testing.T) {
 	t.Parallel()
 

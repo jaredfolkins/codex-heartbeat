@@ -134,6 +134,13 @@
 - Ran `gofmt -w cmd/codex-heartbeat/autoresearch.go cmd/codex-heartbeat/autoresearch_test.go`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1` -> pass
 - This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made fresh autoresearch scaffolds start with a reusable checkbox task list.
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/autoresearch.go`, and `cmd/codex-heartbeat/autoresearch_test.go` to establish the baseline for a scaffold-guardrails cycle.
+- Updated `cmd/codex-heartbeat/autoresearch.go` so the default `PLANNING.md` scaffold now includes generic `## Blocked / Non-Goals` and `## Acceptance Criteria` sections with checkbox items.
+- Updated `cmd/codex-heartbeat/autoresearch_test.go` with focused coverage that a newly scaffolded workspace seeds those guardrail sections and key checklist items.
+- Ran `gofmt -w cmd/codex-heartbeat/autoresearch.go cmd/codex-heartbeat/autoresearch_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceSeedsPlanningGuardrails|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made fresh autoresearch scaffolds start with safer default planning guardrails.
 - 2026-03-29T00:14:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:14:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:14:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:16:05Z screen-idle heartbeat injected with prompt source `program_md`
