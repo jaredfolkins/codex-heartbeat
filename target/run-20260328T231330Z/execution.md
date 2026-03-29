@@ -521,3 +521,11 @@
 - 2026-03-29T02:18:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:19:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:19:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:20:20Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a session-lineage planning cycle.
+- Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that resume-by-name picks the most recent titled lineage variant and that session storage keeps lineage across compressed/resumed sessions.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-lineage semantics.
+- Evaluator: `rg -n 'session-lineage semantics|resume-by-name picks the most recent session in a title lineage|latest session in a lineage|lineage across compressed/resumed sessions|lineage variants like `my project`, `my project #2`, and `my project #3`' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- 2026-03-29T02:21:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:21:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:22:05Z screen-idle heartbeat injected with prompt source `program_md`
