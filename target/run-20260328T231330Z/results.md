@@ -2,13 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `rg -n "isolated git worktrees for parallel agents|delegated-workspace semantics explicitly|background/delegated task runs in an isolated worktree|workers run in isolated git worktrees|share the primary checkout" PLANNING.md`
+- Primary evaluator: `rg -n "task IDs|delegated-task result-surfacing|where its result appears|result delivery appear|identified, tracked, and delivered" PLANNING.md`
 
 ## Observable Signals
 
-- `PLANNING.md` now explicitly covers Hermes-style delegated-workspace isolation.
+- `PLANNING.md` now explicitly covers Hermes-style delegated-task result surfacing.
 - The focused evaluator passed for the updated planning backlog.
-- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of leaving parallel-agent file-conflict handling implicit.
+- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of leaving background-task visibility implicit.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a Hermes-style delegated cross-review workflow.
 
 ## Disposition

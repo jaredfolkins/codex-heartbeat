@@ -386,3 +386,14 @@
 - 2026-03-29T01:35:50Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:36:05Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:36:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:37:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:38:10Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-result-surfacing planning cycle.
+- Reviewed Hermes background-task docs and code in `tmp/hermes-agent-src/website/docs/user-guide/cli.md` and `tmp/hermes-agent-src/cli.py`; confirmed that background tasks get numbered IDs, standalone task IDs, and separate completion/error delivery that does not modify the main conversation history.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-task result surfacing.
+- Evaluator: `rg -n "task IDs|delegated-task result-surfacing|where its result appears|result delivery appear|identified, tracked, and delivered" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about how background/delegated work should be surfaced back to the operator.
+- 2026-03-29T01:39:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:39:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:40:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:40:25Z screen-idle heartbeat injected with prompt source `program_md`

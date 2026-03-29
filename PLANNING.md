@@ -36,6 +36,7 @@
 - Hermes also supports launch-time skill and toolset loading, so the operator model needs a rule for whether a named bundle can preload extra tools/skills in addition to prompt instructions.
 - Hermes's background-session behavior inherits more than just model choice: the child session also carries provider, toolsets, reasoning settings, and fallback-model configuration from the parent session.
 - Hermes also exposes isolated git worktrees for parallel agents, so the operator model needs an explicit rule for whether delegated review tasks should run in conflict-avoiding workspaces instead of sharing one mutable checkout.
+- Hermes also makes background work operator-visible: each task gets a numbered label and standalone task ID, and completion/error is delivered on a separate result surface instead of silently mutating the main conversation history.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -60,6 +61,7 @@
 - [ ] Define bundle-to-tooling semantics explicitly, so operators know whether selecting a named bundle also preloads toolsets or skills in addition to prompt/context instructions.
 - [ ] Define delegated-session configuration inheritance explicitly, so operators know whether provider, toolsets, reasoning settings, and fallback model carry into background review tasks alongside the active profile.
 - [ ] Define delegated-workspace semantics explicitly, so operators know whether parallel review tasks run in isolated git worktrees or share the primary checkout.
+- [ ] Define delegated-task result-surfacing semantics explicitly, so operators know how background review tasks are identified, tracked, and delivered back to the main workflow instead of disappearing into hidden worker state.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -97,6 +99,7 @@
 - [ ] A user can tell whether a selected named bundle also loads extra toolsets or skills and can inspect that tooling surface from wrapper UX or artifacts.
 - [ ] A user can tell whether a background/delegated task also inherits provider, toolsets, and fallback-model settings from the parent session instead of only model/reasoning.
 - [ ] A user can tell whether a background/delegated task runs in an isolated worktree and can trace which workspace produced its artifacts or code changes.
+- [ ] A user can tell how a background/delegated task is identified, where its result appears, and whether completion/error delivery is separate from the main conversation history.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -123,6 +126,7 @@
 - [ ] In phase 1, document whether named bundles may preload toolsets or skills and, if so, surface that loaded tooling set in status/help/artifacts.
 - [ ] In phase 1, if delegated/background sessions are exposed, document whether provider, toolsets, and fallback model inherit from the parent session and show that inherited execution config in status/help/artifacts.
 - [ ] In phase 1, if delegated/background review is exposed, document whether workers run in isolated git worktrees and surface that workspace choice in status/help/artifacts.
+- [ ] In phase 1, if delegated/background review is exposed, document how task IDs, progress, and result delivery appear in status/help/artifacts so delegated work stays auditable.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.
