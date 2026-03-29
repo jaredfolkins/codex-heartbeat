@@ -285,6 +285,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether background/delegated tasks inherit provider, toolsets, reasoning settings, and fallback-model configuration from the parent session.
 - Evaluator: `rg -n "background-session behavior inherits more than just model choice|delegated-session configuration inheritance explicitly|inherits provider, toolsets, and fallback-model settings|provider, toolsets, and fallback model inherit|background/delegated task also inherits provider" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about full execution-config inheritance for delegated/background tasks.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes isolated-worktree notes to establish the baseline for a delegated-workspace planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether parallel review tasks run in isolated git worktrees or share the primary checkout.
+- Evaluator: `rg -n "isolated git worktrees for parallel agents|delegated-workspace semantics explicitly|background/delegated task runs in an isolated worktree|workers run in isolated git worktrees|share the primary checkout" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about conflict-avoiding workspaces for delegated/background review tasks.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -378,3 +382,7 @@
 - 2026-03-29T01:32:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:32:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:32:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:33:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:35:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:36:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:36:20Z screen-idle heartbeat injected with prompt source `program_md`

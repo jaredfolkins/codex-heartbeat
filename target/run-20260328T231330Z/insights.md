@@ -21,6 +21,7 @@
 - Delegated/background review also needs explicit inheritance and isolation rules; otherwise a parallel-workflow design can exist on paper while leaving it unclear which active settings carry over to spawned tasks.
 - Named bundles also need explicit tooling semantics; otherwise a plan can match Hermes's prompt surfaces while still missing that launch-time bundles may carry toolsets or skills too.
 - Delegated/background review also needs explicit full-config inheritance rules; otherwise a plan can say tasks inherit the active profile while still leaving provider, toolsets, and fallback-model behavior underspecified.
+- Delegated/background review also needs explicit workspace-isolation rules; otherwise a multi-agent workflow can sound safe on paper while still leaving file-collision behavior unspecified.
 
 ## What Failed
 
@@ -52,3 +53,4 @@
 - If phase 1 exposes background/delegated tasks, decide early whether they inherit the active profile/model/reasoning settings and where isolation from the parent history is surfaced in status/help/artifacts.
 - If phase 1 exposes named bundles, decide early whether they also preload toolsets or skills and where that loaded tooling set becomes visible to the operator.
 - If phase 1 exposes background/delegated tasks, decide early whether provider, toolsets, and fallback model inherit too so operators can reason about spawned-task behavior without reading source.
+- If phase 1 exposes delegated/background review, decide early whether workers use isolated git worktrees so parallel tasks do not silently share one mutable checkout.

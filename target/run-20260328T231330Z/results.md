@@ -2,13 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `rg -n "background-session behavior inherits more than just model choice|delegated-session configuration inheritance explicitly|inherits provider, toolsets, and fallback-model settings|provider, toolsets, and fallback model inherit|background/delegated task also inherits provider" PLANNING.md`
+- Primary evaluator: `rg -n "isolated git worktrees for parallel agents|delegated-workspace semantics explicitly|background/delegated task runs in an isolated worktree|workers run in isolated git worktrees|share the primary checkout" PLANNING.md`
 
 ## Observable Signals
 
-- `PLANNING.md` now explicitly covers Hermes-style delegated-session configuration inheritance.
+- `PLANNING.md` now explicitly covers Hermes-style delegated-workspace isolation.
 - The focused evaluator passed for the updated planning backlog.
-- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of reducing background-task inheritance to only model/reasoning settings.
+- The source-grounded `[ ]` task list now matches Hermes's operator workflow more closely instead of leaving parallel-agent file-conflict handling implicit.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a Hermes-style delegated cross-review workflow.
 
 ## Disposition

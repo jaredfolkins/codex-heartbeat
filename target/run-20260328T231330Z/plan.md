@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated-session configuration inheritance.
-- Primary evaluator: `rg -n "background-session behavior inherits more than just model choice|delegated-session configuration inheritance explicitly|inherits provider, toolsets, and fallback-model settings|provider, toolsets, and fallback model inherit|background/delegated task also inherits provider" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated-workspace isolation.
+- Primary evaluator: `rg -n "isolated git worktrees for parallel agents|delegated-workspace semantics explicitly|background/delegated task runs in an isolated worktree|workers run in isolated git worktrees|share the primary checkout" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style delegated-session configuration-inheritance items, the implementation backlog will better match the reviewed Hermes operator workflow instead of reducing background-task inheritance to only model/reasoning.
+- If `PLANNING.md` explicitly includes Hermes-style delegated-workspace items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving parallel-agent file-conflict handling implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style delegated-session configuration-inheritance items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style delegated-workspace items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
