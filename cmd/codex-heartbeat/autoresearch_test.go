@@ -99,6 +99,9 @@ Checkpoint commits: true
 	if !strings.Contains(resolution.Text, "Do not start with the 3-agent council") {
 		t.Fatalf("Resolve().Text missing fallback council policy: %q", resolution.Text)
 	}
+	if !strings.Contains(resolution.Text, "agent-paused.lock") {
+		t.Fatalf("Resolve().Text missing pause-lock guidance: %q", resolution.Text)
+	}
 }
 
 func TestPromptResolverFallsBackToEmbeddedTemplate(t *testing.T) {
@@ -774,5 +777,61 @@ func TestArchiveCompletedPlanningTasksMovesCheckedItems(t *testing.T) {
 	}
 	if !strings.Contains(string(history), "### Task List") {
 		t.Fatalf("planning history missing section heading: %q", string(history))
+	}
+}
+
+func TestHeartbeatPauseStateHonorsExistingPauseLock(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 29, 2, 0, 0, 0, time.UTC))
+	if err := os.WriteFile(artifacts.PauseLockPath, []byte("paused\n"), 0o644); err != nil {
+		t.Fatalf("write pause lock: %v", err)
+	}
+
+	paused, reason, err := heartbeatPauseState(artifacts)
+	if err != nil {
+		t.Fatalf("heartbeatPauseState() returned error: %v", err)
+	}
+	if !paused {
+		t.Fatal("heartbeatPauseState() should pause when the lock file exists")
+	}
+	if reason != "pause_lock_present" {
+		t.Fatalf("heartbeatPauseState() reason = %q, want pause_lock_present", reason)
+	}
+}
+
+func TestHeartbeatPauseStateCreatesPauseLockFromCompleteDisposition(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 29, 2, 1, 0, 0, time.UTC))
+	entry := resultLedgerEntry{
+		Timestamp:   "2026-03-29T02:01:00Z",
+		Command:     "go test ./...",
+		Outcome:     "pass",
+		Disposition: "complete",
+	}
+	if err := appendResultLedgerEntry(artifacts.ResultsLedgerPath, entry); err != nil {
+		t.Fatalf("appendResultLedgerEntry() returned error: %v", err)
+	}
+
+	paused, reason, err := heartbeatPauseState(artifacts)
+	if err != nil {
+		t.Fatalf("heartbeatPauseState() returned error: %v", err)
+	}
+	if !paused {
+		t.Fatal("heartbeatPauseState() should pause when the latest disposition is complete")
+	}
+	if reason != "objective_complete" {
+		t.Fatalf("heartbeatPauseState() reason = %q, want objective_complete", reason)
+	}
+
+	lock, err := os.ReadFile(artifacts.PauseLockPath)
+	if err != nil {
+		t.Fatalf("read pause lock: %v", err)
+	}
+	if !strings.Contains(string(lock), "objective achieved") {
+		t.Fatalf("pause lock missing objective-achieved note: %q", string(lock))
 	}
 }

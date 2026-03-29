@@ -18,6 +18,8 @@
   Durable planning memory for completed, superseded, or restart-invalidated tasks.
 - `target/latest-context.md`
   The compact summary that heartbeat prompt injections replay.
+- `agent-paused.lock`
+  A pause sentinel. If this file exists, heartbeat injections should not fire.
 - `target/results.jsonl`
   The experiment ledger with hypothesis, command, outcome, disposition, and notes.
 - `target/run-<timestamp>/{plan,execution,results,insights}.md`
@@ -40,6 +42,7 @@
 - Append concise result entries to `target/results.jsonl`.
 - Move completed checklist items out of `PLANNING.md` into `target/PLANNING_HISTORY.md`.
 - When a refactor or restart invalidates an old plan, preserve that trail in `target/PLANNING_HISTORY.md` instead of deleting it silently.
+- When the objective is fully achieved, record a final completion disposition such as `complete` and create `agent-paused.lock`.
 
 ## Prompt Modes
 

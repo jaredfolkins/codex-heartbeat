@@ -20,6 +20,7 @@ const (
 	defaultProgramFilename        = "program.md"
 	planningFilename              = "PLANNING.md"
 	planningHistoryFilename       = "PLANNING_HISTORY.md"
+	pauseLockFilename             = "agent-paused.lock"
 	targetDirName                 = "target"
 	runDirPrefix                  = "run-"
 	runTemplateDirName            = "templates"
@@ -90,6 +91,7 @@ type autoresearchArtifacts struct {
 	LatestContextPath   string
 	ResultsLedgerPath   string
 	PlanningHistoryPath string
+	PauseLockPath       string
 }
 
 type resultLedgerEntry struct {
@@ -400,6 +402,7 @@ func newAutoresearchArtifacts(workdir string, startedAt time.Time) autoresearchA
 		LatestContextPath:   filepath.Join(targetDir, latestContextFilename),
 		ResultsLedgerPath:   filepath.Join(targetDir, resultsLedgerFilename),
 		PlanningHistoryPath: filepath.Join(targetDir, planningHistoryFilename),
+		PauseLockPath:       filepath.Join(workdir, pauseLockFilename),
 	}
 }
 
@@ -436,6 +439,7 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 		"RUN_DIR":                artifacts.RunDir,
 		"PLANNING_PATH":          filepath.Join(artifacts.Workdir, planningFilename),
 		"PLANNING_HISTORY_PATH":  artifacts.PlanningHistoryPath,
+		"PAUSE_LOCK_PATH":        artifacts.PauseLockPath,
 		"PROGRAM_BODY":           strings.TrimSpace(program.Body),
 		"LATEST_CONTEXT":         strings.TrimSpace(latestContext),
 	}
@@ -740,6 +744,48 @@ func appendResultLedgerEntry(path string, entry resultLedgerEntry) error {
 	return err
 }
 
+func heartbeatPauseState(artifacts autoresearchArtifacts) (paused bool, reason string, err error) {
+	info, err := os.Stat(artifacts.PauseLockPath)
+	switch {
+	case err == nil:
+		if info.IsDir() {
+			return false, "", fmt.Errorf("%s is a directory", artifacts.PauseLockPath)
+		}
+		return true, "pause_lock_present", nil
+	case !errors.Is(err, fs.ErrNotExist):
+		return false, "", err
+	}
+
+	entries, err := loadResultLedgerEntries(artifacts.ResultsLedgerPath)
+	if err != nil {
+		return false, "", err
+	}
+	if len(entries) == 0 {
+		return false, "", nil
+	}
+
+	last := entries[len(entries)-1]
+	disposition := normalizeLedgerValue(last.Disposition)
+	if !isCompletionDisposition(disposition) {
+		return false, "", nil
+	}
+
+	content := strings.TrimSpace(fmt.Sprintf(`# Agent Paused
+
+- Timestamp: %s
+- Reason: objective achieved
+- Disposition: %s
+- Command: %s
+- Outcome: %s
+
+Remove this file to allow heartbeat injections again.
+`, time.Now().UTC().Format(time.RFC3339), strings.TrimSpace(last.Disposition), strings.TrimSpace(last.Command), strings.TrimSpace(last.Outcome)))
+	if err := writeFileAtomic(artifacts.PauseLockPath, []byte(content+"\n"), 0o644); err != nil {
+		return false, "", err
+	}
+	return true, "objective_complete", nil
+}
+
 func recordRunStart(artifacts autoresearchArtifacts, resolution promptResolution, commandName string) error {
 	note := fmt.Sprintf("started via `%s`; prompt source=`%s`; mode=`%s`; council_policy=`%s`; council_triggered=%t", commandName, resolution.Source, resolution.Program.PromptMode, councilPolicyLabel(resolution.CouncilRequested), resolution.CouncilTriggered)
 	if launchSummary := newLaunchOverrides(resolution.Program).Summary(); launchSummary != "" {
@@ -852,6 +898,15 @@ func normalizeLedgerValue(value string) string {
 func isFailureDisposition(disposition string) bool {
 	switch disposition {
 	case "discard", "revert", "failed", "failure", "blocked", "stalled", "dead_end":
+		return true
+	default:
+		return false
+	}
+}
+
+func isCompletionDisposition(disposition string) bool {
+	switch disposition {
+	case "complete", "completed", "done", "objective_achieved":
 		return true
 	default:
 		return false

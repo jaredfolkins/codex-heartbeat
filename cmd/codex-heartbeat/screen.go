@@ -701,7 +701,13 @@ func injectScreenIdleLoop(ctx context.Context, writer io.Writer, prompts promptR
 			currentState, tiebreakReason = rolloutInspector.Resolve(currentState, state.SessionID)
 
 			decision := evaluateScreenIdlePoll(now, quiet, currentState, idlePolls, lastPromptAt)
-			if tiebreakReason != "" {
+			if paused, pauseReason, err := heartbeatPauseState(artifacts); err != nil {
+				reportAsyncError(errCh, err)
+				return
+			} else if paused {
+				decision.shouldInject = false
+				decision.reason = pauseReason
+			} else if tiebreakReason != "" {
 				decision.reason = decision.reason + ":" + tiebreakReason
 			}
 			idlePolls = decision.nextIdlePolls

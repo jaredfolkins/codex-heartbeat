@@ -8,6 +8,7 @@ Current run directory: {{RUN_DIR}}
 Latest context path: {{LATEST_CONTEXT_PATH}}
 Active planning path: {{PLANNING_PATH}}
 Planning history path: {{PLANNING_HISTORY_PATH}}
+Pause lock path: {{PAUSE_LOCK_PATH}}
 
 Read memory before acting:
 - Read `{{LATEST_CONTEXT_PATH}}` before you choose the next step.
@@ -21,6 +22,7 @@ Write memory during this cycle:
 - Keep `insights.md` concise and high-signal.
 - Keep active tasks in `{{PLANNING_PATH}}`.
 - Move completed checklist items and refactor-invalidated plan items to `{{PLANNING_HISTORY_PATH}}` so a restart preserves where you have already been.
+- If the objective is fully achieved, record a final disposition such as `complete` and create `{{PAUSE_LOCK_PATH}}` with a short note so future heartbeat injections stop until the human removes it.
 
 Loop contract:
 1. Establish the current baseline.

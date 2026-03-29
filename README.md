@@ -57,6 +57,7 @@ The normal loop is:
 3. The agent works in the target workspace.
 4. `codex-heartbeat` keeps re-injecting a bounded experiment-loop prompt and points the agent at the run artifacts under `target/`.
 5. The agent writes memory into `target/run-<timestamp>/` and `target/results.jsonl`.
+6. When the objective is fully achieved, the agent creates `agent-paused.lock` so future heartbeat injections stop until the file is removed.
 
 Minimal `program.md` example:
 
@@ -164,6 +165,7 @@ The default embedded prompt is no longer a generic “keep going” reminder. It
 - read memory from `target/latest-context.md`
 - keep active work in `PLANNING.md`
 - preserve completed or superseded planning items in `target/PLANNING_HISTORY.md`
+- pause the loop with `agent-paused.lock` once the objective is fully achieved
 - write memory into `target/run-<timestamp>/` and `target/results.jsonl`
 
 By default the 3-agent council is still a fallback, not the default first move. The prompt tells Codex to use the council only when it is blocked or when the recent failure streak in `target/results.jsonl` reaches the configured threshold from `program.md`.
@@ -173,6 +175,8 @@ When you pass `--council`, the prompt switches to a frequent-council mode: use t
 `Prompt mode: planning` is a guidance mode for using the autoresearch loop to refine the goal, deepen `PLANNING.md`, and decide the next deep dive before broad implementation.
 
 `Prompt mode: manual-test-first` is a guidance mode for workflows where Codex should prepare the next candidate fix and validation steps, then stop before the final human gate.
+
+If `agent-paused.lock` exists in the workspace root, heartbeat injections do not fire. The wrapper also auto-creates that file when the latest `target/results.jsonl` entry records a completion disposition such as `complete`. Remove the file when you want the loop to resume.
 
 ## Launch Profiles
 
@@ -190,6 +194,7 @@ For long-running loops, a target workspace should ideally contain:
 
 - `program.md`: human-authored objective, evaluator, and constraints
 - `PLANNING.md`: the live active plan
+- `agent-paused.lock`: optional pause sentinel that disables future heartbeat injections until removed
 - `target/PLANNING_HISTORY.md`: durable planning memory for completed or superseded work
 - `AGENTS.md`: repo-local rules telling the agent which files to read and what each one owns
 - `target/run-<timestamp>/insights.md`: concise memory from each run

@@ -1190,6 +1190,15 @@ func injectStartupPromptAfterDelay(ctx context.Context, writer io.Writer, prompt
 	case <-ctx.Done():
 		return
 	case <-timer.C:
+		paused, _, err := heartbeatPauseState(artifacts)
+		if err != nil {
+			reportAsyncError(errCh, err)
+			return
+		}
+		if paused {
+			return
+		}
+
 		resolution, err := prompts.Resolve(artifacts)
 		if err != nil {
 			reportAsyncError(errCh, err)
@@ -1227,6 +1236,17 @@ func injectHeartbeatLoop(ctx context.Context, writer io.Writer, prompts promptRe
 		case <-ctx.Done():
 			return
 		case <-timer.C:
+			paused, _, err := heartbeatPauseState(artifacts)
+			if err != nil {
+				reportAsyncError(errCh, err)
+				return
+			}
+			if paused {
+				first = false
+				timer.Reset(interval)
+				continue
+			}
+
 			resolution, err := prompts.Resolve(artifacts)
 			if err != nil {
 				reportAsyncError(errCh, err)

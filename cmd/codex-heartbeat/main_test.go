@@ -627,6 +627,48 @@ func TestInjectStartupPromptAfterDelay(t *testing.T) {
 	}
 }
 
+func TestInjectStartupPromptAfterDelaySkipsWhenPaused(t *testing.T) {
+	t.Parallel()
+
+	var output bytes.Buffer
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+	projectDir := filepath.Join(root, "runtime")
+	cfg := workspaceConfig{
+		LogsDir:    filepath.Join(projectDir, "logs"),
+		ProjectDir: projectDir,
+	}
+	state := workspaceState{SessionID: "session-123"}
+	promptTracker := newPromptInjectionTracker(time.Time{})
+	promptPath := filepath.Join(root, "heartbeat.md")
+	if err := os.WriteFile(promptPath, []byte("hello\n"), 0o644); err != nil {
+		t.Fatalf("write prompt file: %v", err)
+	}
+	prompts, err := newPromptResolver(workdir, promptPath, projectDir, false)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+	artifacts := newAutoresearchArtifacts(workdir, time.Now())
+	if err := os.WriteFile(artifacts.PauseLockPath, []byte("paused\n"), 0o644); err != nil {
+		t.Fatalf("write pause lock: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	injectStartupPromptAfterDelay(ctx, &output, prompts, artifacts, 10*time.Millisecond, promptTracker, cfg, &state, nil)
+
+	if got := output.String(); got != "" {
+		t.Fatalf("injectStartupPromptAfterDelay() output = %q, want no injected prompt while paused", got)
+	}
+	if !promptTracker.LastPromptAt().IsZero() {
+		t.Fatal("injectStartupPromptAfterDelay() should not update the prompt tracker while paused")
+	}
+}
+
 func TestPromptSourceResolveCachesExplicitPrompt(t *testing.T) {
 	t.Parallel()
 
