@@ -30,6 +30,7 @@
 - Delegated child-agent review also needs an explicit summary schema; otherwise operators still cannot tell what a child report must contain beyond a vague final summary.
 - Delegated child-agent review also needs an explicit concurrency cap; otherwise operators still cannot tell how much parallel fan-out one parent task is allowed to create.
 - Delegated/background work also needs an explicit notification policy; otherwise operators still cannot tell whether long-running work sends all updates, only results, only errors, or nothing at all.
+- Interactive operator control also needs an explicit interrupt contract; otherwise a safe implementation can expose in-flight work without clarifying whether interruption kills commands, cancels queued tools, or merges follow-up prompts.
 
 ## What Failed
 
@@ -70,3 +71,4 @@
 - If phase 1 exposes delegated child-agent review, decide early what summary fields every child must return so delegated outputs stay comparable instead of free-form.
 - If phase 1 exposes delegated child-agent review, decide early what the maximum concurrent child fan-out is and surface that limit so delegated parallelism stays predictable.
 - If phase 1 exposes long-running delegated/background work, decide early what notification modes exist and whether completion can ring a bell so background progress stays predictable.
+- If phase 1 exposes interactive interruption, decide early whether in-flight commands are killed, queued tools are cancelled, follow-up interruption messages are coalesced, and stop-without-redirect is supported so operator control stays predictable.

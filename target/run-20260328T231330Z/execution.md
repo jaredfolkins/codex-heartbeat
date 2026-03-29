@@ -452,3 +452,9 @@
 - 2026-03-29T01:56:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:56:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:58:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:59:00Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for an interrupt-and-redirect planning cycle.
+- Reviewed Hermes interruption docs in `tmp/hermes-agent-src/website/docs/user-guide/messaging/index.md` and `tmp/hermes-agent-src/README.md`; confirmed interrupt-and-redirect behavior includes killing active terminal commands, cancelling queued tool calls, combining interruption messages, and stopping without queuing a redirect prompt.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style interrupt-and-redirect semantics.
+- Evaluator: `rg -n "interrupt-and-redirect semantics|command termination, queued-tool cancellation|kills running terminal commands|cancels queued tool calls|stop-without-follow-up" PLANNING.md` -> pass
+- 2026-03-29T02:00:10Z screen-idle heartbeat injected with prompt source `program_md`
