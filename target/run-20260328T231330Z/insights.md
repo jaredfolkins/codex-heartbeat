@@ -23,6 +23,7 @@
 - Delegated/background review also needs explicit full-config inheritance rules; otherwise a plan can say tasks inherit the active profile while still leaving provider, toolsets, and fallback-model behavior underspecified.
 - Delegated/background review also needs explicit workspace-isolation rules; otherwise a multi-agent workflow can sound safe on paper while still leaving file-collision behavior unspecified.
 - Delegated/background review also needs explicit task/result surfacing rules; otherwise operators still cannot tell how spawned work is identified or where completion/error is delivered.
+- Delegated child-agent review also needs an explicit summary-return boundary; otherwise operators still cannot tell whether only the child summary or the full child transcript/tool state flows back into the parent context.
 
 ## What Failed
 
@@ -56,3 +57,4 @@
 - If phase 1 exposes background/delegated tasks, decide early whether provider, toolsets, and fallback model inherit too so operators can reason about spawned-task behavior without reading source.
 - If phase 1 exposes delegated/background review, decide early whether workers use isolated git worktrees so parallel tasks do not silently share one mutable checkout.
 - If phase 1 exposes delegated/background review, decide early where task IDs, progress, and completion/error delivery appear so delegated work stays auditable instead of feeling hidden.
+- If phase 1 exposes delegated child-agent review, decide early whether only the final summary re-enters the parent context or whether richer transcripts/artifacts are surfaced separately so parent-context growth stays predictable.
