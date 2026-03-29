@@ -712,6 +712,8 @@ func TestRootUsageMentionsStatusSurfaces(t *testing.T) {
 		"`launch_settings`",
 		"`hermes_parity`",
 		"`task_list`",
+		"`claim_rule`",
+		"Hermes-style review gap",
 	} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("printRootUsage() missing %q: %s", expected, output.String())

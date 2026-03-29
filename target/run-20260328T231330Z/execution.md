@@ -195,6 +195,13 @@
 - Updated `README.md` so the documented `hermes_parity` status surface now includes `claim_rule`, and the launch-profile non-parity note now explicitly includes the Hermes-style delegated cross-review workflow gap.
 - Evaluator: `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|delegated cross-review|not equivalent to Hermes Agent's" README.md` -> pass
 - This cycle did not change runtime behavior; it only aligned the operator docs with the current safe parity surface and the Hermes-grounded review gap.
+- Re-read `target/latest-context.md`, the current `status.hermes_parity` surface, and the root-help text to establish the baseline for a CLI-help cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `printRootUsage()` now says the `status` parity details include the safe `task_list`, `claim_rule`, and Hermes-style review gap.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for root help mentioning `` `claim_rule` `` and `Hermes-style review gap` alongside the existing `launch_settings`, `hermes_parity`, and `task_list` expectations.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
+- This cycle did not change runtime behavior; it only aligned the built-in CLI help with the fuller safe parity explanation already present in `status` and README.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:39:25Z screen-idle heartbeat injected with prompt source `program_md`
