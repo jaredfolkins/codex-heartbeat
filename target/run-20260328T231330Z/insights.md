@@ -8,6 +8,7 @@
 - Hermes's operator-visible personality/context-file UX is worth tracking explicitly in the backlog; otherwise the plan over-focuses on hidden prompt plumbing and under-specifies the user-facing profile model.
 - Hermes-style named bundles also need a discoverability/switching story; a backlog that only defines profiles in files still misses an operator-facing part of the reviewed workflow.
 - Named bundles also need explicit session-scope rules; without that, operators still cannot tell whether a switch should affect the current thread or only future sessions.
+- If switching only applies to future sessions, the backlog also needs an obvious reset/new-session path; otherwise the UX remains underspecified even after the scope rule is written down.
 
 ## What Failed
 
@@ -26,3 +27,4 @@
 - Decide whether the first safe profile implementation should surface named bundles via `program.md`, a repo-local profile file, or both so it better matches Hermes's personality/context-file UX.
 - Decide whether phase 1 should expose profile listing/switching through `status`, help, or an interactive command so the active bundle is obvious at runtime.
 - Decide whether phase 1 should make profile switches immediate, next-session-only, or dual-mode, and log that behavior clearly when a user changes bundles.
+- If phase 1 lands on next-session-only switching, design the exact reset/new-session command flow early so profile switching does not feel half-finished.
