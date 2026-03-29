@@ -555,3 +555,15 @@
 - 2026-03-29T02:28:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:28:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:29:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:30:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:31:35Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a cross-interface-command-surface planning cycle.
+- Reviewed Hermes README and quick-reference docs in `tmp/hermes-agent-src/README.md`; confirmed that many control commands are shared across CLI and messaging while some remain platform-specific, including CLI `/platforms` versus messaging `/status` and `/sethome`.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style cross-interface command-surface semantics.
+- Evaluator: `rg -n 'cross-interface command-surface semantics|many control commands are shared across CLI and messaging|CLI `/platforms` versus messaging `/status` and `/sethome`|which control commands are shared across CLI and messaging|which control commands are shared across CLI and messaging and which remain platform-specific' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- 2026-03-29T02:33:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:33:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:34:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:34:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:34:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:35:10Z screen-idle heartbeat injected with prompt source `program_md`
