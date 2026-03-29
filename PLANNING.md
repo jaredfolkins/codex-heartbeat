@@ -24,6 +24,7 @@
 ### Source Review Notes
 
 - Hermes's `godmode` feature is not a single prompt. It combines model-family strategy selection, launch-time system prompt injection, ephemeral prefill messages, and canary scoring to decide whether a profile "worked".
+- Hermes also exposes named personalities and project context files as first-class UX surfaces, so reusable instruction bundles are operator-visible concepts instead of only hidden transport settings.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -31,6 +32,7 @@
 
 - [ ] Define the safe scope for this feature: prompt-stack and instruction-profile testing only, not safety-bypass or jailbreak claims.
 - [ ] Add a first-class prompt profile concept for `codex-heartbeat` such as `--profile`, a repo-local profile file, or a `program.md` stanza that can describe model, reasoning effort, base instructions, developer instructions, and optional prefill.
+- [ ] Make prompt profiles operator-visible like Hermes personalities/context files, so reusable instruction bundles can be selected by name instead of only assembled from low-level flags.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -51,6 +53,7 @@
 ### Acceptance Criteria For The Safe Alternative
 
 - [ ] A user can select a named prompt profile for `gpt-5.3-codex-spark` with `high` reasoning without editing the wrapper source.
+- [ ] A user can select a named profile/personality-style bundle or repo-local context-file equivalent that predictably shapes new conversations.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -60,6 +63,7 @@
 ### Phase 1 Recommendation
 
 - [ ] Start with a repo-local prompt profile file and `--profile` flag that selects `model`, `model_reasoning_effort`, and a named instruction bundle.
+- [ ] Keep the phase-1 UX close to Hermes's personality/context-file model so the selected instruction bundle is a visible operator choice, not just hidden launch plumbing.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.

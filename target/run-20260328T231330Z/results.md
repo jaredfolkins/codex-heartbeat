@@ -2,13 +2,13 @@
 
 - Status: success
 - Council triggered at start: false
-- Primary evaluator: `rg -n "^### Review Basis|2037294903814738261|github.com/nousresearch/hermes-agent|cross-review|launch-time instruction control" PLANNING.md`
+- Primary evaluator: `rg -n "personalities|context files|operator-visible|personality-style bundle|phase-1 UX close to Hermes" PLANNING.md`
 
 ## Observable Signals
 
-- `PLANNING.md` now includes a `Review Basis` section that points directly at the reviewed X post and Hermes repo.
+- `PLANNING.md` now explicitly covers Hermes-style personality/context-file UX for named, operator-visible instruction bundles.
 - The focused evaluator passed for the updated planning backlog.
-- The source-grounded `[ ]` task list is now visibly anchored to the exact materials the user asked to review, not only to local summary prose.
+- The source-grounded `[ ]` task list now matches Hermes's operator model more closely instead of only describing hidden instruction-transport fields.
 - The function still does not appear to be the same as Hermes Agent because the wrapper still lacks stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a Hermes-style delegated cross-review workflow.
 
 ## Disposition
