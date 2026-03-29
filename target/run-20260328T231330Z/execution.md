@@ -473,6 +473,10 @@
 - Reviewed Hermes context-file and personality docs in `tmp/hermes-agent-src/website/docs/user-guide/features/context-files.md` and `tmp/hermes-agent-src/website/docs/user-guide/features/personality.md`; confirmed that `SOUL.md` lives only in `HERMES_HOME`, occupies identity slot `#1`, stays outside repo-context discovery, and falls back to a built-in default identity when absent or empty.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style global identity-file semantics.
 - Evaluator: `rg -n "global-identity file semantics|SOUL.md lives only in HERMES_HOME|occupies identity slot \`#1\`|per-user identity file exists outside repo context|fallback identity applies when that file is absent or empty" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a project-context-priority planning cycle.
+- Reviewed Hermes context-file docs in `tmp/hermes-agent-src/website/docs/user-guide/features/context-files.md`; confirmed that only one project context type is loaded per session with first-match order `.hermes.md` -> `AGENTS.md` -> `CLAUDE.md` -> `.cursorrules`, while `SOUL.md` remains independent.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style project-context priority semantics.
+- Evaluator: `rg -n 'project-context priority semantics|only one project context type is selected per session|first-match order across \\.hermes\\.md, AGENTS\\.md, CLAUDE\\.md, and \\.cursorrules|project context uses a first-match file-type priority rule|SOUL\\.md remains independent' PLANNING.md` -> pass
 - 2026-03-29T02:00:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:02:45Z screen-idle heartbeat injected with prompt source `program_md`
@@ -492,3 +496,8 @@
 - 2026-03-29T02:09:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:09:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:09:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:10:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:10:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:11:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:11:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:11:55Z screen-idle heartbeat injected with prompt source `program_md`
