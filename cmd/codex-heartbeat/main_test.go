@@ -331,6 +331,66 @@ Model reasoning effort: high
 	}
 }
 
+func TestStatusCommandIncludesHermesParityGap(t *testing.T) {
+	root := t.TempDir()
+
+	previousHome := os.Getenv("HOME")
+	t.Cleanup(func() {
+		if previousHome == "" {
+			_ = os.Unsetenv("HOME")
+			return
+		}
+		_ = os.Setenv("HOME", previousHome)
+	})
+	if err := os.Setenv("HOME", root); err != nil {
+		t.Fatalf("set HOME: %v", err)
+	}
+
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	outputFile, err := os.CreateTemp(root, "status-output-*.json")
+	if err != nil {
+		t.Fatalf("create temp output file: %v", err)
+	}
+	outputPath := outputFile.Name()
+	_ = outputFile.Close()
+
+	previousStdout := os.Stdout
+	outputWriter, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		t.Fatalf("open temp output file: %v", err)
+	}
+	os.Stdout = outputWriter
+	t.Cleanup(func() {
+		os.Stdout = previousStdout
+	})
+
+	if err := runStatusCommand([]string{"--workdir", workdir}); err != nil {
+		t.Fatalf("runStatusCommand() returned error: %v", err)
+	}
+	_ = outputWriter.Close()
+	os.Stdout = previousStdout
+
+	output, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("read status output: %v", err)
+	}
+	for _, expected := range []string{
+		"\"hermes_parity\": {",
+		"\"equivalent\": false",
+		"\"launch-time base/developer instruction control\"",
+		"\"ephemeral prefill\"",
+		"\"harmless canary scoring\"",
+	} {
+		if !strings.Contains(string(output), expected) {
+			t.Fatalf("status output missing %q: %s", expected, output)
+		}
+	}
+}
+
 func TestRunInteractiveCommandNewIntervalLaunchIncludesPrompt(t *testing.T) {
 	root := t.TempDir()
 	workdir := filepath.Join(root, "work")

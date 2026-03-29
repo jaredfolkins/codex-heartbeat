@@ -1,18 +1,18 @@
 # Latest Context
 
-- Objective: Expose the resolved `program.md` launch settings in `codex-heartbeat status` so the current Hermes-parity answer is visible from the main operator command.
-- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
+- Objective: Expose the current Hermes parity gap directly in `codex-heartbeat status` so the “same as Hermes or not?” answer is explicit from one command.
+- Primary evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`
 - Prompt mode: `autoresearch`
 - Council policy: `fallback`
 - Recent failure streak: 0 / 3
 - Launch settings: `profile=safe-research, model=gpt-5.3-codex-spark, model_reasoning_effort=high`
 
 ## Recent Ledger
-- `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added `launch_settings` to `codex-heartbeat status` while keeping the artifact evidence and child launch args unchanged; Hermes parity is still not there.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added `hermes_parity` to `codex-heartbeat status` while keeping `launch_settings`, artifact evidence, and child launch args unchanged; the parity answer is still no.
+- `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added `launch_settings` to `codex-heartbeat status` while keeping the artifact evidence and child launch args unchanged; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Added launch-setting evidence to `latest-context` and the run-start ledger note while keeping the child Codex CLI args unchanged; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1`: pass | Moved launch selection into `program.md` metadata, removed the top-level wrapper flags, kept the child Codex CLI args the same, and updated tests plus README; the wrapper still lacks Hermes-style instruction channels, prefill, and canary scoring.
 - `keep` via `rg -n "^## Launch Profiles|--profile NAME|--model-reasoning-effort LEVEL|not equivalent to Hermes Agent's|phase-1 prompt-profile feature" README.md`: pass | Documented the phase-1 launch-profile flags in README and stated explicitly that the current wrapper still is not equivalent to Hermes Agent's `godmode` design.
-- `keep` via `rg -n "^### Hermes Parity Gap|stronger launch-time instruction channel|ephemeral prefill|harmless canary-scoring harness|parity claim rule" PLANNING.md`: pass | Added a dedicated Hermes parity-gap checklist covering stronger launch-time instruction control, ephemeral prefill, benign canary scoring, and a parity-claim rule.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

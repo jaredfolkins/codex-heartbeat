@@ -96,3 +96,17 @@
 - Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
 - This cycle again did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only surfaced the current program-driven launch settings through the operator-facing `status` command.
+- Re-read `target/latest-context.md`, `cmd/codex-heartbeat/main.go`, and `cmd/codex-heartbeat/main_test.go` to establish the baseline for a parity-surface cycle.
+- Updated `cmd/codex-heartbeat/main.go` so `status` now emits a `hermes_parity` object with `equivalent=false` and the concrete missing capabilities: launch-time base/developer instruction control, ephemeral prefill, and harmless canary scoring.
+- Updated `cmd/codex-heartbeat/main_test.go` with focused coverage for the new `hermes_parity` block while keeping the existing `launch_settings` status test.
+- Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings|PromptResolverWritesLaunchSettingsToLatestContext|RecordRunStartWritesEvaluatorToResultsLedger|LoadProgramConfigParsesLaunchOverrides|RegisterRunFlags|RunInteractiveCommandPassesLaunchOverrides' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made the current “not equivalent” answer explicit through the operator-facing `status` command.
+- 2026-03-28T23:59:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:00:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:01:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:01:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:01:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:01:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:02:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:02:15Z screen-idle heartbeat injected with prompt source `program_md`

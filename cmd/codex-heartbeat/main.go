@@ -54,7 +54,13 @@ type launchOverrides struct {
 
 type statusOutput struct {
 	workspaceState
-	LaunchSettings *launchOverrides `json:"launch_settings,omitempty"`
+	LaunchSettings *launchOverrides   `json:"launch_settings,omitempty"`
+	HermesParity   hermesParityStatus `json:"hermes_parity"`
+}
+
+type hermesParityStatus struct {
+	Equivalent bool     `json:"equivalent"`
+	Missing    []string `json:"missing"`
 }
 
 type promptSource struct {
@@ -439,7 +445,19 @@ func runStatusCommand(args []string) error {
 	return enc.Encode(statusOutput{
 		workspaceState: state,
 		LaunchSettings: launchSettings,
+		HermesParity:   currentHermesParityStatus(),
 	})
+}
+
+func currentHermesParityStatus() hermesParityStatus {
+	return hermesParityStatus{
+		Equivalent: false,
+		Missing: []string{
+			"launch-time base/developer instruction control",
+			"ephemeral prefill",
+			"harmless canary scoring",
+		},
+	}
 }
 
 func registerRunFlags(fs *flag.FlagSet, opts *sharedOptions) {
