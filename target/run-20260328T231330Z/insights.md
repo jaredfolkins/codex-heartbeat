@@ -37,6 +37,7 @@
 - Prompt-profile parity also needs an explicit global-identity rule; otherwise operators still cannot tell whether a durable per-user identity file exists outside repo context, where it loads from, or what fallback identity applies when it is missing.
 - Repo-context parity also needs an explicit file-type priority rule; otherwise operators still cannot tell whether one project context type wins, how `.hermes.md`, `AGENTS.md`, `CLAUDE.md`, and `.cursorrules` compete, or how that choice stays separate from the global identity layer.
 - Long-lived operator workflows also need explicit session-title semantics; otherwise a safe implementation can describe sessions and resumes without saying whether users can name and revisit work by title.
+- Resumed-session UX also needs explicit recap semantics; otherwise a safe implementation can describe session resume without saying whether users return to a compact "Previous Conversation" panel or only a one-line resume hint.
 
 ## What Failed
 
@@ -84,3 +85,4 @@
 - If phase 1 wants Hermes-like personality behavior, decide early whether a global identity file exists outside repo context, whether it loads only from a home path, and what fallback identity applies so persona layering stays predictable.
 - If phase 1 wants Hermes-like context-file behavior, decide early whether project context uses a first-match file-type priority rule and keep that separate from the global identity layer so context selection stays predictable.
 - If phase 1 exposes longer-lived sessions, decide early whether users can title, browse, and resume sessions by human-readable names so the operator workflow stays navigable without raw IDs.
+- If phase 1 exposes longer-lived sessions, decide early whether resume shows a compact recap panel or only a minimal one-liner, and surface any `resume_display`-style toggle so resumed-session UX stays predictable.

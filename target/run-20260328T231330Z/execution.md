@@ -513,3 +513,11 @@
 - 2026-03-29T02:16:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:16:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:16:30Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a resume-recap planning cycle.
+- Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that resume shows a "Previous Conversation" panel with a compact recap by default and that config can switch back to a minimal one-liner display.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style resume-recap semantics.
+- Evaluator: `rg -n 'resume-recap semantics|Previous Conversation panel|compact recap of the previous conversation|minimal one-liner display mode|resume_display-style toggle' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- 2026-03-29T02:18:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:18:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:19:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:19:15Z screen-idle heartbeat injected with prompt source `program_md`
