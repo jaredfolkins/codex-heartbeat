@@ -28,6 +28,7 @@
 - Hermes pairs personality-style changes with obvious fresh-session flows (`/new` or `/reset`), so operators have a clear way to start a conversation under the newly selected bundle.
 - Hermes spans long-lived conversations and cross-interface use, so the operator model also needs a clear persistence rule for whether a selected bundle is session-local, repo-default, or sticky across future sessions.
 - Hermes also documents persistent memory and user profiles, so the operator model needs a clear rule for whether prompt-profile selection interacts with saved memory or remains an isolated instruction-layer choice.
+- Hermes also exposes first-class session-title behavior: operators can set or show the current session title, resume a previously named session, and browse titled sessions instead of relying only on opaque session IDs.
 - Hermes also separates global identity/personality concerns from project context files, so the operator model needs an explicit precedence rule for which layer wins when a named bundle, global persona, and repo-local context all provide overlapping instructions.
 - Hermes also exposes a distinct global identity file contract: `SOUL.md` lives only in `HERMES_HOME`, occupies identity slot `#1`, stays separate from project context discovery, and falls back to a built-in default identity when absent or empty.
 - Hermes treats `AGENTS.md` as a hierarchical project-context input, combining multiple files across a monorepo instead of assuming a single repo-root instruction file.
@@ -64,6 +65,7 @@
 - [ ] If profile switching is deferred, show both the active and pending bundle in wrapper UX so operators can tell what is in effect now versus what will apply after reset/new session.
 - [ ] Add an explicit return-to-default flow so operators can clear a named bundle and get back to the repo or wrapper default without manual file edits.
 - [ ] Define profile persistence scope explicitly, so operators know whether selecting a bundle changes only the current session, the repo-local default, or future sessions started from the same workspace.
+- [ ] Define session-title semantics explicitly, so operators know whether they can name the current session, browse titled sessions, and resume prior work by title instead of only by opaque session IDs.
 - [ ] Record profile-change history in operator-visible artifacts or status so it is clear when a bundle was selected, cleared, deferred, or promoted to the default.
 - [ ] Define how prompt-profile selection interacts with persistent memory or user-profile state, so operators know whether choosing a bundle changes only instructions or also affects saved context.
 - [ ] Define instruction-layer precedence explicitly, so operators know whether global persona/profile settings or repo-local context files win when they overlap.
@@ -115,6 +117,7 @@
 - [ ] If a profile change is pending, the wrapper clearly shows both the active bundle and the queued next-session bundle.
 - [ ] A user can intentionally clear a selected bundle and confirm that the wrapper has returned to the default profile state.
 - [ ] A user can tell whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
+- [ ] A user can tell whether sessions may be named, whether titled sessions can be listed or browsed, and whether resume may target a human-readable session title instead of only an opaque session ID.
 - [ ] A user can inspect a timestamped record of recent profile changes so active and pending bundle state is auditable instead of purely ephemeral.
 - [ ] A user can tell whether a selected bundle affects persistent memory/user-profile context or only the prompt stack for the current workspace/session.
 - [ ] A user can tell which instruction layer wins when global persona settings, a named bundle, and repo-local context files overlap.
@@ -155,6 +158,7 @@
 - [ ] If phase 1 uses deferred switching, expose an active-versus-pending profile state in `status`, help, or equivalent UX so operators can confirm what will happen on reset/new session.
 - [ ] If phase 1 adds profile selection, include a matching clear/default action so the operator can undo an override without editing config by hand.
 - [ ] Decide in the same phase whether bundle selection persists across future sessions or only applies as a one-session override, and surface that rule in operator UX and artifacts.
+- [ ] In phase 1, document whether sessions can be named, listed, browsed, and resumed by title so long-lived operator workflows stay understandable without raw session IDs.
 - [ ] If phase 1 adds profile selection, record profile-change events in `target/` artifacts or `status` so deferred and persisted changes remain explainable after the fact.
 - [ ] In phase 1, either keep profile selection isolated from persistent memory/user-profile state or document the exact interaction explicitly in status/help/artifacts.
 - [ ] In phase 1, document a simple precedence rule across global persona settings, named bundles, and repo-local context files so overlapping instructions are explainable before any richer transport work starts.

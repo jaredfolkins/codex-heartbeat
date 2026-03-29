@@ -501,3 +501,15 @@
 - 2026-03-29T02:11:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:11:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:11:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:12:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:13:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:14:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:14:55Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a session-title planning cycle.
+- Reviewed Hermes messaging, CLI, and sessions docs in `tmp/hermes-agent-src/website/docs/user-guide/messaging/index.md`, `tmp/hermes-agent-src/website/docs/user-guide/cli.md`, and `tmp/hermes-agent-src/website/docs/user-guide/sessions.md`; confirmed that operators can set or show the current session title, resume a previously named session, and browse titled sessions.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-title semantics.
+- Evaluator: `rg -n 'session-title semantics|operators can set or show the current session title|resume a previously named session|sessions may be named, listed, browsed, and resumed by title|sessions can be named, listed, browsed, and resumed by title' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- 2026-03-29T02:15:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:16:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:16:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:16:30Z screen-idle heartbeat injected with prompt source `program_md`
