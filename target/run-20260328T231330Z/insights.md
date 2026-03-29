@@ -2,9 +2,9 @@
 
 ## What Worked
 
-- Root CLI help is a good final parity-discoverability surface once README and raw `status` JSON already agree.
-- Reusing the focused root-help/status test kept the cycle bounded while still rechecking the parity and launch-setting surfaces together.
-- Once `review_basis` existed in `status` and README, mirroring it in root help completed the main operator-visible parity explanation path.
+- `PLANNING.md` is still the best place to express the requested `[ ]` implementation backlog once the status/help/docs surfaces already agree.
+- A simple grep evaluator was enough to keep the planning cycle bounded while still checking the exact sections that should carry the new task.
+- The reviewed Hermes multi-LLM workflow belongs in the backlog itself, not only in parity notes and docs.
 
 ## What Failed
 
@@ -12,8 +12,8 @@
 
 ## Avoid Next Time
 
-- Do not update help text in a way that drifts from the actual `status` JSON surface.
-- Do not claim Hermes parity from more complete help text alone.
+- Do not let the planning backlog drift behind the already-documented parity gaps.
+- Do not claim Hermes parity from a more complete task list alone.
 
 ## Promising Next Directions
 

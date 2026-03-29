@@ -7,12 +7,12 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "delegated cross-review|Hermes Parity Gap|Phase 1 Recommendation|Task List" PLANNING.md`: pass | Added Hermes-style delegated cross-review items to the source-grounded `[ ]` backlog so the planning artifact matches the reviewed multi-LLM research workflow more directly.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Extended root CLI help so operators can discover `review_basis` alongside `launch_settings`, `hermes_parity`, `task_list`, `claim_rule`, and the Hermes-style review gap.
 - `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|review_basis|delegated cross-review|not equivalent to Hermes Agent's" README.md`: pass | Documented `review_basis` in the README parity section so the operator docs now match the current safe `status.hermes_parity` surface more completely.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Added `review_basis` to `status.hermes_parity` so the current non-parity answer points directly at the reviewed Hermes repo and X post instead of only relying on local parity wording.
 - `keep` via `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Extended root CLI help so operators can discover the safe parity `claim_rule` and Hermes-style review gap alongside `launch_settings`, `hermes_parity`, and `task_list`.
 - `keep` via `rg -n "^Inspect the stored session:|status --workdir|launch_settings|hermes_parity|task_list|claim_rule|delegated cross-review|not equivalent to Hermes Agent's" README.md`: pass | Documented that the README parity comparison now includes both `claim_rule` and the Hermes-style delegated cross-review gap, so the docs match the current safe `status.hermes_parity` surface more closely.
-- `keep` via `go test ./cmd/codex-heartbeat -run 'StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1`: pass | Grounded `status.hermes_parity` in the reviewed Hermes sources by adding the remaining delegated cross-review workflow gap alongside the existing safe launch-control, prefill, and canary items.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

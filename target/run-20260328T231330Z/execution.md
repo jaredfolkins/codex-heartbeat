@@ -217,6 +217,10 @@
 - Ran `gofmt -w cmd/codex-heartbeat/main.go cmd/codex-heartbeat/main_test.go`.
 - Evaluator: `go test ./cmd/codex-heartbeat -run 'RootUsageMentionsStatusSurfaces|StatusCommandIncludesHermesParityGap|StatusCommandIncludesProgramLaunchSettings' -count=1` -> pass
 - This cycle did not change runtime behavior; it only aligned the built-in CLI help with the current full safe parity surface.
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a planning-backlog cycle.
+- Updated `PLANNING.md` so the `Task List`, `Phase 1 Recommendation`, and `Hermes Parity Gap` sections now include Hermes-style delegated cross-review work items grounded in the reviewed sources.
+- Evaluator: `rg -n "delegated cross-review|Hermes Parity Gap|Phase 1 Recommendation|Task List" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only tightened the source-grounded implementation backlog.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -224,3 +228,7 @@
 - 2026-03-29T00:41:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:43:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:45:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:48:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:49:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:49:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:49:35Z screen-idle heartbeat injected with prompt source `program_md`
