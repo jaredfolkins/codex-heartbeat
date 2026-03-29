@@ -7,11 +7,11 @@
 - Recent failure streak: 0 / 3
 
 ## Recent Ledger
+- `keep` via `rg -n "background-notification policy semantics|all`, `result`, `error`, or `off|completion rings a terminal bell|background-notification policy|whether completion can ring a bell" PLANNING.md`: pass | Added Hermes-style background-notification policy items to `PLANNING.md` so the safe backlog now covers how long-running background work notifies operators instead of assuming one fixed update behavior.
 - `keep` via `rg -n "delegated-concurrency-cap semantics|how many child agents may run concurrently|maximum concurrent child-agent fan-out|bounded number of concurrent child agents|unlimited delegated fan-out" PLANNING.md`: pass | Added Hermes-style delegated-concurrency-cap items to `PLANNING.md` so the safe backlog now covers how much delegated fan-out may run in parallel instead of assuming unlimited concurrency.
 - `keep` via `rg -n "delegated-summary schema semantics|what it did|what it found|files touched|issues encountered|expected child-summary fields" PLANNING.md`: pass | Added Hermes-style delegated-summary schema items to `PLANNING.md` so the safe backlog now covers what a child agent must report back instead of leaving delegated outputs unstructured.
 - `keep` via `rg -n "delegated-context handoff semantics|goal/context package|ambient conversation state|packaged goal/context|child does not silently inherit" PLANNING.md`: pass | Added Hermes-style delegated-context handoff items to `PLANNING.md` so the safe backlog now covers what goal/context package a parent sends to a child agent instead of assuming ambient conversation inheritance.
 - `keep` via `rg -n "delegated-depth-limit semantics|children may delegate further|no grandchildren|recursive fan-out|delegation is intentionally capped" PLANNING.md`: pass | Added Hermes-style delegated-depth-limit items to `PLANNING.md` so the safe backlog now covers whether child agents may delegate further or whether recursion stops at one child layer.
-- `keep` via `rg -n "delegated-toolset restriction semantics|subset of tools|subset of the parent tool surface|restricted toolsets for child agents|which toolsets a delegated child may use" PLANNING.md`: pass | Added Hermes-style delegated-toolset restriction items to `PLANNING.md` so the safe backlog now covers whether child agents are limited to a subset of tools and how that narrowed tool surface is exposed.
 
 ## Prior Insights
 - run-20260328T230944Z/insights.md: - - -

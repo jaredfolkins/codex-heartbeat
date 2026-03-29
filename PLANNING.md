@@ -43,6 +43,7 @@
 - Hermes's delegated subagents also have an explicit context-handoff contract: children start with zero knowledge of the parent session and receive only the packaged goal/context the parent provides.
 - Hermes's delegated subagents also return a structured summary shape, covering what they did, what they found, files modified, and issues encountered rather than an unstructured child response blob.
 - Hermes's delegated subagents also have an explicit concurrency cap: parallel batches run only up to a bounded number of concurrent child agents instead of allowing unlimited fan-out in a single parent turn.
+- Hermes also exposes configurable background-notification behavior: operators can choose whether long-running background work pushes all updates, result-only updates, error-only updates, or no updates, and CLI completion can optionally ring a terminal bell.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -74,6 +75,7 @@
 - [ ] Define delegated-context handoff semantics explicitly, so operators know what parent context is packaged for a child agent instead of assuming the child inherits ambient conversation state.
 - [ ] Define delegated-summary schema semantics explicitly, so operators know what a child agent must report back, including findings, files touched, and issues encountered, instead of accepting an unstructured return.
 - [ ] Define delegated-concurrency-cap semantics explicitly, so operators know how many child agents may run in parallel for one parent task instead of assuming unlimited delegated fan-out.
+- [ ] Define background-notification policy semantics explicitly, so operators know whether long-running background work sends all updates, result-only updates, error-only updates, or no updates, and whether completion can ring a bell.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -118,6 +120,7 @@
 - [ ] A user can tell what goal/context package a delegated child actually receives and can confirm that the child does not silently inherit ambient parent conversation state.
 - [ ] A user can tell what summary fields a delegated child must return, including what it did, what it found, files modified, and unresolved issues, instead of receiving an opaque child response.
 - [ ] A user can tell how many delegated child agents may run concurrently for one parent task and whether excess delegated work is queued, rejected, or serialized.
+- [ ] A user can tell what background-notification policy is active for long-running delegated/background work, including whether updates are `all`, `result`, `error`, or `off`, and whether completion rings a terminal bell.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -151,6 +154,7 @@
 - [ ] In phase 1, if delegated child-agent review is exposed, document what goal/context handoff the parent supplies to the child and surface that packaged context boundary in status/help/artifacts so delegation inputs stay explainable.
 - [ ] In phase 1, if delegated child-agent review is exposed, document the expected child-summary fields and surface that schema in status/help/artifacts so delegated outputs stay comparable and auditable.
 - [ ] In phase 1, if delegated child-agent review is exposed, document the maximum concurrent child-agent fan-out and surface that cap in status/help/artifacts so delegated parallelism stays predictable.
+- [ ] In phase 1, if delegated/background work is exposed, document the background-notification policy and surface whether updates are `all`, `result`, `error`, or `off`, plus whether completion can ring a bell.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.
