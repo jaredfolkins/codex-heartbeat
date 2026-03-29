@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated-depth limits.
-- Primary evaluator: `rg -n "delegated-depth-limit semantics|children may delegate further|no grandchildren|recursive fan-out|delegation is intentionally capped" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style delegated-context handoff semantics.
+- Primary evaluator: `rg -n "delegated-context handoff semantics|goal/context package|ambient conversation state|packaged goal/context|child does not silently inherit" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style delegated-depth-limit items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving recursive delegation behavior implicit.
+- If `PLANNING.md` explicitly includes Hermes-style delegated-context handoff items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving child-input packaging implicit.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style delegated-depth-limit items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style delegated-context handoff items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

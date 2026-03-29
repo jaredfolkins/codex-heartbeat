@@ -405,6 +405,10 @@
 - Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that delegation is depth-limited and children cannot delegate further.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-depth limits.
 - Evaluator: `rg -n "delegated-depth-limit semantics|children may delegate further|no grandchildren|recursive fan-out|delegation is intentionally capped" PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a delegated-context-handoff planning cycle.
+- Reviewed Hermes delegation docs in `tmp/hermes-agent-src/website/docs/user-guide/features/delegation.md`; confirmed that child agents start with zero knowledge and receive only the packaged goal/context supplied by the parent.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style delegated-context handoff semantics.
+- Evaluator: `rg -n "delegated-context handoff semantics|goal/context package|ambient conversation state|packaged goal/context|child does not silently inherit" PLANNING.md` -> pass
 - 2026-03-29T01:39:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:39:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:40:10Z screen-idle heartbeat injected with prompt source `program_md`
@@ -416,3 +420,7 @@
 - 2026-03-29T01:43:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:44:35Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:47:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:49:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:49:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:50:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:50:25Z screen-idle heartbeat injected with prompt source `program_md`

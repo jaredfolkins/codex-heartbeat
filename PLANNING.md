@@ -40,6 +40,7 @@
 - Hermes's delegated subagents also have an explicit parent-return boundary: children run with fresh context and restricted toolsets, and only a final structured summary re-enters the parent context instead of the full child transcript.
 - Hermes's delegated subagents also use explicit toolset narrowing, so the operator model needs a rule for whether child agents may be limited to a subset of the parent tool surface and how that restriction is made visible.
 - Hermes's delegated subagents also have an explicit recursion boundary: delegation is depth-limited, with child agents unable to spawn grandchildren, so parallel review cannot fan out indefinitely.
+- Hermes's delegated subagents also have an explicit context-handoff contract: children start with zero knowledge of the parent session and receive only the packaged goal/context the parent provides.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -68,6 +69,7 @@
 - [ ] Define delegated-summary boundary semantics explicitly, so operators know whether child-agent work returns only a final summary to the parent context or merges richer child transcript and tool-trace state.
 - [ ] Define delegated-toolset restriction semantics explicitly, so operators know whether child agents may be limited to a subset of tools and how that narrowed tool surface is selected and surfaced.
 - [ ] Define delegated-depth-limit semantics explicitly, so operators know whether child agents may delegate further or whether delegation stops at one child layer with no grandchildren.
+- [ ] Define delegated-context handoff semantics explicitly, so operators know what parent context is packaged for a child agent instead of assuming the child inherits ambient conversation state.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -109,6 +111,7 @@
 - [ ] A user can tell whether delegated child-agent work re-enters the parent only as a final summary or whether richer child transcripts and tool traces are exposed separately.
 - [ ] A user can tell whether a delegated child agent is restricted to a subset of tools and can inspect which toolsets were allowed for that child instead of inferring it from implementation details.
 - [ ] A user can tell whether delegated child agents may themselves spawn more children or whether delegation is intentionally capped at one child layer with no recursive fan-out.
+- [ ] A user can tell what goal/context package a delegated child actually receives and can confirm that the child does not silently inherit ambient parent conversation state.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -139,6 +142,7 @@
 - [ ] In phase 1, if delegated child-agent review is exposed, document whether only a final summary re-enters the parent context or whether richer child transcripts/artifacts are surfaced separately, and keep that boundary visible.
 - [ ] In phase 1, if delegated child-agent review is exposed, document whether child tool access is narrowed to a subset of tools and surface the allowed toolsets in status/help/artifacts so delegation scope is explainable.
 - [ ] In phase 1, if delegated child-agent review is exposed, document whether child agents may delegate further or whether recursion is capped at one child layer, and keep that limit visible in status/help/artifacts.
+- [ ] In phase 1, if delegated child-agent review is exposed, document what goal/context handoff the parent supplies to the child and surface that packaged context boundary in status/help/artifacts so delegation inputs stay explainable.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.
