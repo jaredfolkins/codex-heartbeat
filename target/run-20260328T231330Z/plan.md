@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style profile-change history for named bundles.
-- Primary evaluator: `rg -n "profile-change history|timestamped record of recent profile changes|record profile-change events|selected, cleared, deferred, or promoted" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style prompt-profile interaction with persistent memory/user-profile state.
+- Primary evaluator: `rg -n "persistent memory|user-profile state|isolated from persistent memory|affects saved context|prompt-profile selection interacts" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style profile-change-history items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving bundle changes hard to audit after the fact.
+- If `PLANNING.md` explicitly includes Hermes-style prompt-profile-versus-memory items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving saved-memory interaction ambiguous.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style profile-change-history items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style prompt-profile-versus-memory items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 

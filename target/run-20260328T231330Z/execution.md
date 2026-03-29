@@ -265,6 +265,10 @@
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover recording profile-change events and exposing a timestamped audit trail for recent bundle changes.
 - Evaluator: `rg -n "profile-change history|timestamped record of recent profile changes|record profile-change events|selected, cleared, deferred, or promoted" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about how operators audit bundle changes over time.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes README notes to establish the baseline for a profile-versus-memory planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether named bundles interact with persistent memory/user-profile state or stay isolated at the prompt layer.
+- Evaluator: `rg -n "persistent memory|user-profile state|isolated from persistent memory|affects saved context|prompt-profile selection interacts" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about whether bundle selection touches saved memory context.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -312,3 +316,9 @@
 - 2026-03-29T01:12:40Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:12:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:13:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:13:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:14:35Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:14:50Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:15:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:15:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:16:10Z screen-idle heartbeat injected with prompt source `program_md`

@@ -13,6 +13,7 @@
 - Named bundles also need a persistence rule; without it, operators still cannot tell whether a selection is a temporary override or the new default for later sessions.
 - Named bundles also need a clear undo path; otherwise the plan describes how to apply overrides more clearly than how to remove them.
 - Named bundles also need change history; otherwise status may show the current state but not how or when it got there.
+- Named bundles also need an explicit memory interaction rule; otherwise it stays unclear whether selecting a bundle changes only prompt instructions or also saved context.
 
 ## What Failed
 
@@ -36,3 +37,4 @@
 - If phase 1 allows persisted bundle selection, decide where that default lives and how a one-session override differs in status/help/artifacts.
 - If phase 1 adds selection, make sure clear/default semantics appear in the same UX surfaces so operators do not need to edit files just to undo an override.
 - If phase 1 adds selection and persistence, decide whether recent bundle changes belong in `status`, `target/` artifacts, or both so operators can debug state transitions later.
+- If phase 1 keeps bundle selection separate from memory, state that plainly in status/help/artifacts; if it does not, define the exact interaction before implementation starts.
