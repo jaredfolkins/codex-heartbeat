@@ -24,6 +24,7 @@
 - Delegated/background review also needs explicit workspace-isolation rules; otherwise a multi-agent workflow can sound safe on paper while still leaving file-collision behavior unspecified.
 - Delegated/background review also needs explicit task/result surfacing rules; otherwise operators still cannot tell how spawned work is identified or where completion/error is delivered.
 - Delegated child-agent review also needs an explicit summary-return boundary; otherwise operators still cannot tell whether only the child summary or the full child transcript/tool state flows back into the parent context.
+- Delegated child-agent review also needs an explicit tool-narrowing rule; otherwise operators still cannot tell whether a child inherits the parent tool surface or runs under a smaller allowed toolset.
 
 ## What Failed
 
@@ -58,3 +59,4 @@
 - If phase 1 exposes delegated/background review, decide early whether workers use isolated git worktrees so parallel tasks do not silently share one mutable checkout.
 - If phase 1 exposes delegated/background review, decide early where task IDs, progress, and completion/error delivery appear so delegated work stays auditable instead of feeling hidden.
 - If phase 1 exposes delegated child-agent review, decide early whether only the final summary re-enters the parent context or whether richer transcripts/artifacts are surfaced separately so parent-context growth stays predictable.
+- If phase 1 exposes delegated child-agent review, decide early whether child tools are narrowed to a subset and where the allowed toolsets appear so delegated scope stays explainable.
