@@ -543,7 +543,15 @@
 - Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that exiting a CLI session shows the session ID and prints a direct resume command.
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-exit discoverability semantics.
 - Evaluator: `rg -n 'session-exit discoverability semantics|session IDs are shown on exit|direct resume command is printed|session ID and prints a direct resume command|exit prints a direct resume command' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
+- Re-read `target/latest-context.md` and `PLANNING.md` to establish the baseline for a session-search planning cycle.
+- Reviewed Hermes sessions and CLI docs in `tmp/hermes-agent-src/website/docs/user-guide/sessions.md` and `tmp/hermes-agent-src/website/docs/user-guide/cli.md`; confirmed that Hermes supports cross-session search and exposes a built-in `session_search` tool backed by full-text search over prior conversations.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover Hermes-style session-search semantics.
+- Evaluator: `rg -n 'session-search semantics|cross-session search|built-in session_search tool|full-text recall surface|searchable across sessions' /Users/jf/src/jf/codex-heartbeat/PLANNING.md` -> pass
 - 2026-03-29T02:26:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:26:30Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:26:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T02:27:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:27:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:28:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:28:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T02:29:00Z screen-idle heartbeat injected with prompt source `program_md`
