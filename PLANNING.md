@@ -26,6 +26,7 @@
 - Hermes's `godmode` feature is not a single prompt. It combines model-family strategy selection, launch-time system prompt injection, ephemeral prefill messages, and canary scoring to decide whether a profile "worked".
 - Hermes also exposes named personalities and project context files as first-class UX surfaces, so reusable instruction bundles are operator-visible concepts instead of only hidden transport settings.
 - Hermes pairs personality-style changes with obvious fresh-session flows (`/new` or `/reset`), so operators have a clear way to start a conversation under the newly selected bundle.
+- Hermes spans long-lived conversations and cross-interface use, so the operator model also needs a clear persistence rule for whether a selected bundle is session-local, repo-default, or sticky across future sessions.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -38,6 +39,7 @@
 - [ ] Define profile-switch scope semantics explicitly, so operators know whether changing a named bundle affects the current conversation, the next fresh thread, or only newly created sessions.
 - [ ] If profile switching is next-session-only, add a one-step reset/new-session flow so operators can start a fresh conversation under the selected bundle without manual file edits or ambiguous restart steps.
 - [ ] If profile switching is deferred, show both the active and pending bundle in wrapper UX so operators can tell what is in effect now versus what will apply after reset/new session.
+- [ ] Define profile persistence scope explicitly, so operators know whether selecting a bundle changes only the current session, the repo-local default, or future sessions started from the same workspace.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -63,6 +65,7 @@
 - [ ] A user can tell whether switching profiles takes effect immediately for the active session or only for the next conversation, and the wrapper behaves consistently with that rule.
 - [ ] If immediate in-thread switching is not supported, a user can start a fresh session with the selected bundle in one obvious wrapper-supported step.
 - [ ] If a profile change is pending, the wrapper clearly shows both the active bundle and the queued next-session bundle.
+- [ ] A user can tell whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -77,6 +80,7 @@
 - [ ] Decide in the same phase whether profile switching is "apply to current session", "apply on next reset/new session", or both, and surface that rule in the operator UX.
 - [ ] If phase 1 uses next-session-only switching, pair it with a reset/new-session command or workflow so changing bundles does not require manual wrapper restarts.
 - [ ] If phase 1 uses deferred switching, expose an active-versus-pending profile state in `status`, help, or equivalent UX so operators can confirm what will happen on reset/new session.
+- [ ] Decide in the same phase whether bundle selection persists across future sessions or only applies as a one-session override, and surface that rule in operator UX and artifacts.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.

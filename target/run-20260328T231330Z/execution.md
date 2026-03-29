@@ -253,6 +253,10 @@
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover showing both the active bundle and the queued next-session bundle when switching is deferred.
 - Evaluator: `rg -n "active and pending bundle|queued next-session bundle|active-versus-pending profile state|what is in effect now versus what will apply" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about how deferred profile changes stay visible before reset/new session.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a profile-persistence-scope planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether a selected bundle is a one-session override or a persisted default for future sessions in the same workspace.
+- Evaluator: `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog less ambiguous about session-local versus persisted bundle selection.
 - 2026-03-29T00:38:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:25Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:38:40Z screen-idle heartbeat injected with prompt source `program_md`
@@ -288,3 +292,7 @@
 - 2026-03-29T01:06:20Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:07:10Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:07:25Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:08:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:09:05Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:09:20Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:09:35Z screen-idle heartbeat injected with prompt source `program_md`

@@ -2,20 +2,20 @@
 
 - Run: `run-20260328T231330Z`
 - Prompt source: `program_md` (`/Users/jf/src/jf/codex-heartbeat/program.md`)
-- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style active-versus-pending profile state for deferred switching.
-- Primary evaluator: `rg -n "active and pending bundle|queued next-session bundle|active-versus-pending profile state|what is in effect now versus what will apply" PLANNING.md`
+- Objective: Make the source-grounded `[ ]` backlog in `PLANNING.md` explicitly cover Hermes-style profile-persistence scope for named bundles.
+- Primary evaluator: `rg -n "persistence rule|profile persistence scope|one-session override|persisted default for future sessions|session-local, repo-default" PLANNING.md`
 - Prompt mode: `autoresearch`
 - Council after failures: 3
 - Checkpoint commits: true
 
 ## Hypothesis
 
-- If `PLANNING.md` explicitly includes Hermes-style active-versus-pending profile-state items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving deferred bundle changes opaque before reset/new session.
+- If `PLANNING.md` explicitly includes Hermes-style profile-persistence-scope items, the implementation backlog will better match the reviewed Hermes operator workflow instead of leaving one-session overrides versus persisted defaults ambiguous.
 
 ## Steps
 
 1. Re-read the current memory and the existing planning backlog.
-2. Make one bounded change by adding Hermes-style active-versus-pending profile-state items to `PLANNING.md`.
+2. Make one bounded change by adding Hermes-style profile-persistence-scope items to `PLANNING.md`.
 3. Run the focused planning evaluator exactly once.
 4. Record the result and choose keep, discard, or revert.
 
