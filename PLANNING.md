@@ -46,6 +46,7 @@
 - Hermes also exposes configurable background-notification behavior: operators can choose whether long-running background work pushes all updates, result-only updates, error-only updates, or no updates, and CLI completion can optionally ring a terminal bell.
 - Hermes also exposes explicit interrupt-and-redirect behavior: sending a new message while work is in flight interrupts the run, kills active terminal commands, cancels queued tool calls, combines interruption messages into one prompt, and supports stopping without queuing a redirect.
 - Hermes's delegated subagents also have explicit interrupt propagation: interrupting the parent interrupts all active children instead of leaving background child work detached from the parent's control flow.
+- Hermes's delegated subagents also have explicit progress-display behavior: CLI mode shows a real-time tree-view of child tool calls with per-task completion lines, while gateway mode batches delegated progress back through the parent progress callback.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -80,6 +81,7 @@
 - [ ] Define background-notification policy semantics explicitly, so operators know whether long-running background work sends all updates, result-only updates, error-only updates, or no updates, and whether completion can ring a bell.
 - [ ] Define interrupt-and-redirect semantics explicitly, so operators know what happens when they send follow-up input during in-flight work, including command termination, queued-tool cancellation, message coalescing, and stop-without-redirect behavior.
 - [ ] Define delegated-interrupt-propagation semantics explicitly, so operators know whether interrupting the parent also interrupts all active child agents or leaves delegated work running independently.
+- [ ] Define delegated-progress-display semantics explicitly, so operators know whether child progress is shown as real-time per-task tool activity, batched parent progress, or some other surface instead of leaving delegated progress visibility implicit.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -127,6 +129,7 @@
 - [ ] A user can tell what background-notification policy is active for long-running delegated/background work, including whether updates are `all`, `result`, `error`, or `off`, and whether completion rings a terminal bell.
 - [ ] A user can tell whether interrupting in-flight work kills running terminal commands, cancels queued tool calls, combines multiple interruption messages, and supports stopping without queuing a new redirect prompt.
 - [ ] A user can tell whether interrupting the parent also interrupts all active delegated children and whether any delegated work may outlive the parent interruption boundary.
+- [ ] A user can tell whether delegated child progress appears as a real-time CLI tree-view with per-task completion lines, as batched parent progress updates, or through some other declared progress surface.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -163,6 +166,7 @@
 - [ ] In phase 1, if delegated/background work is exposed, document the background-notification policy and surface whether updates are `all`, `result`, `error`, or `off`, plus whether completion can ring a bell.
 - [ ] In phase 1, if interactive interruption is exposed, document the interrupt-and-redirect policy and surface whether running terminal commands are killed, queued tools are cancelled, interruption messages are combined, and stop-without-follow-up is supported.
 - [ ] In phase 1, if delegated child-agent review is exposed, document whether parent interruption propagates to all active children and surface that cancellation boundary in status/help/artifacts so delegated control flow stays predictable.
+- [ ] In phase 1, if delegated child-agent review is exposed, document whether progress appears as a real-time CLI tree-view, batched parent progress callback updates, or another declared surface so delegated progress stays predictable across interfaces.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.
