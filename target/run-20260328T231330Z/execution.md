@@ -123,3 +123,17 @@
 - 2026-03-29T00:02:55Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:06:15Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T00:10:00Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:10:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:12:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:12:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:13:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:13:25Z screen-idle heartbeat injected with prompt source `program_md`
+- Re-read `target/latest-context.md`, the current workspace `PLANNING.md`, `cmd/codex-heartbeat/autoresearch.go`, and `cmd/codex-heartbeat/autoresearch_test.go` to establish the baseline for a scaffold-task-list cycle.
+- Updated `cmd/codex-heartbeat/autoresearch.go` so the default `PLANNING.md` scaffold now includes a `## Task List` section with checkbox items for measurable outcome, one bounded hypothesis, one primary evaluator, and explicit keep/discard/revert recording.
+- Updated `cmd/codex-heartbeat/autoresearch_test.go` with focused coverage that a newly scaffolded workspace seeds `PLANNING.md` with the new checkbox task-list section and key checklist items.
+- Ran `gofmt -w cmd/codex-heartbeat/autoresearch.go cmd/codex-heartbeat/autoresearch_test.go`.
+- Evaluator: `go test ./cmd/codex-heartbeat -run 'EnsureAutoresearchWorkspaceScaffoldsWorkspace|EnsureAutoresearchWorkspaceSeedsPlanningTaskList|EnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting' -count=1` -> pass
+- This cycle still did not attempt Hermes-style instruction injection, prefill, or canary scoring; it only made fresh autoresearch scaffolds start with a reusable checkbox task list.
+- 2026-03-29T00:14:10Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:14:40Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T00:14:55Z screen-idle heartbeat injected with prompt source `program_md`

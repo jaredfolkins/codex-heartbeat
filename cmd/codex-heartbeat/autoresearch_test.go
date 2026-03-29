@@ -538,6 +538,31 @@ func TestEnsureAutoresearchWorkspaceScaffoldsWorkspace(t *testing.T) {
 	}
 }
 
+func TestEnsureAutoresearchWorkspaceSeedsPlanningTaskList(t *testing.T) {
+	t.Parallel()
+
+	workdir := t.TempDir()
+	if _, err := ensureAutoresearchWorkspace(workdir); err != nil {
+		t.Fatalf("ensureAutoresearchWorkspace() returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workdir, planningFilename))
+	if err != nil {
+		t.Fatalf("read planning scaffold: %v", err)
+	}
+
+	content := string(data)
+	if !strings.Contains(content, "## Task List") {
+		t.Fatalf("planning scaffold missing task list section: %q", content)
+	}
+	if !strings.Contains(content, "- [ ] Pick one bounded hypothesis for the next cycle.") {
+		t.Fatalf("planning scaffold missing bounded-hypothesis checkbox: %q", content)
+	}
+	if !strings.Contains(content, "- [ ] Name one primary evaluator before changing code.") {
+		t.Fatalf("planning scaffold missing evaluator checkbox: %q", content)
+	}
+}
+
 func TestEnsureAutoresearchWorkspaceWarnsOnPartialScaffoldWithoutOverwriting(t *testing.T) {
 	t.Parallel()
 

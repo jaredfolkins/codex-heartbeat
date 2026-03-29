@@ -943,6 +943,13 @@ const defaultPlanningScaffold = `
 
 - Reuse one primary evaluator until the hypothesis changes.
 
+## Task List
+
+- [ ] Restate the smallest measurable outcome for the current objective.
+- [ ] Pick one bounded hypothesis for the next cycle.
+- [ ] Name one primary evaluator before changing code.
+- [ ] Record the result as keep, discard, revert, or blocked after the evaluator runs.
+
 ## Open Questions
 
 - Capture blockers or questions the next loop should resolve.
