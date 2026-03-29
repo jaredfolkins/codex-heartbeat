@@ -33,6 +33,7 @@
 - Hermes's hierarchical project context is also ordered and labeled: discovered files are concatenated with relative path headers, so operators can tell where each repo-local instruction block came from.
 - Hermes also recognizes adjacent instruction-file conventions like `.cursorrules`, so the operator model needs a compatibility rule for whether existing repo guidance files are ignored, imported, or merged alongside `AGENTS.md`.
 - Hermes also exposes background sessions as a first-class operator workflow: parallel tasks get isolated conversation history while inheriting the current session's model and reasoning-style settings.
+- Hermes also supports launch-time skill and toolset loading, so the operator model needs a rule for whether a named bundle can preload extra tools/skills in addition to prompt instructions.
 - The current `codex-heartbeat` wrapper mostly injects user-visible prompts into an existing Codex thread. Its interactive path currently launches `codex` or `codex resume` without first-class `base_instructions` or `developer_instructions` overrides.
 - Upstream Codex app-server and SDK surfaces do expose `base_instructions`, `developer_instructions`, and `config.model_reasoning_effort`, so a stronger prompt-stack feature likely requires an app-server or SDK-backed path rather than more user-message reinjection.
 
@@ -54,6 +55,7 @@
 - [ ] Define repo-context merge semantics explicitly, so operators know the order in which hierarchical `AGENTS.md` files are combined and how each instruction block is labeled or traced back to its source path.
 - [ ] Define context-file compatibility semantics explicitly, so operators know whether existing repo guidance files like `.cursorrules` are ignored, imported, or merged alongside `AGENTS.md`.
 - [ ] Define background/delegated-session inheritance semantics explicitly, so operators know whether parallel review tasks inherit the active profile/model/reasoning settings while keeping isolated conversation history.
+- [ ] Define bundle-to-tooling semantics explicitly, so operators know whether selecting a named bundle also preloads toolsets or skills in addition to prompt/context instructions.
 - [ ] Decide the transport boundary for the feature: keep the current CLI-wrapper path for heartbeat reinjection, or add a Codex SDK/app-server backend for sessions that need true `base_instructions` / `developer_instructions`.
 - [ ] Add launch-time instruction injection for both new threads and resumed threads, because the current `buildInteractiveArgs()` path only starts `codex` or `codex resume` and cannot set upstream instruction fields.
 - [ ] Add optional ephemeral prefill support so the wrapper can seed the first turn or thread history without writing persistent prompt hacks into workspace files by default.
@@ -88,6 +90,7 @@
 - [ ] A user can tell the order in which hierarchical repo-context files were merged and can trace each injected block back to a relative path header or equivalent source label.
 - [ ] A user can tell whether existing repo instruction files like `.cursorrules` participate in the assembled context and how they were mapped into the wrapper's repo-context model.
 - [ ] A user can tell whether a spawned background/delegated task inherits the active profile/model/reasoning settings and whether its conversation history is isolated from the parent session.
+- [ ] A user can tell whether a selected named bundle also loads extra toolsets or skills and can inspect that tooling surface from wrapper UX or artifacts.
 - [ ] The chosen profile can control model selection, reasoning effort, and at least one stronger instruction channel than a plain user-message heartbeat.
 - [ ] New and resumed sessions behave predictably, and any profile override is visible in runtime logs and `target/` artifacts.
 - [ ] A harmless evaluator can verify that the selected profile changes instruction-following behavior in a measurable, repeatable way.
@@ -111,6 +114,7 @@
 - [ ] In phase 1, if repo context is hierarchical, document the merge order and expose source labels or relative path headers so injected instructions remain explainable in monorepos.
 - [ ] In phase 1, document whether compatibility files like `.cursorrules` are supported and, if so, how they map into the repo-context assembly and observability surfaces.
 - [ ] In phase 1, if background/delegated sessions are exposed, document whether they inherit the active profile/model/reasoning settings and whether their histories remain isolated from the parent session.
+- [ ] In phase 1, document whether named bundles may preload toolsets or skills and, if so, surface that loaded tooling set in status/help/artifacts.
 - [ ] Keep the first implementation on the current wrapper path, but limit the scope to fields the wrapper can already pass safely; treat any need for true `base_instructions` / `developer_instructions` as the trigger for a later SDK/app-server phase.
 - [ ] Add logging and `target/` artifact capture for the selected profile name, model, and reasoning effort in the same patch so validation stays observable.
 - [ ] Carry `review_basis` or equivalent source-traceability evidence through the same phase-1 status/help/docs surfaces so parity claims stay auditable while the transport is still wrapper-based.

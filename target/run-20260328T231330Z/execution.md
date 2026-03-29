@@ -277,6 +277,10 @@
 - Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether parallel background/delegated tasks inherit the active profile/model/reasoning settings while keeping isolated conversation history.
 - Evaluator: `rg -n "background sessions as a first-class|background/delegated-session inheritance semantics|inherits the active profile/model/reasoning settings|history is isolated from the parent session|background/delegated task inherits" PLANNING.md` -> pass
 - This cycle did not change runtime behavior; it only made the planning backlog more explicit about inheritance and isolation for parallel/background review tasks.
+- Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes launch-time skill/toolset notes to establish the baseline for a bundle-to-tooling planning cycle.
+- Updated `PLANNING.md` so the source review notes, main task list, acceptance criteria, and phase-1 recommendation now explicitly cover whether named bundles may preload toolsets or skills in addition to prompt/context instructions.
+- Evaluator: `rg -n "launch-time skill and toolset loading|bundle-to-tooling semantics|preloads toolsets or skills|selected named bundle also loads extra toolsets or skills|named bundles may preload toolsets or skills" PLANNING.md` -> pass
+- This cycle did not change runtime behavior; it only made the planning backlog more explicit about whether named bundles also carry tooling surfaces.
 - Re-read `target/latest-context.md`, `PLANNING.md`, and the Hermes operator-flow notes to establish the baseline for a clear-default planning cycle.
 - Updated `PLANNING.md` so the main task list, acceptance criteria, and phase-1 recommendation now explicitly cover clearing a selected bundle and returning to the default profile state without manual config edits.
 - Evaluator: `rg -n "return-to-default flow|returned to the default profile state|clear/default action|clear a named bundle" PLANNING.md` -> pass
@@ -362,3 +366,7 @@
 - 2026-03-29T01:28:45Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:29:00Z screen-idle heartbeat injected with prompt source `program_md`
 - 2026-03-29T01:29:15Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:29:55Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:30:30Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:30:45Z screen-idle heartbeat injected with prompt source `program_md`
+- 2026-03-29T01:31:00Z screen-idle heartbeat injected with prompt source `program_md`
