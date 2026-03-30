@@ -160,6 +160,7 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 		threshold = defaultCouncilAfterFailures
 	}
 	councilTriggered := r.council || shouldTriggerCouncil(entries, threshold)
+	firstPlanningRun := isFirstPlanningRun(base.program, artifacts, entries)
 
 	latestContext, err := buildLatestContext(artifacts, base.program, r.council, entries)
 	if err != nil {
@@ -169,7 +170,7 @@ func (r promptResolver) Resolve(artifacts autoresearchArtifacts) (promptResoluti
 		return promptResolution{}, err
 	}
 
-	text := renderPromptTemplate(embeddedTemplate("heartbeat.md"), buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council))
+	text := renderPromptTemplate(embeddedTemplate("heartbeat.md"), buildPromptTemplateVars(base.program, artifacts, latestContext, councilTriggered, r.council, firstPlanningRun))
 
 	resolution := promptResolution{
 		Text:             text,
@@ -378,7 +379,7 @@ func newAutoresearchArtifacts(workdir string, startedAt time.Time) autoresearchA
 	}
 }
 
-func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifacts, latestContext string, councilTriggered bool, councilRequested bool) map[string]string {
+func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifacts, latestContext string, councilTriggered bool, councilRequested bool, firstPlanningRun bool) map[string]string {
 	threshold := program.CouncilAfterFailures
 	if threshold <= 0 {
 		threshold = defaultCouncilAfterFailures
@@ -397,7 +398,7 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 		checkpointInstruction = "After meaningful progress, create an intentional save-point commit that explains what changed and why."
 	}
 
-	councilInstruction := buildCouncilInstruction(threshold, councilTriggered, councilRequested)
+	councilInstruction := buildCouncilInstruction(threshold, councilTriggered, councilRequested, firstPlanningRun)
 
 	return map[string]string{
 		"OBJECTIVE":              strings.TrimSpace(program.Objective),
@@ -417,7 +418,10 @@ func buildPromptTemplateVars(program programConfig, artifacts autoresearchArtifa
 	}
 }
 
-func buildCouncilInstruction(threshold int, councilTriggered bool, councilRequested bool) string {
+func buildCouncilInstruction(threshold int, councilTriggered bool, councilRequested bool, firstPlanningRun bool) string {
+	if firstPlanningRun {
+		return "Because this is the first planning-mode run in this workspace, start with an adversarial 3-agent planning council before broad implementation work. Spawn three sub-agents with distinct stances: planner, skeptic, and operator. Let them argue for at least three rounds over objective framing, evaluator choice, sequencing, and non-goals. Then consolidate the winning plan into `PLANNING.md`, move rejected or superseded directions into `target/PLANNING_HISTORY.md`, and only then continue the bounded autoresearch loop."
+	}
 	if councilRequested {
 		return "Use the 3-agent council at many steps in the autoresearch loop: baseline framing, next-hypothesis selection, and post-evaluator interpretation. Keep the root agent on `gpt-5.4` with `xhigh` reasoning. Use `gpt-5.3-codex-spark` with `high` reasoning for the three sub-agents. Still keep each cycle bounded to one hypothesis and one primary evaluator."
 	}
@@ -425,6 +429,29 @@ func buildCouncilInstruction(threshold int, councilTriggered bool, councilReques
 		return fmt.Sprintf("Recent results indicate a stalled loop. Before choosing the next hypothesis, use the 3-agent council because the failure streak reached the threshold of %d.", threshold)
 	}
 	return fmt.Sprintf("Do not start with the 3-agent council. Use it only if you are blocked or the recent failure streak reaches %d.", threshold)
+}
+
+func isFirstPlanningRun(program programConfig, artifacts autoresearchArtifacts, entries []resultLedgerEntry) bool {
+	if program.PromptMode != promptModePlanning {
+		return false
+	}
+	if len(entries) == 0 {
+		return true
+	}
+
+	for _, entry := range entries {
+		if !isPlanningBootstrapEntry(entry, artifacts.RunID) {
+			return false
+		}
+	}
+	return true
+}
+
+func isPlanningBootstrapEntry(entry resultLedgerEntry, runID string) bool {
+	return strings.TrimSpace(entry.RunID) == runID &&
+		strings.TrimSpace(entry.Hypothesis) == defaultHypothesisPlaceholder &&
+		normalizeLedgerValue(entry.Outcome) == "pending" &&
+		normalizeLedgerValue(entry.Disposition) == defaultDispositionPlaceholder
 }
 
 func renderPromptTemplate(template string, vars map[string]string) string {

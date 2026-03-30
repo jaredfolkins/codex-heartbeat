@@ -167,7 +167,7 @@ By default the 3-agent council is still a fallback, not the default first move. 
 
 When you pass `--council`, the prompt switches to a frequent-council mode: use the council during baseline framing, next-hypothesis selection, and post-evaluator interpretation. The guidance is to keep the root agent on `gpt-5.4` with `xhigh` reasoning and use `gpt-5.3-codex-spark` with `high` reasoning for the three sub-agents.
 
-`Prompt mode: planning` is a guidance mode for using the autoresearch loop to refine the goal, deepen `PLANNING.md`, and decide the next deep dive before broad implementation.
+`Prompt mode: planning` is a guidance mode for using the autoresearch loop to refine the goal, deepen `PLANNING.md`, and decide the next deep dive before broad implementation. On the first planning-mode run in a workspace, the prompt now starts with an adversarial 3-agent planning council for several rounds before it settles the initial plan.
 
 `Prompt mode: manual-test-first` is a guidance mode for workflows where Codex should prepare the next candidate fix and validation steps, then stop before the final human gate.
 

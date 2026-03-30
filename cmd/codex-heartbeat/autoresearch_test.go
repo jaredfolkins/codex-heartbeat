@@ -170,8 +170,65 @@ Prompt mode: planning
 	if !strings.Contains(resolution.Text, "refine the goal, deepen the plan") {
 		t.Fatalf("Resolve().Text missing planning-mode guidance: %q", resolution.Text)
 	}
+	if !strings.Contains(resolution.Text, "adversarial 3-agent planning council") {
+		t.Fatalf("Resolve().Text missing first-planning-run council guidance: %q", resolution.Text)
+	}
+	if !strings.Contains(resolution.Text, "at least three rounds") {
+		t.Fatalf("Resolve().Text missing multi-round planning guidance: %q", resolution.Text)
+	}
 	if !strings.Contains(resolution.Text, "Planning history path") {
 		t.Fatalf("Resolve().Text missing planning history path: %q", resolution.Text)
+	}
+}
+
+func TestPromptResolverPlanningModeAfterFirstRunUsesNormalCouncilPolicy(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	workdir := filepath.Join(root, "work")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		t.Fatalf("mkdir workdir: %v", err)
+	}
+
+	program := `# Program
+
+Objective: build the plan before coding
+Primary evaluator: rg -n "TODO|FIXME" .
+Prompt mode: planning
+`
+	if err := os.WriteFile(filepath.Join(workdir, defaultProgramFilename), []byte(program), 0o644); err != nil {
+		t.Fatalf("write program: %v", err)
+	}
+
+	resolver, err := newPromptResolver(workdir, false)
+	if err != nil {
+		t.Fatalf("newPromptResolver() returned error: %v", err)
+	}
+
+	artifacts := newAutoresearchArtifacts(workdir, time.Date(2026, time.March, 29, 1, 5, 0, 0, time.UTC))
+	entry := resultLedgerEntry{
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+		RunID:       "run-older",
+		Hypothesis:  "Map the current architecture",
+		Command:     "rg -n \"TODO|FIXME\" .",
+		Outcome:     "captured the current seams",
+		Disposition: "keep",
+		Notes:       "previous planning cycle",
+	}
+	if err := appendResultLedgerEntry(artifacts.ResultsLedgerPath, entry); err != nil {
+		t.Fatalf("appendResultLedgerEntry() returned error: %v", err)
+	}
+
+	resolution, err := resolver.Resolve(artifacts)
+	if err != nil {
+		t.Fatalf("Resolve() returned error: %v", err)
+	}
+
+	if strings.Contains(resolution.Text, "adversarial 3-agent planning council") {
+		t.Fatalf("Resolve().Text unexpectedly treated a later planning run as first-run bootstrap: %q", resolution.Text)
+	}
+	if !strings.Contains(resolution.Text, "Do not start with the 3-agent council") {
+		t.Fatalf("Resolve().Text missing normal fallback council policy after the first planning run: %q", resolution.Text)
 	}
 }
 
